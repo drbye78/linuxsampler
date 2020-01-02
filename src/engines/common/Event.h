@@ -117,7 +117,7 @@ namespace LinuxSampler {
      * return an invalid Iterator, and thus will prevent you from misusing an
      * event which no longer "exists".
      *
-     * Note that an @c Event object usually just "exists" for exactly on audio
+     * Note that an @c Event object usually just "exists" for exactly one audio
      * fragment cycle: that is it exists right from the beginning of the audio
      * fragment cycle where it was caused (i.e. where its MIDI data was
      * received by the respective engine channel) and will disappear

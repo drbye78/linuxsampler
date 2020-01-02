@@ -36,6 +36,8 @@ Version SVN trunk (?)
       methods and marked the old ones as deprecated; and likewise added new
       *Nrpn*Parameter*() methods as replacement for previous *Nrpn*Controller*()
       methods and marked those old ones deprecated as well.
+    - Added support for MIDI CC #38 (data entry LSB): this allows higher value
+      resolution for certain (e.g. hard coded) RPN and NRPN parameters.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

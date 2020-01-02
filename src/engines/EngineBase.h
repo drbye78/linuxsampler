@@ -1484,63 +1484,46 @@ namespace LinuxSampler {
                         pChannel->PortamentoTime = (float) itControlChangeEvent->Param.CC.Value / 127.0f * (float) CONFIG_PORTAMENTO_TIME_MAX + (float) CONFIG_PORTAMENTO_TIME_MIN;
                         break;
                     }
-                    case 6: { // data entry (currently only used for RPN and NRPN parameters)
-                        //dmsg(1,("DATA ENTRY %d\n", itControlChangeEvent->Param.CC.Value));
+                    case 6: { // data entry (MSB)
+                        //dmsg(1,("DATA ENTRY MSB %d\n", itControlChangeEvent->Param.CC.Value));
+
+                        // look-ahead: if next MIDI event is data entry LSB,
+                        // then skip this event here for now (to avoid double
+                        // handling of what's supposed to be one RPN/NRPN event)
+                        if (isNextEventCCNr(itControlChangeEvent, 38))
+                            break;
+
                         if (pChannel->GetMidiRpnParameter() >= 0) { // RPN parameter number was sent previously ...
-                            dmsg(4,("Guess it's an RPN ...\n"));
-                            if (pChannel->GetMidiRpnParameter() == 2) { // coarse tuning in half tones
-                                int transpose = (int) itControlChangeEvent->Param.CC.Value - 64;
-                                // limit to +- two octaves for now
-                                transpose = RTMath::Min(transpose,  24);
-                                transpose = RTMath::Max(transpose, -24);
-                                pChannel->GlobalTranspose = transpose;
-                                // workaround, so we won't have hanging notes
-                                pChannel->ReleaseAllVoices(itControlChangeEvent);
-                            }
-                            // to prevent other MIDI CC #6 messages to be misenterpreted as RPN value
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiRpnParameter();
+                            int value = itControlChangeEvent->Param.CC.Value << 7;
+
+                            // transform event type: CC event -> RPN event
+                            itControlChangeEvent->Type = Event::type_rpn;
+                            itControlChangeEvent->Param.RPN.Channel = ch;
+                            itControlChangeEvent->Param.RPN.Parameter = param;
+                            itControlChangeEvent->Param.RPN.Value = value;
+
+                            // do the actual RPN event processing
+                            ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
+
+                            // to prevent other data entry messages to be misenterpreted as RPN value
                             pChannel->ResetMidiRpnParameter();
                         } else if (pChannel->GetMidiNrpnParameter() >= 0) { // NRPN parameter number was sent previously ...
-                            dmsg(4,("Guess it's an NRPN ...\n"));
-                            const int NrpnMSB = pChannel->GetMidiNrpnParameter() >> 7;
-                            const int NrpnLSB = pChannel->GetMidiNrpnParameter() & 127;
-                            dmsg(4,("NRPN MSB=%d LSB=%d Data=%d\n", NrpnMSB, NrpnLSB, itControlChangeEvent->Param.CC.Value));
-                            switch (NrpnMSB) {
-                                case 0x1a: { // volume level of note (Roland GS NRPN)
-                                    const uint note = NrpnLSB;
-                                    const uint vol  = itControlChangeEvent->Param.CC.Value;
-                                    dmsg(4,("Note Volume NRPN received (note=%d,vol=%d).\n", note, vol));
-                                    if (note < 128 && vol < 128)
-                                        pChannel->pMIDIKeyInfo[note].Volume = VolumeCurve[vol];
-                                    break;
-                                }
-                                case 0x1c: { // panpot of note (Roland GS NRPN)
-                                    const uint note = NrpnLSB;
-                                    const uint pan  = itControlChangeEvent->Param.CC.Value;
-                                    dmsg(4,("Note Pan NRPN received (note=%d,pan=%d).\n", note, pan));
-                                    if (note < 128 && pan < 128) {
-                                        pChannel->pMIDIKeyInfo[note].PanLeft  = PanCurve[128 - pan];
-                                        pChannel->pMIDIKeyInfo[note].PanRight = PanCurve[pan];
-                                    }
-                                    break;
-                                }
-                                case 0x1d: { // reverb send of note (Roland GS NRPN)
-                                    const uint note = NrpnLSB;
-                                    const float reverb = float(itControlChangeEvent->Param.CC.Value) / 127.0f;
-                                    dmsg(4,("Note Reverb Send NRPN received (note=%d,send=%f).\n", note, reverb));
-                                    if (note < 128)
-                                        pChannel->pMIDIKeyInfo[note].ReverbSend = reverb;
-                                    break;
-                                }
-                                case 0x1e: { // chorus send of note (Roland GS NRPN)
-                                    const uint note = NrpnLSB;
-                                    const float chorus = float(itControlChangeEvent->Param.CC.Value) / 127.0f;
-                                    dmsg(4,("Note Chorus Send NRPN received (note=%d,send=%f).\n", note, chorus));
-                                    if (note < 128)
-                                        pChannel->pMIDIKeyInfo[note].ChorusSend = chorus;
-                                    break;
-                                }
-                            }
-                            // to prevent other MIDI CC #6 messages to be misenterpreted as NRPN value
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiNrpnParameter();
+                            int value = itControlChangeEvent->Param.CC.Value << 7;
+
+                            // transform event type: CC event -> NRPN event
+                            itControlChangeEvent->Type = Event::type_nrpn;
+                            itControlChangeEvent->Param.RPN.Channel = ch;
+                            itControlChangeEvent->Param.RPN.Parameter = param;
+                            itControlChangeEvent->Param.RPN.Value = value;
+
+                            // do the actual NRPN event processing
+                            ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
+
+                            // to prevent other data entry messages to be misenterpreted as NRPN value
                             pChannel->ResetMidiNrpnParameter();
                         }
                         break;
@@ -1554,6 +1537,50 @@ namespace LinuxSampler {
                     case 10: { // panpot
                         //TODO: not sample accurate yet
                         pChannel->iLastPanRequest = itControlChangeEvent->Param.CC.Value;
+                        break;
+                    }
+                    case 38: { // data entry (LSB)
+                        //dmsg(1,("DATA ENTRY LSB %d\n", itControlChangeEvent->Param.CC.Value));
+                        int value = 0;
+
+                        // look-back: if previous MIDI event was data entry MSB,
+                        // then obtain that value for the MSB value portion
+                        if (isPrevEventCCNr(itControlChangeEvent, 6))
+                            value = prevEventOf(itControlChangeEvent)->Param.CC.Value << 7;
+
+                        if (pChannel->GetMidiRpnParameter() >= 0) { // RPN parameter number was sent previously ...
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiRpnParameter();
+                            value |= itControlChangeEvent->Param.CC.Value;
+
+                            // transform event type: CC event -> RPN event
+                            itControlChangeEvent->Type = Event::type_rpn;
+                            itControlChangeEvent->Param.RPN.Channel = ch;
+                            itControlChangeEvent->Param.RPN.Parameter = param;
+                            itControlChangeEvent->Param.RPN.Value = value;
+
+                            // do the actual RPN event processing
+                            ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
+
+                            // to prevent other data entry messages to be misenterpreted as RPN value
+                            pChannel->ResetMidiRpnParameter();
+                        } else if (pChannel->GetMidiNrpnParameter() >= 0) { // NRPN parameter number was sent previously ...
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiNrpnParameter();
+                            value |= itControlChangeEvent->Param.CC.Value;
+
+                            // transform event type: CC event -> NRPN event
+                            itControlChangeEvent->Type = Event::type_nrpn;
+                            itControlChangeEvent->Param.RPN.Channel = ch;
+                            itControlChangeEvent->Param.RPN.Parameter = param;
+                            itControlChangeEvent->Param.RPN.Value = value;
+
+                            // do the actual NRPN event processing
+                            ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
+
+                            // to prevent other data entry messages to be misenterpreted as NRPN value
+                            pChannel->ResetMidiNrpnParameter();
+                        }
                         break;
                     }
                     case 64: { // sustain
@@ -1677,6 +1704,81 @@ namespace LinuxSampler {
                         if (pChannel->SoloMode)
                             KillAllVoices(pEngineChannel, itControlChangeEvent);
                         pChannel->SoloMode = false;
+                        break;
+                    }
+                }
+            }
+
+            /**
+             * Process MIDI RPN events with hard coded behavior.
+             *
+             * @param pEngineChannel - engine channel on which the MIDI RPN
+             *                         event was received
+             * @param itRpnEvent - the actual MIDI RPN event
+             */
+            void ProcessHardcodedRpn(EngineChannel* pEngineChannel,
+                                     Pool<Event>::Iterator& itRpnEvent)
+            {
+                EngineChannelBase<V, R, I>* pChannel =
+                    static_cast<EngineChannelBase<V, R, I>*>(pEngineChannel);
+
+                if (itRpnEvent->Param.RPN.Parameter == 2) { // coarse tuning in half tones
+                    int transpose = (int) itRpnEvent->Param.RPN.ValueMSB() - 64;
+                    // limit to +- two octaves for now
+                    transpose = RTMath::Min(transpose,  24);
+                    transpose = RTMath::Max(transpose, -24);
+                    pChannel->GlobalTranspose = transpose;
+                    // workaround, so we won't have hanging notes
+                    pChannel->ReleaseAllVoices(itRpnEvent);
+                }
+            }
+
+            /**
+             * Process MIDI NRPN events with hard coded behavior.
+             *
+             * @param pEngineChannel - engine channel on which the MIDI NRPN
+             *                         event was received
+             * @param itRpnEvent - the actual MIDI NRPN event
+             */
+            void ProcessHardcodedNrpn(EngineChannel* pEngineChannel,
+                                      Pool<Event>::Iterator& itNrpnEvent)
+            {
+                EngineChannelBase<V, R, I>* pChannel =
+                    static_cast<EngineChannelBase<V, R, I>*>(pEngineChannel);
+
+                switch (itNrpnEvent->Param.NRPN.ParameterMSB()) {
+                    case 0x1a: { // volume level of note (Roland GS NRPN)
+                        const uint note = itNrpnEvent->Param.NRPN.ParameterLSB();
+                        const uint vol  = itNrpnEvent->Param.NRPN.ValueMSB();
+                        dmsg(4,("Note Volume NRPN received (note=%d,vol=%d).\n", note, vol));
+                        if (note < 128 && vol < 128)
+                            pChannel->pMIDIKeyInfo[note].Volume = VolumeCurve[vol];
+                        break;
+                    }
+                    case 0x1c: { // panpot of note (Roland GS NRPN)
+                        const uint note = itNrpnEvent->Param.NRPN.ParameterLSB();
+                        const uint pan  = itNrpnEvent->Param.NRPN.ValueMSB();
+                        dmsg(4,("Note Pan NRPN received (note=%d,pan=%d).\n", note, pan));
+                        if (note < 128 && pan < 128) {
+                            pChannel->pMIDIKeyInfo[note].PanLeft  = PanCurve[128 - pan];
+                            pChannel->pMIDIKeyInfo[note].PanRight = PanCurve[pan];
+                        }
+                        break;
+                    }
+                    case 0x1d: { // reverb send of note (Roland GS NRPN)
+                        const uint note = itNrpnEvent->Param.NRPN.ParameterLSB();
+                        const float reverb = float(itNrpnEvent->Param.NRPN.Value) / 16383.f;
+                        dmsg(4,("Note Reverb Send NRPN received (note=%d,send=%f).\n", note, reverb));
+                        if (note < 128)
+                            pChannel->pMIDIKeyInfo[note].ReverbSend = reverb;
+                        break;
+                    }
+                    case 0x1e: { // chorus send of note (Roland GS NRPN)
+                        const uint note = itNrpnEvent->Param.NRPN.ParameterLSB();
+                        const float chorus = float(itNrpnEvent->Param.NRPN.Value) / 16383.f;
+                        dmsg(4,("Note Chorus Send NRPN received (note=%d,send=%f).\n", note, chorus));
+                        if (note < 128)
+                            pChannel->pMIDIKeyInfo[note].ChorusSend = chorus;
                         break;
                     }
                 }

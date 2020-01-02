@@ -167,6 +167,8 @@ namespace LinuxSampler {
                 type_note_off, ///< (real) MIDI note-off event
                 type_pitchbend, ///< MIDI pitch bend wheel change event
                 type_control_change, ///< MIDI CC event
+                type_rpn, ///< Transformed from a raw RPN CC MIDI event.
+                type_nrpn, ///< Transformed from a raw NRPN CC MIDI event.
                 type_sysex,           ///< MIDI system exclusive message
                 type_cancel_release_key, ///< transformed either from a (real) MIDI note-on or sustain-pedal-down event
                 type_release_key,     ///< transformed either from a (real) MIDI note-off or sustain-pedal-up event
@@ -258,6 +260,16 @@ namespace LinuxSampler {
                     uint8_t Controller;  ///< MIDI controller number of control change event.
                     uint8_t Value;       ///< Controller Value of control change event.
                 } CC;
+                /// Used for both RPN & NRPN events
+                struct _RPN {
+                    uint8_t Channel;     ///< MIDI channel (0..15)
+                    uint16_t Parameter;  ///< Merged 14 bit representation of parameter number (that is MSB and LSB combined).
+                    uint16_t Value;      ///< Merged 14 bit representation of new (N)RPN value (that is MSB and LSB combined).
+                    uint8_t ParameterMSB() const { return Parameter >> 7; }
+                    uint8_t ParameterLSB() const { return Parameter & 127; }
+                    uint8_t ValueMSB() const { return Value >> 7; }
+                    uint8_t ValueLSB() const { return Value & 127; }
+                } RPN, NRPN;
                 /// Pitchbend event specifics
                 struct _Pitch {
                     uint8_t Channel;     ///< MIDI channel (0..15)
@@ -333,6 +345,32 @@ namespace LinuxSampler {
             time_stamp_t    TimeStamp;       ///< Time stamp of the event's occurence.
             int32_t         iFragmentPos;    ///< Position in the current fragment this event refers to.
     };
+
+    inline Pool<Event>::Iterator prevEventOf(const Pool<Event>::Iterator& itEvent) {
+        if (!itEvent) return Pool<Event>::Iterator();
+        Pool<Event>::Iterator itPrev = itEvent;
+        return --itPrev;
+    }
+
+    inline Pool<Event>::Iterator nextEventOf(const Pool<Event>::Iterator& itEvent) {
+        if (!itEvent) return Pool<Event>::Iterator();
+        Pool<Event>::Iterator itNext = itEvent;
+        return ++itNext;
+    }
+
+    inline bool isPrevEventCCNr(const Pool<Event>::Iterator& itEvent, uint8_t CCNr) {
+        Pool<Event>::Iterator itPrev = prevEventOf(itEvent);
+        if (!itPrev) return false;
+        return itPrev->Type == Event::type_control_change &&
+               itPrev->Param.CC.Controller == CCNr;
+    }
+
+    inline bool isNextEventCCNr(const Pool<Event>::Iterator& itEvent, uint8_t CCNr) {
+        Pool<Event>::Iterator itNext = nextEventOf(itEvent);
+        if (!itNext) return false;
+        return itNext->Type == Event::type_control_change &&
+               itNext->Param.CC.Controller == CCNr;
+    }
 
     /**
      * Used to sort timing relevant objects (i.e. events) into timing/scheduler

@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright (C) 2005 - 2014 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -260,38 +260,66 @@ namespace LinuxSampler {
             void SetMidiInstrumentMap(int MidiMap) throw (Exception);
 
             /**
-             * Set MIDI Registered Parameter Number (RPN) Controller
-             * (upper 8 bits / coarse).
+             * Set MIDI Registered Parameter Number (RPN)
+             * (upper 7 bits / coarse).
              */
-            void SetMidiRpnControllerMsb(uint8_t CtrlMSB);
+            void SetMidiRpnParameterMsb(uint8_t ParamMSB);
 
             /**
-             * Set MIDI Registered Parameter Number (RPN) Controller
-             * (lower 8 bits / fine).
+             * Set MIDI Registered Parameter Number (RPN)
+             * (lower 7 bits / fine).
              */
-            void SetMidiRpnControllerLsb(uint8_t CtrlLSB);
+            void SetMidiRpnParameterLsb(uint8_t ParamLSB);
 
             /**
-             * Reset to no RPN controller currently selected.
+             * Reset to no RPN parameter currently selected.
              */
-            void ResetMidiRpnController();
+            void ResetMidiRpnParameter();
 
             /**
-             * Set MIDI Non-Registered Parameter Number (NRPN) Controller
-             * (upper 8 bits / coarse).
+             * Set MIDI Non-Registered Parameter Number (NRPN)
+             * (upper 7 bits / coarse).
              */
-            void SetMidiNrpnControllerMsb(uint8_t CtrlMSB);
+            void SetMidiNrpnParameterMsb(uint8_t ParamMSB);
 
             /**
-             * Set MIDI Non-Registered Parameter Number (NRPN) Controller
-             * (lower 8 bits / fine).
+             * Set MIDI Non-Registered Parameter Number (NRPN)
+             * (lower 7 bits / fine).
              */
-            void SetMidiNrpnControllerLsb(uint8_t CtrlLSB);
+            void SetMidiNrpnParameterLsb(uint8_t ParamLSB);
 
             /**
-             * Reset to no NRPN controller currently selected.
+             * Reset to no NRPN parameter currently selected.
              */
-            void ResetMidiNrpnController();
+            void ResetMidiNrpnParameter();
+
+            /**
+             * Get currently selected MIDI Registered Parameter Number
+             * (RPN), this method will return the already merged 14 bit
+             * parameter number (MSB and LSB value combined).
+             *
+             * @e WARNING: you have to call @c ResetMidiRpnParameter()
+             * after using this value, otherwise all subsequent MIDI CC #6
+             * (Data) messages are interpreted as RPN value messages.
+             *
+             * @returns currently selected (14 bit) RPN number, a negative
+             *          value if no RPN parameter currently selected
+             */
+            int GetMidiRpnParameter();
+
+            /**
+             * Get currently selected MIDI Non-Registered Parameter Number
+             * (NRPN), this method will return the already merged 14 bit
+             * value (MSB and LSB value combined).
+             *
+             * @e WARNING: you have to call @c ResetMidiNrpnParameter()
+             * after using this value, otherwise all subsequent MIDI CC #6
+             * (Data) messages are interpreted as NRPN value messages.
+             *
+             * @returns currently selected (14 bit) NRPN number, a negative
+             *          value if no NRPN parameter currently selected
+             */
+            int GetMidiNrpnParameter();
 
              /**
              * Registers the specified listener to be notified when the number
@@ -308,36 +336,6 @@ namespace LinuxSampler {
              * Removes all listeners.
              */
             void RemoveAllFxSendCountListeners();
-
-            /**
-             * Get currently selected MIDI Registered Parameter Number
-             * (RPN) Controller, this method will return the already merged
-             * value (MSB and LSB value).
-             *
-             * @e WARNING: you have to call @c ResetMidiRpnController()
-             * after using this value, otherwise all subsequent MIDI CC #6
-             * (Data) messages are interpreted as RPN controller value
-             * messages.
-             *
-             * @returns currently selected RPN controller number, a negative
-             *          value if no RPN controller currently selected
-             */
-            int GetMidiRpnController();
-
-            /**
-             * Get currently selected MIDI Non-Registered Parameter Number
-             * (NRPN) Controller, this method will return the already merged
-             * value (MSB and LSB value).
-             *
-             * @e WARNING: you have to call @c ResetMidiNrpnController()
-             * after using this value, otherwise all subsequent MIDI CC #6
-             * (Data) messages are interpreted as NRPN controller value
-             * messages.
-             *
-             * @returns currently selected NRPN controller number, a negative
-             *          value if no NRPN controller currently selected
-             */
-            int GetMidiNrpnController();
 
             /**
              * Gets the current number of active voices.
@@ -372,6 +370,90 @@ namespace LinuxSampler {
              * This method is not real-time safe.
              */
             void ExecuteProgramChange(uint32_t Program);
+
+
+            // Deprecated APIs
+            // (these public methods might be removed in future) ...
+
+            /**
+             * Set MIDI Registered Parameter Number (RPN) Controller
+             * (upper 8 bits / coarse).
+             *
+             * @deprecated Use SetMidiRpnParameterMsb() instead.
+             */
+            void SetMidiRpnControllerMsb(uint8_t CtrlMSB) DEPRECATED_API;
+
+            /**
+             * Set MIDI Registered Parameter Number (RPN) Controller
+             * (lower 8 bits / fine).
+             *
+             * @deprecated Use SetMidiRpnParameterLsb() instead.
+             */
+            void SetMidiRpnControllerLsb(uint8_t CtrlLSB) DEPRECATED_API;
+
+            /**
+             * Reset to no RPN controller currently selected.
+             *
+             * @deprecated Use ResetMidiRpnParameter() instead.
+             */
+            void ResetMidiRpnController() DEPRECATED_API;
+
+            /**
+             * Set MIDI Non-Registered Parameter Number (NRPN) Controller
+             * (upper 8 bits / coarse).
+             *
+             * @deprecated Use SetMidiNrpnParameterMsb() instead.
+             */
+            void SetMidiNrpnControllerMsb(uint8_t CtrlMSB) DEPRECATED_API;
+
+            /**
+             * Set MIDI Non-Registered Parameter Number (NRPN) Controller
+             * (lower 8 bits / fine).
+             *
+             * @deprecated Use SetMidiNrpnParameterLsb() instead.
+             */
+            void SetMidiNrpnControllerLsb(uint8_t CtrlLSB) DEPRECATED_API;
+
+            /**
+             * Reset to no NRPN controller currently selected.
+             *
+             * @deprecated Use ResetMidiNrpnParameter() instead.
+             */
+            void ResetMidiNrpnController() DEPRECATED_API;
+
+            /**
+             * Get currently selected MIDI Registered Parameter Number
+             * (RPN) Controller, this method will return the already merged
+             * value (MSB and LSB value).
+             *
+             * @e WARNING: you have to call @c ResetMidiRpnController()
+             * after using this value, otherwise all subsequent MIDI CC #6
+             * (Data) messages are interpreted as RPN controller value
+             * messages.
+             *
+             * @returns currently selected RPN controller number, a negative
+             *          value if no RPN controller currently selected
+             *
+             * @deprecated Use GetMidiRpnParameter() instead.
+             */
+            int GetMidiRpnController() DEPRECATED_API;
+
+            /**
+             * Get currently selected MIDI Non-Registered Parameter Number
+             * (NRPN) Controller, this method will return the already merged
+             * value (MSB and LSB value).
+             *
+             * @e WARNING: you have to call @c ResetMidiNrpnController()
+             * after using this value, otherwise all subsequent MIDI CC #6
+             * (Data) messages are interpreted as NRPN controller value
+             * messages.
+             *
+             * @returns currently selected NRPN controller number, a negative
+             *          value if no NRPN controller currently selected
+             *
+             * @deprecated Use GetMidiNrpnParameter() instead.
+             */
+            int GetMidiNrpnController() DEPRECATED_API;
 
         protected:
             EngineChannel();

@@ -31,6 +31,11 @@ Version SVN trunk (?)
     - Event:Init(): memset() entire Event::Param union to zero instead of trying
       to do that for its individual members; the latter became error prone due
       to the union's growing complexity meanwhile.
+    - EngineChannel: Overhaul of RPN/NRPN related methods: Added new
+      *Rpn*Parameter*() methods as replacement for previous *Rpn*Controller*()
+      methods and marked the old ones as deprecated; and likewise added new
+      *Nrpn*Parameter*() methods as replacement for previous *Nrpn*Controller*()
+      methods and marked those old ones deprecated as well.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

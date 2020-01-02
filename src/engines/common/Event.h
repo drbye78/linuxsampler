@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2019 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -294,11 +294,7 @@ namespace LinuxSampler {
             MidiInputPort* pMidiInputPort; ///< Pointer to the MIDI input port on which this event occured (NOTE: currently only for global events, that is SysEx messages)
 
             inline void Init() {
-                //FIXME: probably we should memset() zero entire structure here, due to potential union initialization conflicts (see comment on ValueScope::RELATIVE)
-                Param.Note.ID = 0;
-                Param.Note.ParentNoteID = 0;
-                Param.NoteSynthParam.NoteID = 0;
-                Param.NoteSynthParam.Scope = ValueScope::RELATIVE;
+                memset(&Param, 0, sizeof(Param));
             }
             inline int32_t FragmentPos() {
                 if (iFragmentPos >= 0) return iFragmentPos;

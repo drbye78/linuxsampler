@@ -28,6 +28,9 @@ Version SVN trunk (?)
     - Renamed type LFOUnsigned -> LFOTriangleUnsigned.
     - Using now cubic interpolation as resampling algorithm by default; and
       linear interpolation is deprecated now.
+    - Event:Init(): memset() entire Event::Param union to zero instead of trying
+      to do that for its individual members; the latter became error prone due
+      to the union's growing complexity meanwhile.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

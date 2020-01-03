@@ -241,3 +241,7 @@ void NKSPTest::testNKSPIfStatement() {
 void NKSPTest::testNKSPWhileStatement() {
     testWhileStatement();
 }
+
+void NKSPTest::testNKSPBuiltInVars() {
+    testBuiltInVars();
+}

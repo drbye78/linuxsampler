@@ -246,6 +246,7 @@ Version SVN trunk (?)
       "floor()", "sqrt()", "log()", "log2()", "log10()", "exp()", "pow()",
       "sin()", "cos()", "tan()", "asin()", "acos()", "atan()".
     - Added NKSP test cases for unary '+' operator.
+    - Added NKSP test cases for core built-in variables.
 
   * GigaStudio/Gigasampler format engine:
     - LFOTriangleIntMath and LFOTriangleIntAbsMath: Fixed FlipPhase=true

@@ -68,6 +68,7 @@ class NKSPTest : public CppUnit::TestFixture {
     CPPUNIT_TEST(testNKSPBuiltInSearchFunction);
     CPPUNIT_TEST(testNKSPIfStatement);
     CPPUNIT_TEST(testNKSPWhileStatement);
+    CPPUNIT_TEST(testNKSPBuiltInVars);
     CPPUNIT_TEST_SUITE_END();
 
     public:
@@ -129,6 +130,7 @@ class NKSPTest : public CppUnit::TestFixture {
         void testNKSPBuiltInSearchFunction();
         void testNKSPIfStatement();
         void testNKSPWhileStatement();
+        void testNKSPBuiltInVars();
 };
 
 #endif // __LS_NKSPCPPUNITTESTS_H__

@@ -9755,6 +9755,137 @@ end on
     #endif
 }
 
+static void testBuiltInVars() {
+    #if !SILENT_TEST
+    std::cout << "UNIT TEST: built-in variables\n";
+    #endif
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NKSP_PERF_TIMER)
+end on
+)NKSP_CODE",
+        .expectExitResultIsInt = true,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NKSP_REAL_TIMER)
+end on
+)NKSP_CODE",
+        .expectExitResultIsInt = true,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($KSP_TIMER)
+end on
+)NKSP_CODE",
+        .expectExitResultIsInt = true,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit(~NI_MATH_PI)
+end on
+)NKSP_CODE",
+        .expectExitResultIsReal = true,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit(~NI_MATH_E)
+end on
+)NKSP_CODE",
+        .expectExitResultIsReal = true,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NI_CB_TYPE_INIT)
+end on
+)NKSP_CODE",
+        .expectIntExitResult = VM_EVENT_HANDLER_INIT,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NI_CB_TYPE_NOTE)
+end on
+)NKSP_CODE",
+        .expectIntExitResult = VM_EVENT_HANDLER_NOTE,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NI_CB_TYPE_RELEASE)
+end on
+)NKSP_CODE",
+        .expectIntExitResult = VM_EVENT_HANDLER_RELEASE,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NI_CB_TYPE_CONTROLLER)
+end on
+)NKSP_CODE",
+        .expectIntExitResult = VM_EVENT_HANDLER_CONTROLLER,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NI_CB_TYPE_RPN)
+end on
+)NKSP_CODE",
+        .expectIntExitResult = VM_EVENT_HANDLER_RPN,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit($NI_CB_TYPE_NRPN)
+end on
+)NKSP_CODE",
+        .expectIntExitResult = VM_EVENT_HANDLER_NRPN,
+        .expectExitResultUnitPrefix = { VM_NO_PREFIX },
+        .expectExitResultUnit = VM_NO_UNIT
+    });
+
+    #if !SILENT_TEST
+    std::cout << std::endl;
+    #endif
+}
+
 #if !NO_MAIN
 
 int main() {
@@ -9815,6 +9946,7 @@ int main() {
     testBuiltInSearchFunction();
     testIfStatement();
     testWhileStatement();
+    testBuiltInVars();
     std::cout << "\nAll tests passed successfully. :-)\n";
     return 0;
 }

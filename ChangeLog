@@ -220,6 +220,8 @@ Version SVN trunk (?)
       parameter that had been changed and its new value.
     - Added built-in const variables "$NI_CB_TYPE_RPN" and "$NI_CB_TYPE_NRPN"
       which are identifying the new (N)RPN handlers as such at script runtime.
+    - Implemented built-in script function "set_rpn()".
+    - Implemented built-in script function "set_nrpn()".
 
   * test cases:
     - Fixed compiler errors in test cases.

@@ -284,6 +284,8 @@ namespace LinuxSampler {
         // built-in script functions
         InstrumentScriptVMFunction_play_note m_fnPlayNote;
         InstrumentScriptVMFunction_set_controller m_fnSetController;
+        InstrumentScriptVMFunction_set_rpn m_fnSetRpn;
+        InstrumentScriptVMFunction_set_nrpn m_fnSetNrpn;
         InstrumentScriptVMFunction_ignore_event m_fnIgnoreEvent;
         InstrumentScriptVMFunction_ignore_controller m_fnIgnoreController;
         InstrumentScriptVMFunction_note_off m_fnNoteOff;
@@ -335,6 +337,8 @@ namespace LinuxSampler {
 
         friend class InstrumentScriptVMFunction_play_note;
         friend class InstrumentScriptVMFunction_set_controller;
+        friend class InstrumentScriptVMFunction_set_rpn;
+        friend class InstrumentScriptVMFunction_set_nrpn;
         friend class InstrumentScriptVMFunction_ignore_event;
         friend class InstrumentScriptVMFunction_ignore_controller;
         friend class InstrumentScriptVMFunction_note_off;

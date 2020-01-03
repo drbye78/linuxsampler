@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Christian Schoenebeck
+ * Copyright (c) 2014 - 2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -40,6 +40,32 @@ namespace LinuxSampler {
     class InstrumentScriptVMFunction_set_controller FINAL : public VMIntResultFunction {
     public:
         InstrumentScriptVMFunction_set_controller(InstrumentScriptVM* parent);
+        StdUnit_t returnUnitType(VMFnArgs* args) OVERRIDE { return VM_NO_UNIT; }
+        bool returnsFinal(VMFnArgs* args) OVERRIDE { return false; }
+        vmint minRequiredArgs() const OVERRIDE { return 2; }
+        vmint maxAllowedArgs() const OVERRIDE { return 2; }
+        bool acceptsArgType(vmint iArg, ExprType_t type) const OVERRIDE { return type == INT_EXPR;}
+        VMFnResult* exec(VMFnArgs* args) OVERRIDE;
+    protected:
+        InstrumentScriptVM* m_vm;
+    };
+
+    class InstrumentScriptVMFunction_set_rpn FINAL : public VMIntResultFunction {
+    public:
+        InstrumentScriptVMFunction_set_rpn(InstrumentScriptVM* parent);
+        StdUnit_t returnUnitType(VMFnArgs* args) OVERRIDE { return VM_NO_UNIT; }
+        bool returnsFinal(VMFnArgs* args) OVERRIDE { return false; }
+        vmint minRequiredArgs() const OVERRIDE { return 2; }
+        vmint maxAllowedArgs() const OVERRIDE { return 2; }
+        bool acceptsArgType(vmint iArg, ExprType_t type) const OVERRIDE { return type == INT_EXPR;}
+        VMFnResult* exec(VMFnArgs* args) OVERRIDE;
+    protected:
+        InstrumentScriptVM* m_vm;
+    };
+
+    class InstrumentScriptVMFunction_set_nrpn FINAL : public VMIntResultFunction {
+    public:
+        InstrumentScriptVMFunction_set_nrpn(InstrumentScriptVM* parent);
         StdUnit_t returnUnitType(VMFnArgs* args) OVERRIDE { return VM_NO_UNIT; }
         bool returnsFinal(VMFnArgs* args) OVERRIDE { return false; }
         vmint minRequiredArgs() const OVERRIDE { return 2; }

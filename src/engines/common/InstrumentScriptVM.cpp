@@ -237,6 +237,7 @@ namespace LinuxSampler {
 
     InstrumentScriptVM::InstrumentScriptVM() :
         m_event(NULL), m_fnPlayNote(this), m_fnSetController(this),
+        m_fnSetRpn(this), m_fnSetNrpn(this),
         m_fnIgnoreEvent(this), m_fnIgnoreController(this), m_fnNoteOff(this),
         m_fnSetEventMark(this), m_fnDeleteEventMark(this), m_fnByMarks(this),
         m_fnChangeVol(this), m_fnChangeVolTime(this),
@@ -404,6 +405,8 @@ namespace LinuxSampler {
         // built-in script functions of this class
         if      (name == "play_note") return &m_fnPlayNote;
         else if (name == "set_controller") return &m_fnSetController;
+        else if (name == "set_rpn") return &m_fnSetRpn;
+        else if (name == "set_nrpn") return &m_fnSetNrpn;
         else if (name == "ignore_event") return &m_fnIgnoreEvent;
         else if (name == "ignore_controller") return &m_fnIgnoreController;
         else if (name == "note_off") return &m_fnNoteOff;

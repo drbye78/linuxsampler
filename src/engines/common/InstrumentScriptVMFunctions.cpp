@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -202,6 +202,80 @@ namespace LinuxSampler {
             errMsg("set_controller(): argument 1 is an invalid controller");
             return errorResult();
         }
+
+        const event_id_t id = pEngineChannel->ScheduleEventMicroSec(&e, 0);
+
+        // even if id is null, don't return an errorResult() here, because that
+        // would abort the script, and under heavy load it may be considerable
+        // that ScheduleEventMicroSec() fails above, so simply ignore that
+        return successResult( ScriptID::fromEventID(id) );
+    }
+
+    // set_rpn() function
+
+    InstrumentScriptVMFunction_set_rpn::InstrumentScriptVMFunction_set_rpn(InstrumentScriptVM* parent)
+        : m_vm(parent)
+    {
+    }
+
+    VMFnResult* InstrumentScriptVMFunction_set_rpn::exec(VMFnArgs* args) {
+        vmint parameter = args->arg(0)->asInt()->evalInt();
+        vmint value     = args->arg(1)->asInt()->evalInt();
+
+        if (parameter < 0 || parameter > 16383) {
+            errMsg("set_rpn(): argument 1 exceeds RPN parameter number range");
+            return errorResult();
+        }
+        if (value < 0 || value > 16383) {
+            errMsg("set_rpn(): argument 2 exceeds RPN value range");
+            return errorResult();
+        }
+
+        AbstractEngineChannel* pEngineChannel =
+            static_cast<AbstractEngineChannel*>(m_vm->m_event->cause.pEngineChannel);
+
+        Event e = m_vm->m_event->cause; // copy to get fragment time for "now"
+        e.Init(); // clear IDs
+        e.Type = Event::type_rpn;
+        e.Param.RPN.Parameter = parameter;
+        e.Param.RPN.Value = value;
+
+        const event_id_t id = pEngineChannel->ScheduleEventMicroSec(&e, 0);
+
+        // even if id is null, don't return an errorResult() here, because that
+        // would abort the script, and under heavy load it may be considerable
+        // that ScheduleEventMicroSec() fails above, so simply ignore that
+        return successResult( ScriptID::fromEventID(id) );
+    }
+
+    // set_nrpn() function
+
+    InstrumentScriptVMFunction_set_nrpn::InstrumentScriptVMFunction_set_nrpn(InstrumentScriptVM* parent)
+        : m_vm(parent)
+    {
+    }
+
+    VMFnResult* InstrumentScriptVMFunction_set_nrpn::exec(VMFnArgs* args) {
+        vmint parameter = args->arg(0)->asInt()->evalInt();
+        vmint value     = args->arg(1)->asInt()->evalInt();
+
+        if (parameter < 0 || parameter > 16383) {
+            errMsg("set_nrpn(): argument 1 exceeds NRPN parameter number range");
+            return errorResult();
+        }
+        if (value < 0 || value > 16383) {
+            errMsg("set_nrpn(): argument 2 exceeds NRPN value range");
+            return errorResult();
+        }
+
+        AbstractEngineChannel* pEngineChannel =
+            static_cast<AbstractEngineChannel*>(m_vm->m_event->cause.pEngineChannel);
+
+        Event e = m_vm->m_event->cause; // copy to get fragment time for "now"
+        e.Init(); // clear IDs
+        e.Type = Event::type_nrpn;
+        e.Param.NRPN.Parameter = parameter;
+        e.Param.NRPN.Value = value;
 
         const event_id_t id = pEngineChannel->ScheduleEventMicroSec(&e, 0);
 

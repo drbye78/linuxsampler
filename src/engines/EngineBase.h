@@ -910,6 +910,14 @@ namespace LinuxSampler {
                                 dmsg(5,("Engine: MIDI CC received\n"));
                                 ProcessControlChange((EngineChannel*)itEvent->pEngineChannel, itEvent);
                                 break;
+                            case Event::type_rpn: // this can only be reached here by an instrument script having called set_rpn()
+                                dmsg(5,("Engine: MIDI RPN received\n"));
+                                ProcessHardcodedRpn((EngineChannel*)itEvent->pEngineChannel, itEvent);
+                                break;
+                            case Event::type_nrpn: // this can only be reached here by an instrument script having called set_nrpn()
+                                dmsg(5,("Engine: MIDI NRPN received\n"));
+                                ProcessHardcodedNrpn((EngineChannel*)itEvent->pEngineChannel, itEvent);
+                                break;
                             case Event::type_channel_pressure:
                                 dmsg(5,("Engine: MIDI Chan. Pressure received\n"));
                                 ProcessChannelPressure((EngineChannel*)itEvent->pEngineChannel, itEvent);

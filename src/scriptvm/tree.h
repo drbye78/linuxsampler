@@ -340,7 +340,7 @@ public:
     bool isAssignable() const OVERRIDE { return ptr->isAssignable(); }
     void assign(Expression* expr) OVERRIDE;
     vmint evalInt() OVERRIDE;
-    vmfloat unitFactor() const OVERRIDE { return VM_NO_UNIT; }
+    vmfloat unitFactor() const OVERRIDE { return VM_NO_FACTOR; }
     void dump(int level = 0) OVERRIDE;
 };
 typedef Ref<BuiltInIntVariable,Node> BuiltInIntVariableRef;

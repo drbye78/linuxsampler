@@ -51,6 +51,8 @@
 %token NOTE "keyword 'note'"
 %token RELEASE "keyword 'release'"
 %token CONTROLLER "keyword 'controller'"
+%token RPN "keyword 'rpn'"
+%token NRPN "keyword 'nrpn'"
 %token DECLARE "keyword 'declare'"
 %token ASSIGNMENT "operator ':='"
 %token CONST_ "keyword 'const'"
@@ -137,6 +139,18 @@ eventhandler:
             PARSE_ERR(@2, "Redeclaration of 'controller' event handler.");
         context->onController = new OnController($3);
         $$ = context->onController;
+    }
+    | ON RPN opt_statements END ON  {
+        if (context->onRpn)
+            PARSE_ERR(@2, "Redeclaration of 'rpn' event handler.");
+        context->onRpn = new OnRpn($3);
+        $$ = context->onRpn;
+    }
+    | ON NRPN opt_statements END ON  {
+        if (context->onNrpn)
+            PARSE_ERR(@2, "Redeclaration of 'nrpn' event handler.");
+        context->onNrpn = new OnNrpn($3);
+        $$ = context->onNrpn;
     }
 
 function_declaration:

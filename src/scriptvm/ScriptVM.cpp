@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Christian Schoenebeck
+ * Copyright (c) 2014 - 2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -423,6 +423,8 @@ namespace LinuxSampler {
         m["$NI_CB_TYPE_NOTE"] = VM_EVENT_HANDLER_NOTE;
         m["$NI_CB_TYPE_RELEASE"] = VM_EVENT_HANDLER_RELEASE;
         m["$NI_CB_TYPE_CONTROLLER"] = VM_EVENT_HANDLER_CONTROLLER;
+        m["$NI_CB_TYPE_RPN"] = VM_EVENT_HANDLER_RPN;
+        m["$NI_CB_TYPE_NRPN"] = VM_EVENT_HANDLER_NRPN;
 
         return m;
     }

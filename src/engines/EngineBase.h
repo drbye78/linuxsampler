@@ -1504,7 +1504,25 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Parameter = param;
                             itControlChangeEvent->Param.RPN.Value = value;
 
-                            // do the actual RPN event processing
+                            // if there's a RPN script handler, run it ...
+                            if (pChannel->pScript->handlerRpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the RPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerRpn
+                                );
+                                // if RPN event was dropped by script, abort
+                                // here to avoid hard coded RPN processing below
+                                if (!pEventPool->fromID(eventID)) {
+                                    // to prevent other data entry messages to be misenterpreted as RPN value
+                                    pChannel->ResetMidiRpnParameter();
+                                    break;
+                                }
+                            }
+
+                            // do the actual (hard-coded) RPN value change processing
                             ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
 
                             // to prevent other data entry messages to be misenterpreted as RPN value
@@ -1520,7 +1538,25 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Parameter = param;
                             itControlChangeEvent->Param.RPN.Value = value;
 
-                            // do the actual NRPN event processing
+                            // if there's a NRPN script handler, run it ...
+                            if (pChannel->pScript->handlerNrpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the NRPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerNrpn
+                                );
+                                // if NRPN event was dropped by script, abort
+                                // here to avoid hard coded NRPN processing below
+                                if (!pEventPool->fromID(eventID)) {
+                                    // to prevent other data entry messages to be misenterpreted as NRPN value
+                                    pChannel->ResetMidiNrpnParameter();
+                                    break;
+                                }
+                            }
+
+                            // do the actual (hard-coded) NRPN value change processing
                             ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
 
                             // to prevent other data entry messages to be misenterpreted as NRPN value
@@ -1559,7 +1595,25 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Parameter = param;
                             itControlChangeEvent->Param.RPN.Value = value;
 
-                            // do the actual RPN event processing
+                            // if there's a RPN script handler, run it ...
+                            if (pChannel->pScript->handlerRpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the RPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerRpn
+                                );
+                                // if RPN event was dropped by script, abort
+                                // here to avoid hard coded RPN processing below
+                                if (!pEventPool->fromID(eventID)) {
+                                    // to prevent other data entry messages to be misenterpreted as RPN value
+                                    pChannel->ResetMidiRpnParameter();
+                                    break;
+                                }
+                            }
+
+                            // do the actual (hard-coded) RPN value change processing
                             ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
 
                             // to prevent other data entry messages to be misenterpreted as RPN value
@@ -1575,7 +1629,25 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Parameter = param;
                             itControlChangeEvent->Param.RPN.Value = value;
 
-                            // do the actual NRPN event processing
+                            // if there's a NRPN script handler, run it ...
+                            if (pChannel->pScript->handlerNrpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the NRPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerNrpn
+                                );
+                                // if NRPN event was dropped by script, abort
+                                // here to avoid hard coded NRPN processing below
+                                if (!pEventPool->fromID(eventID)) {
+                                    // to prevent other data entry messages to be misenterpreted as NRPN value
+                                    pChannel->ResetMidiNrpnParameter();
+                                    break;
+                                }
+                            }
+
+                            // do the actual (hard-coded) NRPN value change processing
                             ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
 
                             // to prevent other data entry messages to be misenterpreted as NRPN value

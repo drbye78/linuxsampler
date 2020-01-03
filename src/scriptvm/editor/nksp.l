@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 Christian Schoenebeck
+ * Copyright (c) 2015-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -227,7 +227,7 @@ END_ID   on|while|if|select|function|synchronized
 
  /* Event Handler Names (only if they occur alone in a document!) */
  
-^\s*(init|note|release|controller) {
+^\s*(init|note|release|controller|rpn|nrpn) {
     yyextra->token = EventHandlerNameToken(yytext);
     return yyextra->token.baseType;
 }

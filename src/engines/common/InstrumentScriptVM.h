@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -226,6 +226,8 @@ namespace LinuxSampler {
         VMEventHandler*       handlerNote; ///< VM representation of script's MIDI note on callback or NULL if current script did not define such an event handler.
         VMEventHandler*       handlerRelease; ///< VM representation of script's MIDI note off callback or NULL if current script did not define such an event handler.
         VMEventHandler*       handlerController; ///< VM representation of script's MIDI controller callback or NULL if current script did not define such an event handler.
+        VMEventHandler*       handlerRpn; ///< VM representation of script's MIDI RPN event callback or NULL if current script did not define such an event handler.
+        VMEventHandler*       handlerNrpn; ///< VM representation of script's MIDI NRPN event callback or NULL if current script did not define such an event handler.
         Pool<ScriptEvent>*    pEvents; ///< Pool of all available script execution instances. ScriptEvents available to be allocated from the Pool are currently unused / not executiong, whereas the ScriptEvents allocated on the list are currently suspended / have not finished execution yet (@see pKeyEvents).
         RTList<ScriptEvent>*  pKeyEvents[128]; ///< Stores previously finished executed "note on" script events for the respective active note/key as long as the key/note is active. This is however only done if there is a "note" script event handler and a "release" script event handler defined in the script and both handlers use (reference) polyphonic variables. If that is not the case, then this list is not used at all. So the purpose of pKeyEvents is only to implement preserving/passing polyphonic variable data from "on note .. end on" script block to the respective "on release .. end on" script block.
         RTAVLTree<ScriptEvent> suspendedEvents; ///< Contains pointers to all suspended events, sorted by time when those script events are to be resumed next.
@@ -271,6 +273,8 @@ namespace LinuxSampler {
         VMInt8RelPtr m_EVENT_NOTE;
         VMInt8RelPtr m_EVENT_VELOCITY;
         VMInt8Array  m_KEY_DOWN;
+        VMInt16RelPtr m_RPN_ADDRESS; // used for both RPN and NRPN events
+        VMInt16RelPtr m_RPN_VALUE;   // used for both RPN and NRPN events
         //VMIntArray m_POLY_AT; //TODO: ...
         //int m_POLY_AT_NUM; //TODO: ...
         VMInt32RelPtr m_NI_CALLBACK_TYPE;

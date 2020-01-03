@@ -688,6 +688,22 @@ public:
 };
 typedef Ref<OnController,Node> OnControllerRef;
 
+class OnRpn FINAL : public EventHandler {
+public:
+    OnRpn(StatementsRef statements) : EventHandler(statements) {}
+    VMEventHandlerType_t eventHandlerType() const OVERRIDE { return VM_EVENT_HANDLER_RPN; }
+    String eventHandlerName() const OVERRIDE { return "rpn"; }
+};
+typedef Ref<OnRpn,Node> OnRpnRef;
+
+class OnNrpn FINAL : public EventHandler {
+public:
+    OnNrpn(StatementsRef statements) : EventHandler(statements) {}
+    VMEventHandlerType_t eventHandlerType() const OVERRIDE { return VM_EVENT_HANDLER_NRPN; }
+    String eventHandlerName() const OVERRIDE { return "nrpn"; }
+};
+typedef Ref<OnNrpn,Node> OnNrpnRef;
+
 class EventHandlers FINAL : virtual public Node {
     std::vector<EventHandlerRef> args;
 public:
@@ -937,6 +953,8 @@ public:
     OnNoteRef onNote;
     OnReleaseRef onRelease;
     OnControllerRef onController;
+    OnRpnRef onRpn;
+    OnNrpnRef onNrpn;
 
     ArrayList<vmint>* globalIntMemory;
     ArrayList<vmfloat>* globalRealMemory;

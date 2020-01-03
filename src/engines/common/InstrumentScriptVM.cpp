@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Christian Schoenebeck
+ * Copyright (c) 2014 - 2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -61,6 +61,8 @@ namespace LinuxSampler {
         handlerNote = NULL;
         handlerRelease = NULL;
         handlerController = NULL;
+        handlerRpn = NULL;
+        handlerNrpn = NULL;
         pEvents = NULL;
         for (int i = 0; i < 128; ++i)
             pKeyEvents[i] = NULL;
@@ -114,12 +116,16 @@ namespace LinuxSampler {
         handlerNote = parserContext->eventHandlerByName("note");
         handlerRelease = parserContext->eventHandlerByName("release");
         handlerController = parserContext->eventHandlerByName("controller");
+        handlerRpn = parserContext->eventHandlerByName("rpn");
+        handlerNrpn = parserContext->eventHandlerByName("nrpn");
         bHasValidScript =
-            handlerInit || handlerNote || handlerRelease || handlerController;
+            handlerInit || handlerNote || handlerRelease || handlerController ||
+            handlerRpn || handlerNrpn;
 
         // amount of script handlers each script event has to execute
         int handlerExecCount = 0;
-        if (handlerNote || handlerRelease || handlerController) // only one of these are executed after "init" handler
+        if (handlerNote || handlerRelease || handlerController || handlerRpn ||
+            handlerNrpn) // only one of these are executed after "init" handler
             handlerExecCount++;
 
         // create script event pool (if it doesn't exist already)
@@ -194,6 +200,8 @@ namespace LinuxSampler {
             handlerNote = NULL;
             handlerRelease = NULL;
             handlerController = NULL;
+            handlerRpn = NULL;
+            handlerNrpn = NULL;
         }
         bHasValidScript = false;
     }
@@ -255,6 +263,8 @@ namespace LinuxSampler {
         m_EVENT_ID = DECLARE_VMINT_READONLY(m_event, class ScriptEvent, id);
         m_EVENT_NOTE = DECLARE_VMINT_READONLY(m_event, class ScriptEvent, cause.Param.Note.Key);
         m_EVENT_VELOCITY = DECLARE_VMINT_READONLY(m_event, class ScriptEvent, cause.Param.Note.Velocity);
+        m_RPN_ADDRESS = DECLARE_VMINT_READONLY(m_event, class ScriptEvent, cause.Param.RPN.Parameter);
+        m_RPN_VALUE = DECLARE_VMINT_READONLY(m_event, class ScriptEvent, cause.Param.RPN.Value);
         m_KEY_DOWN.size = 128;
         m_KEY_DOWN.readonly = true;
         m_NI_CALLBACK_TYPE = DECLARE_VMINT_READONLY(m_event, class ScriptEvent, handlerType);
@@ -329,6 +339,8 @@ namespace LinuxSampler {
         m["$EVENT_NOTE"] = &m_EVENT_NOTE;
         m["$EVENT_VELOCITY"] = &m_EVENT_VELOCITY;
 //         m["$POLY_AT_NUM"] = &m_POLY_AT_NUM;
+        m["$RPN_ADDRESS"] = &m_RPN_ADDRESS; // used for both RPN and NRPN events
+        m["$RPN_VALUE"] = &m_RPN_VALUE;     // used for both RPN and NRPN events
         m["$NI_CALLBACK_TYPE"] = &m_NI_CALLBACK_TYPE;
         m["$NKSP_IGNORE_WAIT"] = &m_NKSP_IGNORE_WAIT;
         m["$NKSP_CALLBACK_PARENT_ID"] = &m_NKSP_CALLBACK_PARENT_ID;

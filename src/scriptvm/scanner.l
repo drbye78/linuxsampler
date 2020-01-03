@@ -355,6 +355,8 @@ UNIT     (s|(Hz)|B)
 "not" return NOT;
 "else" return ELSE;
 "controller" return CONTROLLER;
+"rpn" return RPN;
+"nrpn" return NRPN;
 "case" return CASE;
 "select" return SELECT;
 "to" return TO;

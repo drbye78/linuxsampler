@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -120,6 +120,8 @@ namespace LinuxSampler {
         VM_EVENT_HANDLER_NOTE, ///< Note event handler, that is script's "on note ... end on" code block.
         VM_EVENT_HANDLER_RELEASE, ///< Release event handler, that is script's "on release ... end on" code block.
         VM_EVENT_HANDLER_CONTROLLER, ///< Controller event handler, that is script's "on controller ... end on" code block.
+        VM_EVENT_HANDLER_RPN, ///< RPN event handler, that is script's "on rpn ... end on" code block.
+        VM_EVENT_HANDLER_NRPN, ///< NRPN event handler, that is script's "on nrpn ... end on" code block.
     };
 
     /**
@@ -1135,7 +1137,7 @@ namespace LinuxSampler {
      *
      * Refer to DECLARE_VMINT() for example code.
      *
-     * @see VMInt32RelPtr, VMInt8RelPtr, DECLARE_VMINT()
+     * @see VMInt32RelPtr, VMInt16RelPtr, VMInt8RelPtr, DECLARE_VMINT()
      */
     struct VMInt64RelPtr : VMRelPtr, VMIntPtr {
         VMInt64RelPtr() {
@@ -1177,7 +1179,7 @@ namespace LinuxSampler {
      *
      * Refer to DECLARE_VMINT() for example code.
      *
-     * @see VMInt64RelPtr, VMInt8RelPtr, DECLARE_VMINT()
+     * @see VMInt64RelPtr, VMInt16RelPtr, VMInt8RelPtr, DECLARE_VMINT()
      */
     struct VMInt32RelPtr : VMRelPtr, VMIntPtr {
         VMInt32RelPtr() {
@@ -1195,6 +1197,48 @@ namespace LinuxSampler {
         }
         void assign(vmint i) OVERRIDE {
             *(int32_t*)&(*(uint8_t**)base)[offset] = (int32_t)i;
+        }
+        bool isAssignable() const OVERRIDE { return !readonly; }
+    };
+
+    /** @brief Pointer to built-in VM integer variable (of C/C++ type int16_t).
+     *
+     * Used for defining built-in 16 bit integer script variables.
+     *
+     * @b CAUTION: You may only use this class for pointing to C/C++ variables
+     * of type "int16_t" (thus being exactly 16 bit in size). If the C/C++ int
+     * variable you want to reference is 64 bit in size then you @b must use
+     * VMInt64RelPtr instead! Respectively for a referenced native variable with
+     * only 8 bit in size you @b must use VMInt8RelPtr instead!
+     *
+     * For efficiency reasons the actual native C/C++ int variable is referenced
+     * by two components here. The actual native int C/C++ variable in memory
+     * is dereferenced at VM run-time by taking the @c base pointer dereference
+     * and adding @c offset bytes. This has the advantage that for a large
+     * number of built-in int variables, only one (or few) base pointer need
+     * to be re-assigned before running a script, instead of updating each
+     * built-in variable each time before a script is executed.
+     *
+     * Refer to DECLARE_VMINT() for example code.
+     *
+     * @see VMInt64RelPtr, VMInt32RelPtr, VMInt8RelPtr, DECLARE_VMINT()
+     */
+    struct VMInt16RelPtr : VMRelPtr, VMIntPtr {
+        VMInt16RelPtr() {
+            base   = NULL;
+            offset = 0;
+            readonly = false;
+        }
+        VMInt16RelPtr(const VMRelPtr& data) {
+            base   = data.base;
+            offset = data.offset;
+            readonly = false;
+        }
+        vmint evalInt() OVERRIDE {
+            return (vmint)*(int16_t*)&(*(uint8_t**)base)[offset];
+        }
+        void assign(vmint i) OVERRIDE {
+            *(int16_t*)&(*(uint8_t**)base)[offset] = (int16_t)i;
         }
         bool isAssignable() const OVERRIDE { return !readonly; }
     };
@@ -1219,7 +1263,7 @@ namespace LinuxSampler {
      *
      * Refer to DECLARE_VMINT() for example code.
      *
-     * @see VMIntRel32Ptr, VMIntRel64Ptr, DECLARE_VMINT()
+     * @see VMInt16RelPtr, VMIntRel32Ptr, VMIntRel64Ptr, DECLARE_VMINT()
      */
     struct VMInt8RelPtr : VMRelPtr, VMIntPtr {
         VMInt8RelPtr() {
@@ -1262,8 +1306,8 @@ namespace LinuxSampler {
     #endif
 
     /**
-     * Convenience macro for initializing VMInt64RelPtr, VMInt32RelPtr and
-     * VMInt8RelPtr structures. Usage example:
+     * Convenience macro for initializing VMInt64RelPtr, VMInt32RelPtr,
+     * VMInt16RelPtr and VMInt8RelPtr structures. Usage example:
      * @code
      * struct Foo {
      *   uint8_t a; // native representation of a built-in integer script variable
@@ -1316,9 +1360,10 @@ namespace LinuxSampler {
 
     /**
      * Same as DECLARE_VMINT(), but this one defines the VMInt64RelPtr,
-     * VMInt32RelPtr and VMInt8RelPtr structures to be of read-only type.
-     * That means the script parser will abort any script at parser time if the
-     * script is trying to modify such a read-only built-in variable.
+     * VMInt32RelPtr, VMInt16RelPtr and VMInt8RelPtr structures to be of
+     * read-only type. That means the script parser will abort any script at
+     * parser time if the script is trying to modify such a read-only built-in
+     * variable.
      *
      * @b NOTE: this is only intended for built-in read-only variables that
      * may change during runtime! If your built-in variable's data is rather

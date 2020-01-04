@@ -1542,9 +1542,9 @@ namespace LinuxSampler {
 
                             // transform event type: CC event -> NRPN event
                             itControlChangeEvent->Type = Event::type_nrpn;
-                            itControlChangeEvent->Param.RPN.Channel = ch;
-                            itControlChangeEvent->Param.RPN.Parameter = param;
-                            itControlChangeEvent->Param.RPN.Value = value;
+                            itControlChangeEvent->Param.NRPN.Channel = ch;
+                            itControlChangeEvent->Param.NRPN.Parameter = param;
+                            itControlChangeEvent->Param.NRPN.Value = value;
 
                             // if there's a NRPN script handler, run it ...
                             if (pChannel->pScript->handlerNrpn) {
@@ -1633,9 +1633,9 @@ namespace LinuxSampler {
 
                             // transform event type: CC event -> NRPN event
                             itControlChangeEvent->Type = Event::type_nrpn;
-                            itControlChangeEvent->Param.RPN.Channel = ch;
-                            itControlChangeEvent->Param.RPN.Parameter = param;
-                            itControlChangeEvent->Param.RPN.Value = value;
+                            itControlChangeEvent->Param.NRPN.Channel = ch;
+                            itControlChangeEvent->Param.NRPN.Parameter = param;
+                            itControlChangeEvent->Param.NRPN.Value = value;
 
                             // if there's a NRPN script handler, run it ...
                             if (pChannel->pScript->handlerNrpn) {

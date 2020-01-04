@@ -254,6 +254,13 @@ namespace LinuxSampler {
         p->uiMidiRpnDataLsb = DataLSB & 127;
     }
 
+    void EngineChannel::SetMidiRpnData(int Data) {
+        if (Data < 0) Data = 0;
+        if (Data > 16383) Data = 16383;
+        p->uiMidiRpnDataMsb = (Data >> 7) & 127;
+        p->uiMidiRpnDataLsb = Data & 127;
+    }
+
     void EngineChannel::ResetMidiRpnParameter() {
         p->uiMidiRpnMsb = p->uiMidiRpnLsb = 0;
         p->uiMidiRpnDataMsb = p->uiMidiRpnDataLsb = 0;
@@ -305,6 +312,13 @@ namespace LinuxSampler {
 
     void EngineChannel::SetMidiNrpnDataLsb(uint8_t DataLSB) {
         p->uiMidiNrpnDataLsb = DataLSB & 127;
+    }
+
+    void EngineChannel::SetMidiNrpnData(int Data) {
+        if (Data < 0) Data = 0;
+        if (Data > 16383) Data = 16383;
+        p->uiMidiNrpnDataMsb = (Data >> 7) & 127;
+        p->uiMidiNrpnDataLsb = Data & 127;
     }
 
     void EngineChannel::ResetMidiNrpnParameter() {

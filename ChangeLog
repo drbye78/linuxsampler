@@ -42,6 +42,8 @@ Version SVN trunk (?)
       allow processing MIDI data entry messages without always having to be
       preceded strictly by RPN/NRPN parameter selection messages on each value
       change).
+    - Added support for MIDI CC #96 (data increment) and MIDI CC #97 (data
+      decrement).
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

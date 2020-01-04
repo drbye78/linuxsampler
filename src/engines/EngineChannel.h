@@ -284,6 +284,12 @@ namespace LinuxSampler {
             void SetMidiRpnDataLsb(uint8_t DataLSB);
 
             /**
+             * Set new data value (14 bits, MSB and LSB data combined) for
+             * currently selected MIDI Registered Parameter Number (RPN).
+             */
+            void SetMidiRpnData(int Data);
+
+            /**
              * Reset to no RPN parameter currently selected.
              */
             void ResetMidiRpnParameter();
@@ -311,6 +317,12 @@ namespace LinuxSampler {
              * selected MIDI Non-Registered Parameter Number (NRPN).
              */
             void SetMidiNrpnDataLsb(uint8_t DataLSB);
+
+            /**
+             * Set new data value (14 bits, MSB and LSB data combined) for
+             * currently selected MIDI Non-Registered Parameter Number (NRPN).
+             */
+            void SetMidiNrpnData(int Data);
 
             /**
              * Reset to no NRPN parameter currently selected.

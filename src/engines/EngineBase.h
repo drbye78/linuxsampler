@@ -1747,6 +1747,150 @@ namespace LinuxSampler {
                         }
                         break;
                     }
+                    case 96: { // data increment (data entry +1)
+                        //dmsg(1,("DATA INC\n"));
+                        if (pChannel->GetMidiRpnParameter() >= 0) { // RPN parameter number was sent previously ...
+                            pChannel->SetMidiRpnData(
+                                pChannel->GetMidiRpnData() + 1
+                            );
+                            bIsRpn = true;
+
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiRpnParameter();
+                            int value = pChannel->GetMidiRpnData();
+
+                            // transform event type: CC event -> RPN event
+                            itControlChangeEvent->Type = Event::type_rpn;
+                            itControlChangeEvent->Param.RPN.Channel = ch;
+                            itControlChangeEvent->Param.RPN.Parameter = param;
+                            itControlChangeEvent->Param.RPN.Value = value;
+
+                            // if there's a RPN script handler, run it ...
+                            if (pChannel->pScript->handlerRpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the RPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerRpn
+                                );
+                                // if RPN event was dropped by script, abort
+                                // here to avoid hard coded RPN processing below
+                                if (!pEventPool->fromID(eventID))
+                                    break;
+                            }
+
+                            // do the actual (hard-coded) RPN value change processing
+                            ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
+
+                        } else if (pChannel->GetMidiNrpnParameter() >= 0) { // NRPN parameter number was sent previously ...
+                            pChannel->SetMidiNrpnData(
+                                pChannel->GetMidiNrpnData() + 1
+                            );
+                            bIsNrpn = true;
+
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiNrpnParameter();
+                            int value = pChannel->GetMidiNrpnData();
+
+                            // transform event type: CC event -> NRPN event
+                            itControlChangeEvent->Type = Event::type_nrpn;
+                            itControlChangeEvent->Param.NRPN.Channel = ch;
+                            itControlChangeEvent->Param.NRPN.Parameter = param;
+                            itControlChangeEvent->Param.NRPN.Value = value;
+
+                            // if there's a NRPN script handler, run it ...
+                            if (pChannel->pScript->handlerNrpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the NRPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerNrpn
+                                );
+                                // if NRPN event was dropped by script, abort
+                                // here to avoid hard coded NRPN processing below
+                                if (!pEventPool->fromID(eventID))
+                                    break;
+                            }
+
+                            // do the actual (hard-coded) NRPN value change processing
+                            ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
+                        }
+                        break;
+                    }
+                    case 97: { // data decrement (data entry -1)
+                        //dmsg(1,("DATA DEC\n"));
+                        if (pChannel->GetMidiRpnParameter() >= 0) { // RPN parameter number was sent previously ...
+                            pChannel->SetMidiRpnData(
+                                pChannel->GetMidiRpnData() - 1
+                            );
+                            bIsRpn = true;
+
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiRpnParameter();
+                            int value = pChannel->GetMidiRpnData();
+
+                            // transform event type: CC event -> RPN event
+                            itControlChangeEvent->Type = Event::type_rpn;
+                            itControlChangeEvent->Param.RPN.Channel = ch;
+                            itControlChangeEvent->Param.RPN.Parameter = param;
+                            itControlChangeEvent->Param.RPN.Value = value;
+
+                            // if there's a RPN script handler, run it ...
+                            if (pChannel->pScript->handlerRpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the RPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerRpn
+                                );
+                                // if RPN event was dropped by script, abort
+                                // here to avoid hard coded RPN processing below
+                                if (!pEventPool->fromID(eventID))
+                                    break;
+                            }
+
+                            // do the actual (hard-coded) RPN value change processing
+                            ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
+
+                        } else if (pChannel->GetMidiNrpnParameter() >= 0) { // NRPN parameter number was sent previously ...
+                            pChannel->SetMidiNrpnData(
+                                pChannel->GetMidiNrpnData() - 1
+                            );
+                            bIsNrpn = true;
+
+                            int ch = itControlChangeEvent->Param.CC.Channel;
+                            int param = pChannel->GetMidiNrpnParameter();
+                            int value = pChannel->GetMidiNrpnData();
+
+                            // transform event type: CC event -> NRPN event
+                            itControlChangeEvent->Type = Event::type_nrpn;
+                            itControlChangeEvent->Param.NRPN.Channel = ch;
+                            itControlChangeEvent->Param.NRPN.Parameter = param;
+                            itControlChangeEvent->Param.NRPN.Value = value;
+
+                            // if there's a NRPN script handler, run it ...
+                            if (pChannel->pScript->handlerNrpn) {
+                                const event_id_t eventID =
+                                    pEventPool->getID(itControlChangeEvent);
+                                // run the NRPN script handler
+                                ProcessEventByScript(
+                                    pChannel, itControlChangeEvent,
+                                    pChannel->pScript->handlerNrpn
+                                );
+                                // if NRPN event was dropped by script, abort
+                                // here to avoid hard coded NRPN processing below
+                                if (!pEventPool->fromID(eventID))
+                                    break;
+                            }
+
+                            // do the actual (hard-coded) NRPN value change processing
+                            ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
+                        }
+                        break;
+                    }
                     case 98: { // NRPN parameter LSB
                         dmsg(4,("NRPN LSB %d\n", itControlChangeEvent->Param.CC.Value));
                         bIsNrpn = true;

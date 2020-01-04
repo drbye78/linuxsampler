@@ -1976,6 +1976,9 @@ namespace LinuxSampler {
                     pChannel->GlobalTranspose = transpose;
                     // workaround, so we won't have hanging notes
                     pChannel->ReleaseAllVoices(itRpnEvent);
+                } else if (itRpnEvent->Param.RPN.Parameter == 16383) { // null function RPN
+                    // disable subsequent data entry/increment/decrement processing
+                    pChannel->ResetMidiRpnParameter();
                 }
             }
 
@@ -2025,6 +2028,13 @@ namespace LinuxSampler {
                         dmsg(4,("Note Chorus Send NRPN received (note=%d,send=%f).\n", note, chorus));
                         if (note < 128)
                             pChannel->pMIDIKeyInfo[note].ChorusSend = chorus;
+                        break;
+                    }
+                    case 0x7f: {
+                        if (itNrpnEvent->Param.NRPN.ParameterLSB() == 0x7f) { // null function NRPN
+                            // disable subsequent data entry/increment/decrement processing
+                            pChannel->ResetMidiNrpnParameter();
+                        }
                         break;
                     }
                 }

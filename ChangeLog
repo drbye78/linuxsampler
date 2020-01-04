@@ -44,6 +44,9 @@ Version SVN trunk (?)
       change).
     - Added support for MIDI CC #96 (data increment) and MIDI CC #97 (data
       decrement).
+    - Added support for 'null function RPN/NRPN' (which is RPN/NRPN parameter
+      MSB=127 and LSB=127) and which is disabling subsequent data
+      entry/increment/decrement CC messages.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

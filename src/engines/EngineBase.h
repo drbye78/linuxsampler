@@ -885,6 +885,7 @@ namespace LinuxSampler {
                     RTList<Event>::Iterator itEvent = pChannel->pEvents->first();
                     RTList<Event>::Iterator end     = pChannel->pEvents->end();
                     for (; itEvent != end; ++itEvent) {
+                        bool bIsCC = false; // just for resetting RPN/NRPN below
                         switch (itEvent->Type) {
                             case Event::type_note_on:
                                 dmsg(5,("Engine: Note on received\n"));
@@ -909,14 +910,17 @@ namespace LinuxSampler {
                             case Event::type_control_change:
                                 dmsg(5,("Engine: MIDI CC received\n"));
                                 ProcessControlChange((EngineChannel*)itEvent->pEngineChannel, itEvent);
+                                bIsCC = true;
                                 break;
                             case Event::type_rpn: // this can only be reached here by an instrument script having called set_rpn()
                                 dmsg(5,("Engine: MIDI RPN received\n"));
                                 ProcessHardcodedRpn((EngineChannel*)itEvent->pEngineChannel, itEvent);
+                                bIsCC = true;
                                 break;
                             case Event::type_nrpn: // this can only be reached here by an instrument script having called set_nrpn()
                                 dmsg(5,("Engine: MIDI NRPN received\n"));
                                 ProcessHardcodedNrpn((EngineChannel*)itEvent->pEngineChannel, itEvent);
+                                bIsCC = true;
                                 break;
                             case Event::type_channel_pressure:
                                 dmsg(5,("Engine: MIDI Chan. Pressure received\n"));
@@ -941,6 +945,14 @@ namespace LinuxSampler {
                             case Event::type_release_key:
                             case Event::type_release_note:
                                 break; // noop
+                        }
+                        // reset cached RPN/NRPN parameter number and data in
+                        // case this event was not a control change event
+                        if (!bIsCC) {
+                            if (pChannel->GetMidiRpnParameter() >= 0)
+                                pChannel->ResetMidiRpnParameter();
+                            if (pChannel->GetMidiNrpnParameter() >= 0)
+                                pChannel->ResetMidiNrpnParameter();
                         }
                     }
                 }
@@ -1487,6 +1499,9 @@ namespace LinuxSampler {
                 EngineChannelBase<V, R, I>* pChannel =
                     static_cast<EngineChannelBase<V, R, I>*>(pEngineChannel);
 
+                // will be set to true if this CC event has anything to do with RPN/NRPN
+                bool bIsRpn = false, bIsNrpn = false;
+
                 switch (itControlChangeEvent->Param.CC.Controller) {
                     case 5: { // portamento time
                         pChannel->PortamentoTime = (float) itControlChangeEvent->Param.CC.Value / 127.0f * (float) CONFIG_PORTAMENTO_TIME_MAX + (float) CONFIG_PORTAMENTO_TIME_MIN;
@@ -1494,17 +1509,21 @@ namespace LinuxSampler {
                     }
                     case 6: { // data entry (MSB)
                         //dmsg(1,("DATA ENTRY MSB %d\n", itControlChangeEvent->Param.CC.Value));
-
-                        // look-ahead: if next MIDI event is data entry LSB,
-                        // then skip this event here for now (to avoid double
-                        // handling of what's supposed to be one RPN/NRPN event)
-                        if (isNextEventCCNr(itControlChangeEvent, 38))
-                            break;
-
                         if (pChannel->GetMidiRpnParameter() >= 0) { // RPN parameter number was sent previously ...
+                            pChannel->SetMidiRpnDataMsb(
+                                itControlChangeEvent->Param.CC.Value
+                            );
+                            bIsRpn = true;
+
+                            // look-ahead: if next MIDI event is data entry LSB,
+                            // then skip this event here for now (to avoid double
+                            // handling of what's supposed to be one RPN event)
+                            if (isNextEventCCNr(itControlChangeEvent, 38))
+                                break;
+
                             int ch = itControlChangeEvent->Param.CC.Channel;
                             int param = pChannel->GetMidiRpnParameter();
-                            int value = itControlChangeEvent->Param.CC.Value << 7;
+                            int value = pChannel->GetMidiRpnData();
 
                             // transform event type: CC event -> RPN event
                             itControlChangeEvent->Type = Event::type_rpn;
@@ -1523,22 +1542,28 @@ namespace LinuxSampler {
                                 );
                                 // if RPN event was dropped by script, abort
                                 // here to avoid hard coded RPN processing below
-                                if (!pEventPool->fromID(eventID)) {
-                                    // to prevent other data entry messages to be misenterpreted as RPN value
-                                    pChannel->ResetMidiRpnParameter();
+                                if (!pEventPool->fromID(eventID))
                                     break;
-                                }
                             }
 
                             // do the actual (hard-coded) RPN value change processing
                             ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
 
-                            // to prevent other data entry messages to be misenterpreted as RPN value
-                            pChannel->ResetMidiRpnParameter();
                         } else if (pChannel->GetMidiNrpnParameter() >= 0) { // NRPN parameter number was sent previously ...
+                            pChannel->SetMidiNrpnDataMsb(
+                                itControlChangeEvent->Param.CC.Value
+                            );
+                            bIsNrpn = true;
+
+                            // look-ahead: if next MIDI event is data entry LSB,
+                            // then skip this event here for now (to avoid double
+                            // handling of what's supposed to be one NRPN event)
+                            if (isNextEventCCNr(itControlChangeEvent, 38))
+                                break;
+
                             int ch = itControlChangeEvent->Param.CC.Channel;
                             int param = pChannel->GetMidiNrpnParameter();
-                            int value = itControlChangeEvent->Param.CC.Value << 7;
+                            int value = pChannel->GetMidiNrpnData();
 
                             // transform event type: CC event -> NRPN event
                             itControlChangeEvent->Type = Event::type_nrpn;
@@ -1557,18 +1582,12 @@ namespace LinuxSampler {
                                 );
                                 // if NRPN event was dropped by script, abort
                                 // here to avoid hard coded NRPN processing below
-                                if (!pEventPool->fromID(eventID)) {
-                                    // to prevent other data entry messages to be misenterpreted as NRPN value
-                                    pChannel->ResetMidiNrpnParameter();
+                                if (!pEventPool->fromID(eventID))
                                     break;
-                                }
                             }
 
                             // do the actual (hard-coded) NRPN value change processing
                             ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
-
-                            // to prevent other data entry messages to be misenterpreted as NRPN value
-                            pChannel->ResetMidiNrpnParameter();
                         }
                         break;
                     }
@@ -1585,17 +1604,15 @@ namespace LinuxSampler {
                     }
                     case 38: { // data entry (LSB)
                         //dmsg(1,("DATA ENTRY LSB %d\n", itControlChangeEvent->Param.CC.Value));
-                        int value = 0;
-
-                        // look-back: if previous MIDI event was data entry MSB,
-                        // then obtain that value for the MSB value portion
-                        if (isPrevEventCCNr(itControlChangeEvent, 6))
-                            value = prevEventOf(itControlChangeEvent)->Param.CC.Value << 7;
-
                         if (pChannel->GetMidiRpnParameter() >= 0) { // RPN parameter number was sent previously ...
+                            pChannel->SetMidiRpnDataLsb(
+                                itControlChangeEvent->Param.CC.Value
+                            );
+                            bIsRpn = true;
+
                             int ch = itControlChangeEvent->Param.CC.Channel;
                             int param = pChannel->GetMidiRpnParameter();
-                            value |= itControlChangeEvent->Param.CC.Value;
+                            int value = pChannel->GetMidiRpnData();
 
                             // transform event type: CC event -> RPN event
                             itControlChangeEvent->Type = Event::type_rpn;
@@ -1614,22 +1631,22 @@ namespace LinuxSampler {
                                 );
                                 // if RPN event was dropped by script, abort
                                 // here to avoid hard coded RPN processing below
-                                if (!pEventPool->fromID(eventID)) {
-                                    // to prevent other data entry messages to be misenterpreted as RPN value
-                                    pChannel->ResetMidiRpnParameter();
+                                if (!pEventPool->fromID(eventID))
                                     break;
-                                }
                             }
 
                             // do the actual (hard-coded) RPN value change processing
                             ProcessHardcodedRpn(pEngineChannel, itControlChangeEvent);
 
-                            // to prevent other data entry messages to be misenterpreted as RPN value
-                            pChannel->ResetMidiRpnParameter();
                         } else if (pChannel->GetMidiNrpnParameter() >= 0) { // NRPN parameter number was sent previously ...
+                            pChannel->SetMidiNrpnDataLsb(
+                                itControlChangeEvent->Param.CC.Value
+                            );
+                            bIsNrpn = true;
+
                             int ch = itControlChangeEvent->Param.CC.Channel;
                             int param = pChannel->GetMidiNrpnParameter();
-                            value |= itControlChangeEvent->Param.CC.Value;
+                            int value = pChannel->GetMidiNrpnData();
 
                             // transform event type: CC event -> NRPN event
                             itControlChangeEvent->Type = Event::type_nrpn;
@@ -1648,18 +1665,12 @@ namespace LinuxSampler {
                                 );
                                 // if NRPN event was dropped by script, abort
                                 // here to avoid hard coded NRPN processing below
-                                if (!pEventPool->fromID(eventID)) {
-                                    // to prevent other data entry messages to be misenterpreted as NRPN value
-                                    pChannel->ResetMidiNrpnParameter();
+                                if (!pEventPool->fromID(eventID))
                                     break;
-                                }
                             }
 
                             // do the actual (hard-coded) NRPN value change processing
                             ProcessHardcodedNrpn(pEngineChannel, itControlChangeEvent);
-
-                            // to prevent other data entry messages to be misenterpreted as NRPN value
-                            pChannel->ResetMidiNrpnParameter();
                         }
                         break;
                     }
@@ -1738,21 +1749,25 @@ namespace LinuxSampler {
                     }
                     case 98: { // NRPN parameter LSB
                         dmsg(4,("NRPN LSB %d\n", itControlChangeEvent->Param.CC.Value));
+                        bIsNrpn = true;
                         pEngineChannel->SetMidiNrpnParameterLsb(itControlChangeEvent->Param.CC.Value);
                         break;
                     }
                     case 99: { // NRPN parameter MSB
                         dmsg(4,("NRPN MSB %d\n", itControlChangeEvent->Param.CC.Value));
+                        bIsNrpn = true;
                         pEngineChannel->SetMidiNrpnParameterMsb(itControlChangeEvent->Param.CC.Value);
                         break;
                     }
                     case 100: { // RPN parameter LSB
                         dmsg(4,("RPN LSB %d\n", itControlChangeEvent->Param.CC.Value));
+                        bIsRpn = true;
                         pEngineChannel->SetMidiRpnParameterLsb(itControlChangeEvent->Param.CC.Value);
                         break;
                     }
                     case 101: { // RPN parameter MSB
                         dmsg(4,("RPN MSB %d\n", itControlChangeEvent->Param.CC.Value));
+                        bIsRpn = true;
                         pEngineChannel->SetMidiRpnParameterMsb(itControlChangeEvent->Param.CC.Value);
                         break;
                     }
@@ -1787,6 +1802,13 @@ namespace LinuxSampler {
                         break;
                     }
                 }
+
+                // reset cached RPN/NRPN parameter number and data in case this
+                // CC event had nothing to do with RPN/NRPN
+                if (!bIsRpn && pChannel->GetMidiRpnParameter() >= 0)
+                    pChannel->ResetMidiRpnParameter();
+                if (!bIsNrpn && pChannel->GetMidiNrpnParameter() >= 0)
+                    pChannel->ResetMidiNrpnParameter();
             }
 
             /**

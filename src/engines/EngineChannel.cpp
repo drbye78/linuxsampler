@@ -43,8 +43,12 @@ namespace LinuxSampler {
         uint8_t uiMidiBankLsb;
         uint8_t uiMidiRpnMsb; ///< MIDI Registered Parameter Number (upper 7 bits / coarse)
         uint8_t uiMidiRpnLsb; ///< MIDI Registered Parameter Number (lower 7 bits / fine)
+        uint8_t uiMidiRpnDataMsb; ///< New MIDI RPN Parameter Value (upper 7 bits / coarse)
+        uint8_t uiMidiRpnDataLsb; ///< New MIDI RPN Parameter Value (lower 7 bits / fine)
         uint8_t uiMidiNrpnMsb; ///< MIDI Non-Registered Parameter Number (upper 7 bits / coarse)
         uint8_t uiMidiNrpnLsb; ///< MIDI Non-Registered Parameter Number (lower 7 bits / fine)
+        uint8_t uiMidiNrpnDataMsb; ///< New MIDI NRPN Parameter Value (upper 7 bits / coarse)
+        uint8_t uiMidiNrpnDataLsb; ///< New MIDI NRPN Parameter Value (lower 7 bits / fine)
         bool    bMidiBankMsbReceived;
         bool    bMidiBankLsbReceived;
         bool    bProgramChangeReceived;
@@ -242,8 +246,17 @@ namespace LinuxSampler {
         SetMidiRpnParameterLsb(CtrlLSB);
     }
 
+    void EngineChannel::SetMidiRpnDataMsb(uint8_t DataMSB) {
+        p->uiMidiRpnDataMsb = DataMSB & 127;
+    }
+
+    void EngineChannel::SetMidiRpnDataLsb(uint8_t DataLSB) {
+        p->uiMidiRpnDataLsb = DataLSB & 127;
+    }
+
     void EngineChannel::ResetMidiRpnParameter() {
         p->uiMidiRpnMsb = p->uiMidiRpnLsb = 0;
+        p->uiMidiRpnDataMsb = p->uiMidiRpnDataLsb = 0;
         p->bMidiRpnReceived = false;
     }
 
@@ -259,6 +272,11 @@ namespace LinuxSampler {
     int EngineChannel::GetMidiRpnController() { // deprecated API
         return (p->bMidiRpnReceived) ?
                (p->uiMidiRpnMsb << 8) | p->uiMidiRpnLsb : -1;
+    }
+
+    int EngineChannel::GetMidiRpnData() {
+        return (p->bMidiRpnReceived) ?
+               (p->uiMidiRpnDataMsb << 7) | p->uiMidiRpnDataLsb : 0;
     }
 
     // NRPNs ...
@@ -281,8 +299,17 @@ namespace LinuxSampler {
         SetMidiNrpnParameterLsb(CtrlLSB);
     }
 
+    void EngineChannel::SetMidiNrpnDataMsb(uint8_t DataMSB) {
+        p->uiMidiNrpnDataMsb = DataMSB & 127;
+    }
+
+    void EngineChannel::SetMidiNrpnDataLsb(uint8_t DataLSB) {
+        p->uiMidiNrpnDataLsb = DataLSB & 127;
+    }
+
     void EngineChannel::ResetMidiNrpnParameter() {
         p->uiMidiNrpnMsb = p->uiMidiNrpnLsb = 0;
+        p->uiMidiNrpnDataMsb = p->uiMidiNrpnDataLsb = 0;
         p->bMidiNrpnReceived = false;
     }
 
@@ -298,6 +325,11 @@ namespace LinuxSampler {
     int EngineChannel::GetMidiNrpnController() { // deprecated API
         return (p->bMidiNrpnReceived) ?
                (p->uiMidiNrpnMsb << 8) | p->uiMidiNrpnLsb : -1;
+    }
+
+    int EngineChannel::GetMidiNrpnData() {
+        return (p->bMidiNrpnReceived) ?
+               (p->uiMidiNrpnDataMsb << 7) | p->uiMidiNrpnDataLsb : 0;
     }
 
     uint EngineChannel::GetVoiceCount() {

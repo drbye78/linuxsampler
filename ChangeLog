@@ -38,6 +38,10 @@ Version SVN trunk (?)
       methods and marked those old ones deprecated as well.
     - Added support for MIDI CC #38 (data entry LSB): this allows higher value
       resolution for certain (e.g. hard coded) RPN and NRPN parameters.
+    - Implemented support for compressed RPN/NRPN message sequences (that is to
+      allow processing MIDI data entry messages without always having to be
+      preceded strictly by RPN/NRPN parameter selection messages on each value
+      change).
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

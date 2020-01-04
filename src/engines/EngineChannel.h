@@ -272,6 +272,18 @@ namespace LinuxSampler {
             void SetMidiRpnParameterLsb(uint8_t ParamLSB);
 
             /**
+             * Set new MSB data value (upper 7 bits / coarse) for currently
+             * selected MIDI Registered Parameter Number (RPN).
+             */
+            void SetMidiRpnDataMsb(uint8_t DataMSB);
+
+            /**
+             * Set new LSB data value (lower 7 bits / fine) for currently
+             * selected MIDI Registered Parameter Number (RPN).
+             */
+            void SetMidiRpnDataLsb(uint8_t DataLSB);
+
+            /**
              * Reset to no RPN parameter currently selected.
              */
             void ResetMidiRpnParameter();
@@ -287,6 +299,18 @@ namespace LinuxSampler {
              * (lower 7 bits / fine).
              */
             void SetMidiNrpnParameterLsb(uint8_t ParamLSB);
+
+            /**
+             * Set new MSB data value (upper 7 bits / coarse) for currently
+             * selected MIDI Non-Registered Parameter Number (NRPN).
+             */
+            void SetMidiNrpnDataMsb(uint8_t DataMSB);
+
+            /**
+             * Set new LSB data value (lower 7 bits / fine) for currently
+             * selected MIDI Non-Registered Parameter Number (NRPN).
+             */
+            void SetMidiNrpnDataLsb(uint8_t DataLSB);
 
             /**
              * Reset to no NRPN parameter currently selected.
@@ -308,6 +332,16 @@ namespace LinuxSampler {
             int GetMidiRpnParameter();
 
             /**
+             * Get current data value of currently selected MIDI Registered
+             * Parameter Number (RPN), this method will return the already
+             * merged 14 bit data value (MSB and LSB data values combined).
+             *
+             * @returns latest data value (14 bits) of currently selected RPN
+             *          parameter, zero otherwise
+             */
+            int GetMidiRpnData();
+
+            /**
              * Get currently selected MIDI Non-Registered Parameter Number
              * (NRPN), this method will return the already merged 14 bit
              * value (MSB and LSB value combined).
@@ -320,6 +354,16 @@ namespace LinuxSampler {
              *          value if no NRPN parameter currently selected
              */
             int GetMidiNrpnParameter();
+
+            /**
+             * Get current data value of currently selected MIDI Non-Registered
+             * Parameter Number (NRPN), this method will return the already
+             * merged 14 bit data value (MSB and LSB data values combined).
+             *
+             * @returns latest data value (14 bits) of currently selected NRPN
+             *          parameter, zero otherwise
+             */
+            int GetMidiNrpnData();
 
              /**
              * Registers the specified listener to be notified when the number

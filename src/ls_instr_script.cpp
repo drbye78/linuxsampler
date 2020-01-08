@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -188,8 +188,9 @@ int main(int argc, char *argv[]) {
             printf("[Event handler '%s' finished with ERROR status]\n", handler->eventHandlerName().c_str());
         } else if (result & VM_EXEC_SUSPENDED) {
             fmt.yellow();
-            printf("[Event handler '%s' returned with SUSPENDED status: %d microseconds]\n",
-                   handler->eventHandlerName().c_str(), execContext->suspensionTimeMicroseconds());
+            printf("[Event handler '%s' returned with SUSPENDED status: %" PRId64 " microseconds]\n",
+                   handler->eventHandlerName().c_str(),
+                   (int64_t)execContext->suspensionTimeMicroseconds());
         } else if (!(result & VM_EXEC_RUNNING)) {
             fmt.green();
             printf("[Event handler '%s' finished with SUCCESS status]\n", handler->eventHandlerName().c_str());

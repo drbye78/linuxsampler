@@ -3,9 +3,9 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2008 Christian Schoenebeck                         *
- *   Copyright (C) 2009-2012 Christian Schoenebeck and Grigor Iliev        *
- *   Copyright (C) 2013-2016 Christian Schoenebeck and Andreas Persson     *
+ *   Copyright (C) 2005-2020 Christian Schoenebeck                         *
+ *   Copyright (C) 2009-2012 Grigor Iliev                                  *
+ *   Copyright (C) 2013-2016 Andreas Persson                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -69,7 +69,7 @@ namespace LinuxSampler {
         pEngine->engineChannels.add(pChannel);
         // remember index in the ArrayList
         pChannel->iEngineIndexSelf = pEngine->engineChannels.size() - 1;
-        dmsg(4,("This Engine has now %d EngineChannels.\n",pEngine->engineChannels.size()));
+        dmsg(4,("This Engine has now %" PRId64 " EngineChannels.\n", (int64_t)pEngine->engineChannels.size()));
         return pEngine;
     }
 
@@ -127,7 +127,7 @@ namespace LinuxSampler {
             delete pEngine;
             dmsg(4,("Destroying Engine.\n"));
         }
-        else dmsg(4,("This Engine has now %d EngineChannels.\n",pEngine->engineChannels.size()));
+        else dmsg(4,("This Engine has now %" PRId64 " EngineChannels.\n", (int64_t)pEngine->engineChannels.size()));
     }
 
     void AbstractEngine::Enable() {

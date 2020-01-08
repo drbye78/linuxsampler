@@ -247,10 +247,10 @@ namespace LinuxSampler {
         context->createScanner(is);
 
         InstrScript_parse(context);
-        dmsg(2,("Allocating %lld bytes of global int VM memory.\n", context->globalIntVarCount * sizeof(vmint)));
-        dmsg(2,("Allocating %lld bytes of global real VM memory.\n", context->globalRealVarCount * sizeof(vmfloat)));
-        dmsg(2,("Allocating %lld bytes of global unit factor VM memory.\n", context->globalUnitFactorCount * sizeof(vmfloat)));
-        dmsg(2,("Allocating %lld of global VM string variables.\n", context->globalStrVarCount));
+        dmsg(2,("Allocating %" PRId64 " bytes of global int VM memory.\n", int64_t(context->globalIntVarCount * sizeof(vmint))));
+        dmsg(2,("Allocating %" PRId64 " bytes of global real VM memory.\n", int64_t(context->globalRealVarCount * sizeof(vmfloat))));
+        dmsg(2,("Allocating %" PRId64 " bytes of global unit factor VM memory.\n", int64_t(context->globalUnitFactorCount * sizeof(vmfloat))));
+        dmsg(2,("Allocating %" PRId64 " of global VM string variables.\n", (int64_t)context->globalStrVarCount));
         if (!context->globalIntMemory)
             context->globalIntMemory = new ArrayList<vmint>();
         if (!context->globalRealMemory)
@@ -303,8 +303,8 @@ namespace LinuxSampler {
                 _requiredMaxStackSizeFor(&*parserCtx->handlers);
         }
         execCtx->stack.resize(parserCtx->requiredMaxStackSize);
-        dmsg(2,("Created VM exec context with %lld bytes VM stack size.\n",
-                parserCtx->requiredMaxStackSize * sizeof(ExecContext::StackFrame)));
+        dmsg(2,("Created VM exec context with %" PRId64 " bytes VM stack size.\n",
+                int64_t(parserCtx->requiredMaxStackSize * sizeof(ExecContext::StackFrame))));
         //printf("execCtx=0x%lx\n", (uint64_t)execCtx);
         const vmint polyIntSize = parserCtx->polyphonicIntVarCount;
         execCtx->polyphonicIntMemory.resize(polyIntSize);
@@ -319,9 +319,9 @@ namespace LinuxSampler {
         for (vmint i = 0; i < polyFactorSize; ++i)
             execCtx->polyphonicUnitFactorMemory[i] = VM_NO_FACTOR;
 
-        dmsg(2,("Allocated %lld bytes polyphonic int memory.\n", polyIntSize * sizeof(vmint)));
-        dmsg(2,("Allocated %lld bytes polyphonic real memory.\n", polyRealSize * sizeof(vmfloat)));
-        dmsg(2,("Allocated %lld bytes unit factor memory.\n", polyFactorSize * sizeof(vmfloat)));
+        dmsg(2,("Allocated %" PRId64 " bytes polyphonic int memory.\n", int64_t(polyIntSize * sizeof(vmint))));
+        dmsg(2,("Allocated %" PRId64 " bytes polyphonic real memory.\n", int64_t(polyRealSize * sizeof(vmfloat))));
+        dmsg(2,("Allocated %" PRId64 " bytes unit factor memory.\n", int64_t(polyFactorSize * sizeof(vmfloat))));
         return execCtx;
     }
 

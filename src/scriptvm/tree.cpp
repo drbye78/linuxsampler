@@ -188,7 +188,7 @@ vmint IntLiteral::evalInt() {
 
 void IntLiteral::dump(int level) {
     printIndents(level);
-    printf("IntLiteral %lld\n", value);
+    printf("IntLiteral %" PRId64 "\n", (int64_t)value);
 }
 
 RealLiteral::RealLiteral(const RealLitDef& def) :
@@ -845,7 +845,7 @@ vmint ConstIntVariable::evalInt() {
 
 void ConstIntVariable::dump(int level) {
     printIndents(level);
-    printf("ConstIntVariable val=%lld\n", value);
+    printf("ConstIntVariable val=%" PRId64 "\n", (int64_t)value);
 }
 
 ConstRealVariable::ConstRealVariable(const RealVarDef& def) :
@@ -1034,7 +1034,7 @@ void IntArrayVariable::dump(int level) {
             printf("\n");
             printIndents(level+1);
         }
-        printf("%lld, ", values[i]);
+        printf("%" PRId64 ", ", (int64_t)values[i]);
     }
     printIndents(level);
     printf(")\n");
@@ -1285,7 +1285,7 @@ String StringVariable::evalStr() {
 
 void StringVariable::dump(int level) {
     printIndents(level);
-    printf("StringVariable memPos=%lld\n", memPos);
+    printf("StringVariable memPos=%" PRId64 "\n", (int64_t)memPos);
 }
 
 ConstStringVariable::ConstStringVariable(ParserContext* ctx, String _value)
@@ -1355,7 +1355,7 @@ void SelectCase::dump(int level) {
     printIndents(level);
     if (select)
         if (select->isConstExpr())
-            printf("Case select %lld\n", select->evalInt());
+            printf("Case select %" PRId64 "\n", (int64_t)select->evalInt());
         else
             printf("Case select [runtime expr]\n");
     else
@@ -1365,16 +1365,16 @@ void SelectCase::dump(int level) {
         CaseBranch& branch = branches[i];
         if (branch.from && branch.to)
             if (branch.from->isConstExpr() && branch.to->isConstExpr())
-                printf("case %lld to %lld\n", branch.from->evalInt(), branch.to->evalInt());
+                printf("case %" PRId64 " to %" PRId64 "\n", (int64_t)branch.from->evalInt(), (int64_t)branch.to->evalInt());
             else if (branch.from->isConstExpr() && !branch.to->isConstExpr())
-                printf("case %lld to [runtime expr]\n", branch.from->evalInt());
+                printf("case %" PRId64 " to [runtime expr]\n", (int64_t)branch.from->evalInt());
             else if (!branch.from->isConstExpr() && branch.to->isConstExpr())
-                printf("case [runtime expr] to %lld\n", branch.to->evalInt());
+                printf("case [runtime expr] to %" PRId64 "\n", (int64_t)branch.to->evalInt());
             else
                 printf("case [runtime expr] to [runtime expr]\n");
         else if (branch.from)
             if (branch.from->isConstExpr())
-                printf("case %lld\n", branch.from->evalInt());
+                printf("case %" PRId64 "\n", (int64_t)branch.from->evalInt());
             else
                 printf("case [runtime expr]\n");
         else
@@ -1413,7 +1413,7 @@ void While::dump(int level) {
     printIndents(level);
     if (m_condition)
         if (m_condition->isConstExpr())
-            printf("while (%lld) {\n", m_condition->evalInt());
+            printf("while (%" PRId64 ") {\n", (int64_t)m_condition->evalInt());
         else
             printf("while ([runtime expr]) {\n");
     else

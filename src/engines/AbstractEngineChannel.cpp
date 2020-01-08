@@ -891,7 +891,7 @@ namespace LinuxSampler {
      * @returns unique event ID of scheduled new event, or NULL on error
      */
     event_id_t AbstractEngineChannel::ScheduleEventMicroSec(const Event* pEvent, int64_t delay) {
-        dmsg(3,("AbstractEngineChannel::ScheduleEventMicroSec(Event.Type=%d,delay=%lld)\n", pEvent->Type, delay));
+        dmsg(3,("AbstractEngineChannel::ScheduleEventMicroSec(Event.Type=%d,delay=%" PRId64 ")\n", pEvent->Type, delay));
         RTList<Event>::Iterator itEvent = pEvents->allocAppend();
         if (!itEvent) {
             dmsg(1,("AbstractEngineChannel::ScheduleEventMicroSec(): Event pool emtpy!\n"));

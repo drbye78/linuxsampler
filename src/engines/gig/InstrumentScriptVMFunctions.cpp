@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -67,7 +67,7 @@ namespace LinuxSampler { namespace gig {
                 baseBits += pRegion->pDimensionDefinitions[i].bits;
             }
             if (idx < 0) {
-                dmsg(2,("gig_set_dim_zone(): no such gig dimension %lld\n", dim));
+                dmsg(2,("gig_set_dim_zone(): no such gig dimension %" PRId64 "\n", (int64_t)dim));
                 return successResult(); // no such dimension found
             }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -201,7 +201,7 @@ VMFnResult* CoreVMFunction_message::exec(VMFnArgs* args) {
 
     VMIntExpr* intExpr = dynamic_cast<VMIntExpr*>(args->arg(0));
     if (intExpr) {
-        printf("[ScriptVM %.3f] %lld\n", usecs/1000000.f, (int64_t)intExpr->evalInt());
+        printf("[ScriptVM %.3f] %" PRId64 "\n", usecs/1000000.f, (int64_t)intExpr->evalInt());
         return successResult();
     }
 

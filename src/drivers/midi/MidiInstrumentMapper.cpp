@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright (C) 2006 - 2016 Christian Schoenebeck                       *
+ *   Copyright (C) 2006 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -242,7 +242,7 @@ namespace LinuxSampler {
         try {
             SetLoadMode(&entry);
         } catch(Exception e) {
-            throw e;
+            throw; // re-throw
         }
 
         return entry;

@@ -245,7 +245,7 @@ namespace LinuxSampler {
             }
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         if (i == -1) throw Exception("Unkown DB directory: " + toEscapedPath(Dir));
@@ -282,7 +282,7 @@ namespace LinuxSampler {
             return pDirs;
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
     }
     
@@ -391,7 +391,7 @@ namespace LinuxSampler {
             }
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         
@@ -428,7 +428,7 @@ namespace LinuxSampler {
             ExecSql(sql.str(), toDbName(dirName));
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
 
         EndTransaction();
@@ -451,7 +451,7 @@ namespace LinuxSampler {
             RemoveDirectory(dirId);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
 
         EndTransaction();
@@ -554,7 +554,7 @@ namespace LinuxSampler {
             sqlite3_finalize(pStmt);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
 
         EndTransaction();
@@ -591,7 +591,7 @@ namespace LinuxSampler {
             ExecSql(sql.str(), dbName);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
 
         EndTransaction();
@@ -636,7 +636,7 @@ namespace LinuxSampler {
             ExecSql(sql.str());
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
 
         EndTransaction();
@@ -680,7 +680,7 @@ namespace LinuxSampler {
             DirectoryTreeWalk(Dir, &directoryCopier);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
 
         EndTransaction();
@@ -701,7 +701,7 @@ namespace LinuxSampler {
             ExecSql(sql.str(), Desc);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         
@@ -850,7 +850,7 @@ namespace LinuxSampler {
             }
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
 
@@ -895,7 +895,7 @@ namespace LinuxSampler {
             return pInstrs;
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
     }
 
@@ -938,7 +938,7 @@ namespace LinuxSampler {
             RemoveInstrument(instrId);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         FireInstrumentCountChanged(ParentDir);
@@ -972,7 +972,7 @@ namespace LinuxSampler {
             i = GetInstrumentInfo(id);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         
@@ -1047,7 +1047,7 @@ namespace LinuxSampler {
             ExecSql(sql.str(), toDbName(Name));
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         FireInstrumentNameChanged(Instr, toAbstractName(Name));
@@ -1090,7 +1090,7 @@ namespace LinuxSampler {
             ExecSql(sql.str());
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         FireInstrumentCountChanged(ParentDir);
@@ -1121,7 +1121,7 @@ namespace LinuxSampler {
             CopyInstrument(instrId, instrName, dstId, Dst);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         
@@ -1186,7 +1186,7 @@ namespace LinuxSampler {
             ExecSql(sql.str(), Desc);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         FireInstrumentInfoChanged(Instr);
@@ -1366,7 +1366,7 @@ namespace LinuxSampler {
             else directoryFinder.ProcessDirectory(Dir, DirId);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
 
@@ -1386,7 +1386,7 @@ namespace LinuxSampler {
             else instrumentFinder.ProcessDirectory(Dir, DirId);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
 
@@ -1408,7 +1408,7 @@ namespace LinuxSampler {
             return result;
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
     }
     
@@ -1424,7 +1424,7 @@ namespace LinuxSampler {
             ExecSql("UPDATE instruments SET instr_file=? WHERE instr_file=?", params);
         } catch (Exception e) {
             EndTransaction();
-            throw e;
+            throw; // re-throw
         }
         EndTransaction();
         

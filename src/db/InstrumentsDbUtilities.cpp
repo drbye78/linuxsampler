@@ -679,7 +679,7 @@ namespace LinuxSampler {
             if (Progress.GetStatus() != 100) Progress.SetStatus(100);
         } catch(Exception e) {
             Progress.SetErrorStatus(-1);
-            throw e;
+            throw; // re-throw
         }
     }
 
@@ -723,7 +723,7 @@ namespace LinuxSampler {
             if (Progress.GetStatus() != 100) Progress.SetStatus(100);
         } catch(Exception e) {
             Progress.SetErrorStatus(-1);
-            throw e;
+            throw; // re-throw
         }
     }
 

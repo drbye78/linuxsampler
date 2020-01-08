@@ -3,9 +3,9 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2008 Christian Schoenebeck                         *
- *   Copyright (C) 2009-2012 Christian Schoenebeck and Grigor Iliev        *
- *   Copyright (C) 2013-2017 Christian Schoenebeck and Andreas Persson     *
+ *   Copyright (C) 2005-2020 Christian Schoenebeck                         *
+ *   Copyright (C) 2009-2012 Grigor Iliev                                  *
+ *   Copyright (C) 2013-2017 Andreas Persson                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -878,6 +878,10 @@ namespace LinuxSampler {
                     case Event::synth_param_decay:
                     case Event::synth_param_sustain:
                     case Event::synth_param_release:
+                    case Event::synth_param_cutoff_attack:
+                    case Event::synth_param_cutoff_decay:
+                    case Event::synth_param_cutoff_sustain:
+                    case Event::synth_param_cutoff_release:
                         break; // noop
                 }
             }

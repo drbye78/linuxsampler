@@ -3,9 +3,9 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2008 Christian Schoenebeck                         *
- *   Copyright (C) 2009-2012 Christian Schoenebeck and Grigor Iliev        *
- *   Copyright (C) 2012-2017 Christian Schoenebeck and Andreas Persson     *
+ *   Copyright (C) 2005-2020 Christian Schoenebeck                         *
+ *   Copyright (C) 2009-2012 Grigor Iliev                                  *
+ *   Copyright (C) 2012-2017 Andreas Persson                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -824,6 +824,8 @@ namespace LinuxSampler {
                                 //TODO: ...
                                 break;
 
+                            case Event::type_rpn: // rpn handled in ProcessHardcodedControllers() instead ATM
+                            case Event::type_nrpn: // nrpn handled in ProcessHardcodedControllers() instead ATM
                             case Event::type_cancel_release_key:
                             case Event::type_release_key:
                             case Event::type_release_note:

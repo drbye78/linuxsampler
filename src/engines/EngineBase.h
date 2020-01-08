@@ -250,7 +250,9 @@ namespace LinuxSampler {
                 return 0;
             }
 
-            virtual int MaxVoices() OVERRIDE { return pVoicePool->poolSize(); }
+            virtual int MaxVoices() OVERRIDE {
+                return (int) pVoicePool->poolSize();
+            }
 
             virtual void SetMaxVoices(int iVoices) throw (Exception) OVERRIDE {
                 if (iVoices < 1)
@@ -1202,7 +1204,7 @@ namespace LinuxSampler {
                 // steal oldest voice on the oldest key from any other engine channel
                 // (the smaller engine channel number, the higher priority)
                 EngineChannelBase<V, R, I>*  pSelectedChannel;
-                int                          iChannelIndex;
+                ssize_t                      iChannelIndex;
                 VoiceIterator                itSelectedVoice;
 
                 #if CONFIG_DEVMODE

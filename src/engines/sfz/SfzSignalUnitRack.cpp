@@ -444,7 +444,7 @@ namespace LinuxSampler { namespace sfz {
     }
      
     int CCUnit::GetCurveCount() {
-        return pVoice->pRegion->GetInstrument()->curves.size();
+        return (int) pVoice->pRegion->GetInstrument()->curves.size();
     }
      
     ::sfz::Curve* CCUnit::GetCurve(int idx) { 

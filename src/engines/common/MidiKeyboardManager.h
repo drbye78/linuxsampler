@@ -3,8 +3,8 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2008 Christian Schoenebeck                         *
- *   Copyright (C) 2009-2010 Christian Schoenebeck and Grigor Iliev        *
+ *   Copyright (C) 2005-2020 Christian Schoenebeck                         *
+ *   Copyright (C) 2009-2010 Grigor Iliev                                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -326,7 +326,7 @@ namespace LinuxSampler {
                 if (!pKey->Active) { // mark as active key
                     pKey->Active = true;
                     pKey->itSelf = pActiveKeys->allocAppend();
-                    const int iKey = pKey - &pMIDIKeyInfo[0];
+                    const int iKey = int( pKey - &pMIDIKeyInfo[0] );
                     *pKey->itSelf = iKey;
                 }
             }

@@ -27,12 +27,19 @@
 #ifndef __LS_GLOBAL_H__
 #define __LS_GLOBAL_H__
 
+// workaround for a bug with older versions of mingw, which would prevent
+// portable format specifiers like PRId64 from being defined
+#ifdef __MINGW32__
+# define __STDC_FORMAT_MACROS 1
+#endif
+
+// C++ header <string> before any C headers intentionally here, due to
+// format specifiers bug occurring with older versions of mingw (see above)
+#include <string>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <inttypes.h>
-
-#include <string>
 
 typedef std::string String;
 

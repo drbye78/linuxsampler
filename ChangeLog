@@ -231,6 +231,9 @@ Version SVN trunk (?)
       which are identifying the new (N)RPN handlers as such at script runtime.
     - Implemented built-in script function "set_rpn()".
     - Implemented built-in script function "set_nrpn()".
+    - Fix: built-in functions returning an array type were broken and caused a
+      crash when the built-in function's (supposed to be array) result value was
+      used by the script VM.
 
   * test cases:
     - Fixed compiler errors in test cases.

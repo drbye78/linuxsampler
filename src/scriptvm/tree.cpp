@@ -639,12 +639,30 @@ vmfloat FunctionCall::evalReal() {
 }
 
 VMIntArrayExpr* FunctionCall::asIntArray() const {
+    //FIXME: asIntArray() not intended for evaluation semantics (for both
+    // performance reasons with arrays, but also to prevent undesired value
+    // mutation by implied (hidden) evaluation, as actually done here. We must
+    // force function evaluation here though, because we need it for function
+    // calls to be evaluated at all. This issue should be addressed cleanly by
+    // adjusting the API appropriately.
+    FunctionCall* rwSelf = const_cast<FunctionCall*>(this);
+    rwSelf->result = rwSelf->execVMFn();
+
     if (!result) return 0;
     VMIntArrayExpr* intArrExpr = dynamic_cast<VMIntArrayExpr*>(result->resultValue());
     return intArrExpr;
 }
 
 VMRealArrayExpr* FunctionCall::asRealArray() const {
+    //FIXME: asRealArray() not intended for evaluation semantics (for both
+    // performance reasons with arrays, but also to prevent undesired value
+    // mutation by implied (hidden) evaluation, as actually done here. We must
+    // force function evaluation here though, because we need it for function
+    // calls to be evaluated at all. This issue should be addressed cleanly by
+    // adjusting the API appropriately.
+    FunctionCall* rwSelf = const_cast<FunctionCall*>(this);
+    rwSelf->result = rwSelf->execVMFn();
+
     if (!result) return 0;
     VMRealArrayExpr* realArrExpr = dynamic_cast<VMRealArrayExpr*>(result->resultValue());
     return realArrExpr;

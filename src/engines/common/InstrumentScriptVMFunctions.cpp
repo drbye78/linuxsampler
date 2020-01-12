@@ -980,10 +980,9 @@ namespace LinuxSampler {
             (unit) ?
                 true : // imply 'final' value if unit type is used
                 args->arg(1)->asNumber()->isFinal();
-        if (!unit && cutoff > VM_FILTER_PAR_MAX_VALUE) {
-            wrnMsg("change_cutoff(): argument 2 may not be larger than " strfy(VM_FILTER_PAR_MAX_VALUE));
-            cutoff = VM_FILTER_PAR_MAX_VALUE;
-        } else if (unit && cutoff > VM_FILTER_PAR_MAX_HZ) {
+        // note: intentionally not checking against a max. value here if no unit!
+        // (to allow i.e. passing 2000000 for doubling cutoff frequency)
+        if (unit && cutoff > VM_FILTER_PAR_MAX_HZ) {
             wrnMsg("change_cutoff(): argument 2 may not be larger than " strfy(VM_FILTER_PAR_MAX_HZ) " Hz");
             cutoff = VM_FILTER_PAR_MAX_HZ;
         } else if (cutoff < 0) {
@@ -1080,10 +1079,9 @@ namespace LinuxSampler {
     VMFnResult* InstrumentScriptVMFunction_change_reso::exec(VMFnArgs* args) {
         vmint resonance = args->arg(1)->asInt()->evalInt();
         bool isFinal    = args->arg(1)->asInt()->isFinal();
-        if (resonance > VM_FILTER_PAR_MAX_VALUE) {
-            wrnMsg("change_reso(): argument 2 may not be larger than 1000000");
-            resonance = VM_FILTER_PAR_MAX_VALUE;
-        } else if (resonance < 0) {
+        // note: intentionally not checking against a max. value here!
+        // (to allow i.e. passing 2000000 for doubling the resonance)
+        if (resonance < 0) {
             wrnMsg("change_reso(): argument 2 may not be negative");
             resonance = 0;
         }
@@ -1809,7 +1807,7 @@ namespace LinuxSampler {
                     &NoteBase::_Override::AmpLFODepth,
                     Event::synth_param_amp_lfo_depth,
                     /* if value passed without unit */
-                    0, 1000000, true,
+                    0, NO_LIMIT, true,
                     /* not used (since this function does not accept unit) */
                     NO_LIMIT, NO_LIMIT, VM_NO_PREFIX>( args, "change_amp_lfo_depth" );
     }
@@ -1822,7 +1820,7 @@ namespace LinuxSampler {
                     &NoteBase::_Override::AmpLFOFreq,
                     Event::synth_param_amp_lfo_freq,
                     /* if value passed without unit */
-                    0, 1000000, true,
+                    0, NO_LIMIT, true,
                     /* if value passed with 'Hz' unit */
                     0, 30000, VM_NO_PREFIX>( args, "change_amp_lfo_freq" );
     }
@@ -1835,7 +1833,7 @@ namespace LinuxSampler {
                     &NoteBase::_Override::CutoffLFODepth,
                     Event::synth_param_cutoff_lfo_depth,
                     /* if value passed without unit */
-                    0, 1000000, true,
+                    0, NO_LIMIT, true,
                     /* not used (since this function does not accept unit) */
                     NO_LIMIT, NO_LIMIT, VM_NO_PREFIX>( args, "change_cutoff_lfo_depth" );
     }
@@ -1848,7 +1846,7 @@ namespace LinuxSampler {
                     &NoteBase::_Override::CutoffLFOFreq,
                     Event::synth_param_cutoff_lfo_freq,
                     /* if value passed without unit */
-                    0, 1000000, true,
+                    0, NO_LIMIT, true,
                     /* if value passed with 'Hz' unit */
                     0, 30000, VM_NO_PREFIX>( args, "change_cutoff_lfo_freq" );
     }
@@ -1861,7 +1859,7 @@ namespace LinuxSampler {
                     &NoteBase::_Override::PitchLFODepth,
                     Event::synth_param_pitch_lfo_depth,
                     /* if value passed without unit */
-                    0, 1000000, true,
+                    0, NO_LIMIT, true,
                     /* not used (since this function does not accept unit) */
                     NO_LIMIT, NO_LIMIT, VM_NO_PREFIX>( args, "change_pitch_lfo_depth" );
     }
@@ -1874,7 +1872,7 @@ namespace LinuxSampler {
                     &NoteBase::_Override::PitchLFOFreq,
                     Event::synth_param_pitch_lfo_freq,
                     /* if value passed without unit */
-                    0, 1000000, true,
+                    0, NO_LIMIT, true,
                     /* if value passed with 'Hz' unit */
                     0, 30000, VM_NO_PREFIX>( args, "change_pitch_lfo_freq" );
     }

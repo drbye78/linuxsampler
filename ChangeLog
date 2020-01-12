@@ -234,6 +234,12 @@ Version SVN trunk (?)
     - Fix: built-in functions returning an array type were broken and caused a
       crash when the built-in function's (supposed to be array) result value was
       used by the script VM.
+    - Removed upper value constraint for 2nd argument of built-in functions
+      "change_amp_lfo_freq()", "change_cutoff_lfo_freq()",
+      "change_pitch_lfo_freq()","change_reso()", "change_cutoff()",
+      "change_amp_lfo_depth()", "change_cutoff_lfo_depth()" and
+      "change_pitch_lfo_depth()", to allow e.g. passing value 2000000 to double
+      the LFO frequency / resonance / cutoff frequency.
 
   * test cases:
     - Fixed compiler errors in test cases.

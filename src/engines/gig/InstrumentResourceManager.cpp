@@ -1,9 +1,10 @@
+
 /***************************************************************************
  *                                                                         *
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2016 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -701,7 +702,7 @@ namespace LinuxSampler { namespace gig {
             // number of '0' samples (silence samples) behind the official buffer
             // border, to allow the interpolator do it's work even at the end of
             // the sample.
-            const uint neededSilenceSamples = uint((maxSamplesPerCycle << CONFIG_MAX_PITCH) + 3);
+            const uint neededSilenceSamples = uint((maxSamplesPerCycle << CONFIG_MAX_PITCH) + 6);
             const uint currentlyCachedSilenceSamples = uint(pSample->GetCache().NullExtensionSize / pSample->FrameSize);
             if (currentlyCachedSilenceSamples < neededSilenceSamples) {
                 dmsg(3,("Caching whole sample (sample name: \"%s\", sample size: %llu)\n", pSample->pInfo->Name.c_str(), (long long)pSample->SamplesTotal));

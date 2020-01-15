@@ -283,6 +283,7 @@ Version SVN trunk (?)
     - Format extension: Support for additional filter types:
       lowpass 1/2/4/6-pole, highpass 1/2/4/6-pole, bandpass 2-pole,
       bandreject 2-pole.
+    - Fixd potential crash with polynomial interpolator and max. pitch.
 
   * SFZ format engine:
     - Fixed support for regions with loccN/hiccN conditions on more than one

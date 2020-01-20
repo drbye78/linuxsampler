@@ -284,6 +284,9 @@ Version SVN trunk (?)
       lowpass 1/2/4/6-pole, highpass 1/2/4/6-pole, bandpass 2-pole,
       bandreject 2-pole.
     - Fixd potential crash with polynomial interpolator and max. pitch.
+    - If minimum cutoff is defined, remap cutoff controller CC values to really
+      span the entire possible cutoff range (and avoiding a dead controller
+      zone).
 
   * SFZ format engine:
     - Fixed support for regions with loccN/hiccN conditions on more than one

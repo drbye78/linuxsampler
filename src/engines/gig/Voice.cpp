@@ -186,19 +186,12 @@ namespace LinuxSampler { namespace gig {
         const bool isGStFilter = isGStFilterType(pRegion->VCFType);
 
         if (pRegion->VCFCutoffControllerInvert) ccvalue = 127 - ccvalue;
-        if (isGStFilter) {
-            // VCFVelocityScale in this case means "minimum cutoff" for GSt
-            if (ccvalue < MinCutoff()) ccvalue = MinCutoff();
-        } else {
-            // for our own filter types we interpret "minimum cutoff"
-            // differently: GSt handles this as a simple hard limit with the
-            // consequence that a certain range of the controller is simply
-            // dead; so for our filter types we rather remap that to
-            // restrain within the min_cutoff..127 range as well, but
-            // effectively spanned over the entire controller range (0..127)
-            // to avoid such a "dead" lower controller zone
-            ccvalue = MinCutoff() + (ccvalue / 127.f) * float(127 - MinCutoff());
-        }
+        // interpret "minimum cutoff" not simply as hard limit, rather
+        // restrain it to min_cutoff..127 range, but spanned / remapped over
+        // the entire controller range (0..127) to avoid a "dead" lower
+        // controller zone (that is to avoid a certain CC value range where
+        // the controller would not change the cutoff frequency)
+        ccvalue = MinCutoff() + (ccvalue / 127.f) * float(127 - MinCutoff());
 
         float cutoff = CutoffBase * ccvalue;
         if (cutoff > 127.0f) cutoff = 127.0f;

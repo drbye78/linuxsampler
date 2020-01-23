@@ -3,9 +3,8 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2008 Christian Schoenebeck                         *
- *   Copyright (C) 2009-2011 Christian Schoenebeck and Grigor Iliev        *
- *   Copyright (C) 2012-2016 Christian Schoenebeck                         *
+ *   Copyright (C) 2005-2020 Christian Schoenebeck                         *
+ *   Copyright (C) 2009-2011 Grigor Iliev                                  *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -27,6 +26,14 @@
 #define	__LS_VOICEBASE_H__
 
 #include "AbstractVoice.h"
+#include <limits.h> // for INT_MIN
+
+/*
+ * Used as private, special constant value for @c VoiceBase member variable
+ * @c RealSampleWordsLeftToRead. This special constant value denotes that no
+ * silence samples have been added to the end of the stream yet.
+ */
+#define NO_SILENCE_STREAM_SAMPLES_YET INT_MIN
 
 namespace LinuxSampler {
 
@@ -147,17 +154,19 @@ namespace LinuxSampler {
                                     SmplInfo.ChannelCount * (int(finalSynthesisParameters.dPos) - MaxRAMPos)
                                 ));
                                 finalSynthesisParameters.dPos -= int(finalSynthesisParameters.dPos);
-                                RealSampleWordsLeftToRead = -1; // -1 means no silence has been added yet
+                                RealSampleWordsLeftToRead = NO_SILENCE_STREAM_SAMPLES_YET;
                             }
 
                             const int sampleWordsLeftToRead = DiskStreamRef.pStream->GetReadSpace();
 
                             // add silence sample at the end if we reached the end of the stream (for the interpolator)
                             if (DiskStreamRef.State == Stream::state_end) {
-                                const int maxSampleWordsPerCycle = (GetEngine()->MaxSamplesPerCycle << CONFIG_MAX_PITCH) * SmplInfo.ChannelCount + 6; // +6 for the interpolator algorithm
-                                if (sampleWordsLeftToRead <= maxSampleWordsPerCycle) {
+                                if (RealSampleWordsLeftToRead == NO_SILENCE_STREAM_SAMPLES_YET) {
                                     // remember how many sample words there are before any silence has been added
-                                    if (RealSampleWordsLeftToRead < 0) RealSampleWordsLeftToRead = sampleWordsLeftToRead;
+                                    RealSampleWordsLeftToRead = sampleWordsLeftToRead;
+                                }
+                                const int maxSampleWordsPerCycle = (GetEngine()->MaxSamplesPerCycle << CONFIG_MAX_PITCH) * SmplInfo.ChannelCount + 6; // +6 for the interpolator algorithm
+                                if (sampleWordsLeftToRead < maxSampleWordsPerCycle) {
                                     DiskStreamRef.pStream->WriteSilence(maxSampleWordsPerCycle - sampleWordsLeftToRead);
                                 }
                             }
@@ -175,7 +184,10 @@ namespace LinuxSampler {
                             // change state of voice to 'end' if we really reached the end of the sample data
                             if (RealSampleWordsLeftToRead >= 0) {
                                 RealSampleWordsLeftToRead -= readSampleWords;
-                                if (RealSampleWordsLeftToRead <= 0) this->PlaybackState = Voice::playback_state_end;
+                                if (RealSampleWordsLeftToRead <= 0) {
+                                    this->PlaybackState = Voice::playback_state_end;
+                                    RealSampleWordsLeftToRead = 0;
+                                }
                             }
                         }
                         break;

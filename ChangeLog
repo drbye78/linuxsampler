@@ -47,6 +47,8 @@ Version SVN trunk (?)
     - Added support for 'null function RPN/NRPN' (which is RPN/NRPN parameter
       MSB=127 and LSB=127) and which is disabling subsequent data
       entry/increment/decrement CC messages.
+    - Fixed crash when editing key groups (a.k.a. exclusive groups) with an
+      instrument editor.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

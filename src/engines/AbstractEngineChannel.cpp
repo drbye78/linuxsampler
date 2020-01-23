@@ -1134,7 +1134,10 @@ namespace LinuxSampler {
      */
     void AbstractEngineChannel::HandleKeyGroupConflicts(uint KeyGroup, Pool<Event>::Iterator& itNoteOnEvent) {
         dmsg(4,("HandelKeyGroupConflicts KeyGroup=%d\n", KeyGroup));
-        if (KeyGroup) {
+        // when editing key groups with an instrument editor while sound was
+        // already loaded, ActiveKeyGroups may not have the KeyGroup in question
+        // so check for that to prevent a crash while editing instruments
+        if (KeyGroup && ActiveKeyGroups.count(KeyGroup)) {
             // send a release event to all active voices in the group
             RTList<Event>::Iterator itEvent = ActiveKeyGroups[KeyGroup]->allocAppend(pEngine->pEventPool);
             *itEvent = *itNoteOnEvent;

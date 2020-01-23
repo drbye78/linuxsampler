@@ -118,7 +118,18 @@ namespace LinuxSampler {
         itKillEvent     = Pool<Event>::Iterator();
         MidiKeyBase* pKeyInfo = GetMidiKeyInfo(MIDIKey());
 
-        pGroupEvents = iKeyGroup ? pEngineChannel->ActiveKeyGroups[iKeyGroup] : 0;
+        // when editing key groups with an instrument editor while sound was
+        // already loaded, ActiveKeyGroups may not have the KeyGroup in question
+        // so use find() here instead of array subscript operator[] to avoid an
+        // implied creation of a NULL entry, to prevent a crash while editing
+        // instruments
+        {
+            AbstractEngineChannel::ActiveKeyGroupMap::const_iterator it =
+                pEngineChannel->ActiveKeyGroups.find(iKeyGroup);
+            pGroupEvents =
+                (iKeyGroup && it != pEngineChannel->ActiveKeyGroups.end()) ?
+                    it->second : NULL;
+        }
 
         SmplInfo   = GetSampleInfo();
         RgnInfo    = GetRegionInfo();

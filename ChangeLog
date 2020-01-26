@@ -50,6 +50,7 @@ Version SVN trunk (?)
     - Fixed crash when editing key groups (a.k.a. exclusive groups) with an
       instrument editor.
     - Fixed playing noise at the end of a disk stream under certain conditions.
+    - Fixed potential crash with high pitch at end of RAM playback.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

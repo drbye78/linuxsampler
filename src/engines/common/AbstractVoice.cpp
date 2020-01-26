@@ -175,7 +175,8 @@ namespace LinuxSampler {
 
         if (DiskVoice) { // voice to be streamed from disk
             if (cachedsamples > (GetEngine()->MaxSamplesPerCycle << CONFIG_MAX_PITCH)) {
-                MaxRAMPos = cachedsamples - (GetEngine()->MaxSamplesPerCycle << CONFIG_MAX_PITCH) / SmplInfo.ChannelCount; //TODO: this calculation is too pessimistic and may better be moved to Render() method, so it calculates MaxRAMPos dependent to the current demand of sample points to be rendered (e.g. in case of JACK)
+                //TODO: this calculation is too pessimistic
+                MaxRAMPos = cachedsamples - (GetEngine()->MaxSamplesPerCycle << CONFIG_MAX_PITCH);
             } else {
                 // The cache is too small to fit a max sample buffer.
                 // Setting MaxRAMPos to 0 will probably cause a click

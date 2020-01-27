@@ -269,6 +269,7 @@ Version SVN trunk (?)
       "sin()", "cos()", "tan()", "asin()", "acos()", "atan()".
     - Added NKSP test cases for unary '+' operator.
     - Added NKSP test cases for core built-in variables.
+    - Added thorough NKSP test cases for variable declarations.
 
   * GigaStudio/Gigasampler format engine:
     - LFOTriangleIntMath and LFOTriangleIntAbsMath: Fixed FlipPhase=true

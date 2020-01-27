@@ -98,6 +98,26 @@ void NKSPTest::testNKSPPrecedenceOfOperators() {
     testPrecedenceOfOperators();
 }
 
+void NKSPTest::testNKSPIntVarDeclaration() {
+    testIntVarDeclaration();
+}
+
+void NKSPTest::testNKSPIntArrayVarDeclaration() {
+    testIntArrayVarDeclaration();
+}
+
+void NKSPTest::testNKSPRealVarDeclaration() {
+    testRealVarDeclaration();
+}
+
+void NKSPTest::testNKSPRealArrayVarDeclaration() {
+    testRealArrayVarDeclaration();
+}
+
+void NKSPTest::testNKSPStringVarDeclaration() {
+    testStringVarDeclaration();
+}
+
 void NKSPTest::testNKSPBuiltInMinFunction() {
     testBuiltInMinFunction();
 }

@@ -32,6 +32,11 @@ class NKSPTest : public CppUnit::TestFixture {
     CPPUNIT_TEST(testNKSPBitwiseOrOperator);
     CPPUNIT_TEST(testNKSPBitwiseNotOperator);
     CPPUNIT_TEST(testNKSPPrecedenceOfOperators);
+    CPPUNIT_TEST(testNKSPIntVarDeclaration);
+    CPPUNIT_TEST(testNKSPIntArrayVarDeclaration);
+    CPPUNIT_TEST(testNKSPRealVarDeclaration);
+    CPPUNIT_TEST(testNKSPRealArrayVarDeclaration);
+    CPPUNIT_TEST(testNKSPStringVarDeclaration);
     CPPUNIT_TEST(testNKSPBuiltInMinFunction);
     CPPUNIT_TEST(testNKSPBuiltInMaxFunction);
     CPPUNIT_TEST(testNKSPBuiltInAbsFunction);
@@ -94,6 +99,11 @@ class NKSPTest : public CppUnit::TestFixture {
         void testNKSPBitwiseOrOperator();
         void testNKSPBitwiseNotOperator();
         void testNKSPPrecedenceOfOperators();
+        void testNKSPIntVarDeclaration();
+        void testNKSPIntArrayVarDeclaration();
+        void testNKSPRealVarDeclaration();
+        void testNKSPRealArrayVarDeclaration();
+        void testNKSPStringVarDeclaration();
         void testNKSPBuiltInMinFunction();
         void testNKSPBuiltInMaxFunction();
         void testNKSPBuiltInAbsFunction();

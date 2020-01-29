@@ -41,6 +41,12 @@ enum StmtType_t {
     STMT_NOOP,
 };
 
+enum Qualifier_t {
+    QUALIFIER_NONE = 0,
+    QUALIFIER_CONST = 1,
+    QUALIFIER_POLYPHONIC = (1<<1),
+};
+
 /**
  * Convenience function used for retrieving the (assumed) data type of a given
  * script variable name.
@@ -68,6 +74,15 @@ inline ExprType_t scalarTypeOfArray(ExprType_t arrayType) {
     if (arrayType == STRING_ARR_EXPR) return STRING_EXPR;
     assert(false);
     return EMPTY_EXPR; // just to shut up the compiler
+}
+
+inline String qualifierStr(Qualifier_t qualifier) {
+    switch (qualifier) {
+        case QUALIFIER_NONE:          return "none";
+        case QUALIFIER_CONST:         return "const";
+        case QUALIFIER_POLYPHONIC:    return "polyphonic";
+    }
+    return "unknown";
 }
 
 /**

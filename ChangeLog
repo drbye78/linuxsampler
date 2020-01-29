@@ -244,6 +244,10 @@ Version SVN trunk (?)
       "change_amp_lfo_depth()", "change_cutoff_lfo_depth()" and
       "change_pitch_lfo_depth()", to allow e.g. passing value 2000000 to double
       the LFO frequency / resonance / cutoff frequency.
+    - Reduced code involved for parsing NKSP variable declarations by using 2
+      generalized grammar rules with optional components (i.e. optional value
+      assignment and optional variable qualifiers) instead of previous linear
+      combinations of grammar rules, which also fixes some edge case.
 
   * test cases:
     - Fixed compiler errors in test cases.

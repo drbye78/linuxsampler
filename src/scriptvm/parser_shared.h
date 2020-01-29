@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -48,6 +48,7 @@ struct _YYSTYPE {
     LinuxSampler::ExpressionRef nExpression;
     LinuxSampler::CaseBranch nCaseBranch;
     LinuxSampler::CaseBranches nCaseBranches;
+    LinuxSampler::Qualifier_t varQualifier;
 };
 #define YYSTYPE _YYSTYPE
 #define yystype YYSTYPE     ///< For backward compatibility.

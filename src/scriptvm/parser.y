@@ -83,10 +83,11 @@
 %type <nStatements> statements opt_statements userfunctioncall
 %type <nStatement> statement assignment
 %type <nFunctionCall> functioncall
-%type <nArgs> args
-%type <nExpression> arg expr logical_or_expr logical_and_expr bitwise_or_expr bitwise_and_expr rel_expr add_expr mul_expr unary_expr concat_expr
+%type <nArgs> args opt_arr_assignment
+%type <nExpression> arg expr logical_or_expr logical_and_expr bitwise_or_expr bitwise_and_expr rel_expr add_expr mul_expr unary_expr concat_expr opt_assignment
 %type <nCaseBranch> caseclause
 %type <nCaseBranches> caseclauses
+%type <varQualifier> opt_qualifiers qualifiers qualifier
 
 %start script
 
@@ -196,231 +197,168 @@ statement:
     | userfunctioncall  {
         $$ = $1;
     }
-    | DECLARE VARIABLE  {
-        const char* name = $2;
-        //printf("declared var '%s'\n", name);
-        if (context->variableByName(name)) {
-            PARSE_ERR(@2, (String("Redeclaration of variable '") + name + "'.").c_str());
-        } else if (name[0] == '@') {
-            context->vartable[name] = new StringVariable(context);
-        } else if (name[0] == '~') {
-            context->vartable[name] = new RealVariable({
-                .ctx = context
-            });
-        } else if (name[0] == '$') {
-            context->vartable[name] = new IntVariable({
-                .ctx = context
-            });
-        } else if (name[0] == '?') {
-            PARSE_ERR(@2, (String("Real number array variable '") + name + "' declaration requires array size.").c_str());
-        } else if (name[0] == '%') {
-            PARSE_ERR(@2, (String("Integer array variable '") + name + "' declaration requires array size.").c_str());
-        } else {
-            PARSE_ERR(@2, (String("Variable '") + name + "' declared with unknown type.").c_str());
-        }
-        $$ = new NoOperation;
-    }
-    | DECLARE POLYPHONIC VARIABLE  {
+    | DECLARE opt_qualifiers VARIABLE opt_assignment  {
+        $$ = new NoOperation; // just as default result value
+        const bool qConst      = $2 & QUALIFIER_CONST;
+        const bool qPolyphonic = $2 & QUALIFIER_POLYPHONIC;
         const char* name = $3;
-        //printf("declared polyphonic var '%s'\n", name);
-        if (context->variableByName(name)) {
-            PARSE_ERR(@3, (String("Redeclaration of variable '") + name + "'.").c_str());
-        } else if (name[0] != '$' && name[0] != '~') {
-            PARSE_ERR(@3, "Polyphonic variables must only be declared either as integer or real number type.");
-        } else if (name[0] == '~') {
-            context->vartable[name] = new PolyphonicRealVariable({
-                .ctx = context
-            });
-        } else {
-            context->vartable[name] = new PolyphonicIntVariable({
-                .ctx = context
-            });
-        }
-        $$ = new NoOperation;
-    }
-    | DECLARE VARIABLE ASSIGNMENT expr  {
-        const char* name = $2;
-        //printf("declared assign var '%s'\n", name);
+        ExpressionRef expr = $4;
+        //printf("declared var '%s'\n", name);
         const ExprType_t declType = exprTypeOfVarName(name);
         if (context->variableByName(name)) {
-            PARSE_ERR(@2, (String("Redeclaration of variable '") + name + "'.").c_str());
-            $$ = new NoOperation;
-        } else if ($4->exprType() == STRING_EXPR) {
-            if (name[0] != '@')
-                PARSE_WRN(@2, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", string expression assigned though.").c_str());
-            StringExprRef expr = $4;
-            if (expr->isConstExpr()) {
-                const String s = expr->evalStr();
-                StringVariableRef var = new StringVariable(context);
-                context->vartable[name] = var;
-                $$ = new Assignment(var, new StringLiteral(s));
-            } else {
-                StringVariableRef var = new StringVariable(context);
-                context->vartable[name] = var;
-                $$ = new Assignment(var, expr);
-            }
-        } else if ($4->exprType() == REAL_EXPR) {
-            if (name[0] != '~')
-                PARSE_WRN(@2, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", real number expression assigned though.").c_str());
-            RealExprRef expr = $4;
-            RealVariableRef var = new RealVariable({
-                .ctx = context,
-                .unitType = expr->unitType(),
-                .isFinal = expr->isFinal()
-            });
-            if (expr->isConstExpr()) {
-                $$ = new Assignment(var, new RealLiteral({
-                    .value = expr->evalReal(),
-                    .unitFactor = expr->unitFactor(),
-                    .unitType = expr->unitType(),
-                    .isFinal = expr->isFinal()
-                }));
-            } else {
-                $$ = new Assignment(var, expr);
-            }
-            context->vartable[name] = var;
-        } else if ($4->exprType() == INT_EXPR) {
-            if (name[0] != '$')
-                PARSE_WRN(@2, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", integer expression assigned though.").c_str());
-            IntExprRef expr = $4;
-            IntVariableRef var = new IntVariable({
-                .ctx = context,
-                .unitType = expr->unitType(),
-                .isFinal = expr->isFinal()
-            });
-            if (expr->isConstExpr()) {
-                $$ = new Assignment(var, new IntLiteral({
-                    .value = expr->evalInt(),
-                    .unitFactor = expr->unitFactor(),
-                    .unitType = expr->unitType(),
-                    .isFinal = expr->isFinal()
-                }));
-            } else {
-                $$ = new Assignment(var, expr);
-            }
-            context->vartable[name] = var;
-        } else if ($4->exprType() == EMPTY_EXPR) {
-            PARSE_ERR(@4, "Expression does not result in a value.");
-            $$ = new NoOperation;
-        } else if (isArray($4->exprType())) {
-            PARSE_ERR(@2, (String("Variable '") + name + "' declared as scalar type, array expression assigned though.").c_str());
-            $$ = new NoOperation;
-        }
-    }
-    | DECLARE VARIABLE '[' expr ']'  {
-        //printf("declare array without args\n");
-        const char* name = $2;
-        if (!$4->isConstExpr()) {
-            PARSE_ERR(@4, (String("Array variable '") + name + "' must be declared with constant array size.").c_str());
-        } else if ($4->exprType() != INT_EXPR) {
-            PARSE_ERR(@4, (String("Size of array variable '") + name + "' declared with non integer expression.").c_str());
-        } else if (context->variableByName(name)) {
-            PARSE_ERR(@2, (String("Redeclaration of variable '") + name + "'.").c_str());
+            PARSE_ERR(@3, (String("Redeclaration of variable '") + name + "'.").c_str());
+        } else if (qConst && !expr) {
+            PARSE_ERR(@2, (String("Variable '") + name + "' declared const without value assignment.").c_str());
+        } else if (qConst && qPolyphonic) {
+            PARSE_ERR(@2, (String("Variable '") + name + "' must not be declared both const and polyphonic.").c_str());
         } else {
-            IntExprRef sizeExpr = $4;
-            if (sizeExpr->unitType() || sizeExpr->hasUnitFactorNow()) {
-                PARSE_ERR(@4, "Units are not allowed as array size.");
-            } else {
-                if (sizeExpr->isFinal())
-                    PARSE_WRN(@4, "Final operator '!' is meaningless here.");
-                vmint size = sizeExpr->evalInt();
-                if (size <= 0) {
-                    PARSE_ERR(@4, (String("Array variable '") + name + "' declared with array size " + ToString(size) + ".").c_str());
-                } else {
-                    if (name[0] == '?') {
-                        context->vartable[name] = new RealArrayVariable(context, size);
-                    } else if (name[0] == '%') {
-                        context->vartable[name] = new IntArrayVariable(context, size);
+            if (!expr) {
+                if (qPolyphonic) {
+                    if (name[0] != '$' && name[0] != '~') {
+                        PARSE_ERR(@3, "Polyphonic variables must only be declared either as integer or real number type.");
+                    } else if (name[0] == '~') {
+                        context->vartable[name] = new PolyphonicRealVariable({
+                            .ctx = context
+                        });
                     } else {
-                        PARSE_ERR(@2, (String("Variable '") + name + "' declared as unknown array type: use either '%' or '?' instead of '" + String(name).substr(0,1) + "'.").c_str());
+                        context->vartable[name] = new PolyphonicIntVariable({
+                            .ctx = context
+                        });
+                    }
+                } else {
+                    if (name[0] == '@') {
+                        context->vartable[name] = new StringVariable(context);
+                    } else if (name[0] == '~') {
+                        context->vartable[name] = new RealVariable({
+                            .ctx = context
+                        });
+                    } else if (name[0] == '$') {
+                        context->vartable[name] = new IntVariable({
+                            .ctx = context
+                        });
+                    } else if (name[0] == '?') {
+                        PARSE_ERR(@3, (String("Real number array variable '") + name + "' declaration requires array size.").c_str());
+                    } else if (name[0] == '%') {
+                        PARSE_ERR(@3, (String("Integer array variable '") + name + "' declaration requires array size.").c_str());
+                    } else {
+                        PARSE_ERR(@3, (String("Variable '") + name + "' declared with unknown type.").c_str());
                     }
                 }
-            }
-        }
-        $$ = new NoOperation;
-    }
-    | DECLARE VARIABLE '[' expr ']' ASSIGNMENT '(' args ')'  {
-        const char* name = $2;
-        if (!$4->isConstExpr()) {
-            PARSE_ERR(@4, (String("Array variable '") + name + "' must be declared with constant array size.").c_str());
-        } else if ($4->exprType() != INT_EXPR) {
-            PARSE_ERR(@4, (String("Size of array variable '") + name + "' declared with non integer expression.").c_str());
-        } else if (context->variableByName(name)) {
-            PARSE_ERR(@2, (String("Redeclaration of variable '") + name + "'.").c_str());
-        } else {
-            IntExprRef sizeExpr = $4;
-            ArgsRef args = $8;
-            vmint size = sizeExpr->evalInt();
-            if (size <= 0) {
-                PARSE_ERR(@4, (String("Array variable '") + name + "' must be declared with positive array size.").c_str());
-            } else if (args->argsCount() > size) {
-                PARSE_ERR(@8, (String("Array variable '") + name +
-                          "' was declared with size " + ToString(size) +
-                          " but " + ToString(args->argsCount()) +
-                          " values were assigned." ).c_str());
-            } else if (sizeExpr->unitType() || sizeExpr->hasUnitFactorNow()) {
-                PARSE_ERR(@4, "Units are not allowed as array size.");
             } else {
-                if (sizeExpr->isFinal())
-                    PARSE_WRN(@4, "Final operator '!' is meaningless here.");
-                ExprType_t declType = EMPTY_EXPR;
-                if (name[0] == '%') {
-                    declType = INT_EXPR;
-                } else if (name[0] == '?') {
-                    declType = REAL_EXPR;
-                } else if (name[0] == '$') {
-                    PARSE_ERR(@2, (String("Variable '") + name + "' declaration ambiguous: Use '%' as name prefix for integer arrays instead of '$'.").c_str());
-                } else if (name[0] == '~') {
-                    PARSE_ERR(@2, (String("Variable '") + name + "' declaration ambiguous: Use '?' as name prefix for real number arrays instead of '~'.").c_str());
-                } else {
-                    PARSE_ERR(@2, (String("Variable '") + name + "' declared as unknown array type: use either '%' or '?' instead of '" + String(name).substr(0,1) + "'.").c_str());
-                }
-                bool argsOK = true;
-                if (declType == EMPTY_EXPR) {
-                    argsOK = false;
-                } else {
-                    for (vmint i = 0; i < args->argsCount(); ++i) {
-                        if (args->arg(i)->exprType() != declType) {
-                            PARSE_ERR(
-                                @8,
-                                (String("Array variable '") + name +
-                                "' declared with invalid assignment values. Assigned element " +
-                                ToString(i+1) + " is not an " + typeStr(declType) + " expression.").c_str()
-                            );
-                            argsOK = false;
-                            break;
-                        } else if (args->arg(i)->asNumber()->unitType()) {
-                            PARSE_ERR(
-                                @8,
-                                (String("Array variable '") + name +
-                                "' declared with invalid assignment values. Assigned element " +
-                                ToString(i+1) + " contains a unit type, only metric prefixes are allowed for arrays.").c_str()
-                            );
-                            argsOK = false;
-                            break;
-                        } else if (args->arg(i)->asNumber()->isFinal()) {
-                            PARSE_ERR(
-                                @8,
-                                (String("Array variable '") + name +
-                                "' declared with invalid assignment values. Assigned element " +
-                                ToString(i+1) + " declared as 'final' value.").c_str()
-                            );
-                            argsOK = false;
-                            break;
+                if (qPolyphonic && !isNumber(expr->exprType())) {
+                    PARSE_ERR(@3, "Polyphonic variables must only be declared either as integer or real number type.");
+                } else if (expr->exprType() == STRING_EXPR) {
+                    if (name[0] != '@')
+                        PARSE_WRN(@3, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", string expression assigned though.").c_str());
+                    StringExprRef strExpr = expr;
+                    String s;
+                    if (qConst) {
+                        if (strExpr->isConstExpr())
+                            s = strExpr->evalStr();
+                        else
+                            PARSE_ERR(@4, (String("Assignment to const string variable '") + name + "' requires const expression.").c_str());
+                        ConstStringVariableRef var = new ConstStringVariable(context, s);
+                        context->vartable[name] = var;
+                    } else {
+                        if (strExpr->isConstExpr()) {
+                            s = strExpr->evalStr();
+                            StringVariableRef var = new StringVariable(context);
+                            context->vartable[name] = var;
+                            $$ = new Assignment(var, new StringLiteral(s));
+                        } else {
+                            StringVariableRef var = new StringVariable(context);
+                            context->vartable[name] = var;
+                            $$ = new Assignment(var, strExpr);
                         }
                     }
-                }
-                if (argsOK) {
-                    if (declType == REAL_EXPR)
-                        context->vartable[name] = new RealArrayVariable(context, size, args);
-                    else
-                        context->vartable[name] = new IntArrayVariable(context, size, args);
+                } else if (expr->exprType() == REAL_EXPR) {
+                    if (name[0] != '~')
+                        PARSE_WRN(@3, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", real number expression assigned though.").c_str());
+                    RealExprRef realExpr = expr;
+                    if (qConst) {
+                        if (!realExpr->isConstExpr()) {
+                            PARSE_ERR(@4, (String("Assignment to const real number variable '") + name + "' requires const expression.").c_str());
+                        }
+                        ConstRealVariableRef var = new ConstRealVariable(
+                            #if defined(__GNUC__) && !defined(__clang__)
+                            (const RealVarDef&) // GCC 8.x requires this cast here (looks like a GCC bug to me); cast would cause an error with clang though
+                            #endif
+                        {
+                            .value = (realExpr->isConstExpr()) ? realExpr->evalReal() : vmfloat(0),
+                            .unitFactor = (realExpr->isConstExpr()) ? realExpr->unitFactor() : VM_NO_FACTOR,
+                            .unitType = realExpr->unitType(),
+                            .isFinal = realExpr->isFinal()
+                        });
+                        context->vartable[name] = var;
+                    } else {
+                        RealVariableRef var = new RealVariable({
+                            .ctx = context,
+                            .unitType = realExpr->unitType(),
+                            .isFinal = realExpr->isFinal()
+                        });
+                        if (realExpr->isConstExpr()) {
+                            $$ = new Assignment(var, new RealLiteral({
+                                .value = realExpr->evalReal(),
+                                .unitFactor = realExpr->unitFactor(),
+                                .unitType = realExpr->unitType(),
+                                .isFinal = realExpr->isFinal()
+                            }));
+                        } else {
+                            $$ = new Assignment(var, realExpr);
+                        }
+                        context->vartable[name] = var;
+                    }
+                } else if (expr->exprType() == INT_EXPR) {
+                    if (name[0] != '$')
+                        PARSE_WRN(@3, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", integer expression assigned though.").c_str());
+                    IntExprRef intExpr = expr;
+                    if (qConst) {
+                        if (!intExpr->isConstExpr()) {
+                            PARSE_ERR(@4, (String("Assignment to const integer variable '") + name + "' requires const expression.").c_str());
+                        }
+                        ConstIntVariableRef var = new ConstIntVariable(
+                            #if defined(__GNUC__) && !defined(__clang__)
+                            (const IntVarDef&) // GCC 8.x requires this cast here (looks like a GCC bug to me); cast would cause an error with clang though
+                            #endif
+                        {
+                            .value = (intExpr->isConstExpr()) ? intExpr->evalInt() : 0,
+                            .unitFactor = (intExpr->isConstExpr()) ? intExpr->unitFactor() : VM_NO_FACTOR,
+                            .unitType = intExpr->unitType(),
+                            .isFinal = intExpr->isFinal()
+                        });
+                        context->vartable[name] = var;
+                    } else {
+                        IntVariableRef var = new IntVariable({
+                            .ctx = context,
+                            .unitType = intExpr->unitType(),
+                            .isFinal = intExpr->isFinal()
+                        });
+                        if (intExpr->isConstExpr()) {
+                            $$ = new Assignment(var, new IntLiteral({
+                                .value = intExpr->evalInt(),
+                                .unitFactor = intExpr->unitFactor(),
+                                .unitType = intExpr->unitType(),
+                                .isFinal = intExpr->isFinal()
+                            }));
+                        } else {
+                            $$ = new Assignment(var, intExpr);
+                        }
+                        context->vartable[name] = var;
+                    }
+                } else if (expr->exprType() == EMPTY_EXPR) {
+                    PARSE_ERR(@4, "Expression does not result in a value.");
+                    $$ = new NoOperation;
+                } else if (isArray(expr->exprType())) {
+                    PARSE_ERR(@3, (String("Variable '") + name + "' declared as scalar type, array expression assigned though.").c_str());
+                    $$ = new NoOperation;
                 }
             }
         }
-        $$ = new NoOperation;
     }
-    | DECLARE CONST_ VARIABLE '[' expr ']' ASSIGNMENT '(' args ')'  {
+    | DECLARE opt_qualifiers VARIABLE '[' expr ']' opt_arr_assignment  {
+        $$ = new NoOperation; // just as default result value
+        const bool qConst      = $2 & QUALIFIER_CONST;
+        const bool qPolyphonic = $2 & QUALIFIER_POLYPHONIC;
         const char* name = $3;
         if (!$5->isConstExpr()) {
             PARSE_ERR(@5, (String("Array variable '") + name + "' must be declared with constant array size.").c_str());
@@ -428,148 +366,104 @@ statement:
             PARSE_ERR(@5, (String("Size of array variable '") + name + "' declared with non integer expression.").c_str());
         } else if (context->variableByName(name)) {
             PARSE_ERR(@3, (String("Redeclaration of variable '") + name + "'.").c_str());
+        } else if (qConst && !$7) {
+            PARSE_ERR(@2, (String("Array variable '") + name + "' declared const without value assignment.").c_str());
+        } else if (qPolyphonic) {
+            PARSE_ERR(@2, (String("Array variable '") + name + "' must not be declared polyphonic.").c_str());
         } else {
             IntExprRef sizeExpr = $5;
-            ArgsRef args = $9;
+            ArgsRef args = $7;
             vmint size = sizeExpr->evalInt();
             if (size <= 0) {
                 PARSE_ERR(@5, (String("Array variable '") + name + "' must be declared with positive array size.").c_str());
-            } else if (args->argsCount() > size) {
-                PARSE_ERR(@9, (String("Array variable '") + name +
-                          "' was declared with size " + ToString(size) +
-                          " but " + ToString(args->argsCount()) +
-                          " values were assigned." ).c_str());
             } else if (sizeExpr->unitType() || sizeExpr->hasUnitFactorNow()) {
                 PARSE_ERR(@5, "Units are not allowed as array size.");
             } else {
                 if (sizeExpr->isFinal())
                     PARSE_WRN(@5, "Final operator '!' is meaningless here.");
-                ExprType_t declType = EMPTY_EXPR;
-                if (name[0] == '%') {
-                    declType = INT_EXPR;
-                } else if (name[0] == '?') {
-                    declType = REAL_EXPR;
-                } else if (name[0] == '$') {
-                    PARSE_ERR(@3, (String("Variable '") + name + "' declaration ambiguous: Use '%' as name prefix for integer arrays instead of '$'.").c_str());
-                } else if (name[0] == '~') {
-                    PARSE_ERR(@3, (String("Variable '") + name + "' declaration ambiguous: Use '?' as name prefix for real number arrays instead of '~'.").c_str());
+                if (!args) {
+                    if (name[0] == '?') {
+                        context->vartable[name] = new RealArrayVariable(context, size);
+                    } else if (name[0] == '%') {
+                        context->vartable[name] = new IntArrayVariable(context, size);
+                    } else {
+                        PARSE_ERR(@3, (String("Variable '") + name + "' declared as unknown array type: use either '%' or '?' instead of '" + String(name).substr(0,1) + "'.").c_str());
+                    }
                 } else {
-                    PARSE_ERR(@3, (String("Variable '") + name + "' declared as unknown array type: use either '%' or '?' instead of '" + String(name).substr(0,1) + "'.").c_str());
-                }
-                bool argsOK = true;
-                if (declType == EMPTY_EXPR) {
-                    argsOK = false;
-                } else {
-                    for (vmint i = 0; i < args->argsCount(); ++i) {
-                        if (args->arg(i)->exprType() != declType) {
-                            PARSE_ERR(
-                                @9,
-                                (String("const array variable '") + name +
-                                "' declared with invalid assignment values. Assigned element " +
-                                ToString(i+1) + " is not an " + typeStr(declType) + " expression.").c_str()
-                            );
-                            argsOK = false;
-                            break;
+                    if (size <= 0) {
+                        PARSE_ERR(@5, (String("Array variable '") + name + "' must be declared with positive array size.").c_str());
+                    } else if (args->argsCount() > size) {
+                        PARSE_ERR(@7, (String("Array variable '") + name +
+                                  "' was declared with size " + ToString(size) +
+                                  " but " + ToString(args->argsCount()) +
+                                  " values were assigned." ).c_str());
+                    } else {
+                        ExprType_t declType = EMPTY_EXPR;
+                        if (name[0] == '%') {
+                            declType = INT_EXPR;
+                        } else if (name[0] == '?') {
+                            declType = REAL_EXPR;
+                        } else if (name[0] == '$') {
+                            PARSE_ERR(@3, (String("Variable '") + name + "' declaration ambiguous: Use '%' as name prefix for integer arrays instead of '$'.").c_str());
+                        } else if (name[0] == '~') {
+                            PARSE_ERR(@3, (String("Variable '") + name + "' declaration ambiguous: Use '?' as name prefix for real number arrays instead of '~'.").c_str());
+                        } else {
+                            PARSE_ERR(@3, (String("Variable '") + name + "' declared as unknown array type: use either '%' or '?' instead of '" + String(name).substr(0,1) + "'.").c_str());
                         }
-                        if (!args->arg(i)->isConstExpr()) {
-                            PARSE_ERR(
-                                @9,
-                                (String("const array variable '") + name +
-                                "' must be defined with const values. Assigned element " +
-                                ToString(i+1) + " is not a const expression though.").c_str()
-                            );
+                        bool argsOK = true;
+                        if (declType == EMPTY_EXPR) {
                             argsOK = false;
-                            break;
-                        } else if (args->arg(i)->asNumber()->unitType()) {
-                            PARSE_ERR(
-                                @9,
-                                (String("const array variable '") + name +
-                                "' declared with invalid assignment values. Assigned element " +
-                                ToString(i+1) + " contains a unit type, only metric prefixes are allowed for arrays.").c_str()
-                            );
-                            argsOK = false;
-                            break;
-                        } else if (args->arg(i)->asNumber()->isFinal()) {
-                            PARSE_ERR(
-                                @9,
-                                (String("const array variable '") + name +
-                                "' declared with invalid assignment values. Assigned element " +
-                                ToString(i+1) + " declared as 'final' value.").c_str()
-                            );
-                            argsOK = false;
-                            break;
+                        } else {
+                            for (vmint i = 0; i < args->argsCount(); ++i) {
+                                if (args->arg(i)->exprType() != declType) {
+                                    PARSE_ERR(
+                                        @7,
+                                        (String("Array variable '") + name +
+                                        "' declared with invalid assignment values. Assigned element " +
+                                        ToString(i+1) + " is not an " + typeStr(declType) + " expression.").c_str()
+                                    );
+                                    argsOK = false;
+                                    break;
+                                } else if (qConst && !args->arg(i)->isConstExpr()) {
+                                    PARSE_ERR(
+                                        @7,
+                                        (String("const array variable '") + name +
+                                        "' must be defined with const values. Assigned element " +
+                                        ToString(i+1) + " is not a const expression though.").c_str()
+                                    );
+                                    argsOK = false;
+                                    break;
+                                } else if (args->arg(i)->asNumber()->unitType()) {
+                                    PARSE_ERR(
+                                        @7,
+                                        (String("Array variable '") + name +
+                                        "' declared with invalid assignment values. Assigned element " +
+                                        ToString(i+1) + " contains a unit type, only metric prefixes are allowed for arrays.").c_str()
+                                    );
+                                    argsOK = false;
+                                    break;
+                                } else if (args->arg(i)->asNumber()->isFinal()) {
+                                    PARSE_ERR(
+                                        @7,
+                                        (String("Array variable '") + name +
+                                        "' declared with invalid assignment values. Assigned element " +
+                                        ToString(i+1) + " declared as 'final' value.").c_str()
+                                    );
+                                    argsOK = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (argsOK) {
+                            if (declType == REAL_EXPR)
+                                context->vartable[name] = new RealArrayVariable(context, size, args, qConst);
+                            else
+                                context->vartable[name] = new IntArrayVariable(context, size, args, qConst);
                         }
                     }
                 }
-                if (argsOK) {
-                    if (declType == REAL_EXPR)
-                        context->vartable[name] = new RealArrayVariable(context, size, args, true);
-                    else
-                        context->vartable[name] = new IntArrayVariable(context, size, args, true);
-                }
             }
         }
-        $$ = new NoOperation;
-    }
-    | DECLARE CONST_ VARIABLE ASSIGNMENT expr  {
-        const char* name = $3;
-        const ExprType_t declType = exprTypeOfVarName(name);
-        if ($5->exprType() == STRING_EXPR) {
-            if (name[0] != '@')
-                PARSE_WRN(@5, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", string expression assigned though.").c_str());
-            String s;
-            StringExprRef expr = $5;
-            if (expr->isConstExpr())
-                s = expr->evalStr();
-            else
-                PARSE_ERR(@5, (String("Assignment to const string variable '") + name + "' requires const expression.").c_str());
-            ConstStringVariableRef var = new ConstStringVariable(context, s);
-            context->vartable[name] = var;
-            //$$ = new Assignment(var, new StringLiteral(s));
-        } else if ($5->exprType() == REAL_EXPR) {
-            if (name[0] != '~')
-                PARSE_WRN(@5, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", real number expression assigned though.").c_str());
-            RealExprRef expr = $5;
-            if (!expr->isConstExpr()) {
-                PARSE_ERR(@5, (String("Assignment to const real number variable '") + name + "' requires const expression.").c_str());
-            }
-            ConstRealVariableRef var = new ConstRealVariable(
-                #if defined(__GNUC__) && !defined(__clang__)
-                (const RealVarDef&) // GCC 8.x requires this cast here (looks like a GCC bug to me); cast would cause an error with clang though
-                #endif
-            { 
-                .value = (expr->isConstExpr()) ? expr->evalReal() : vmfloat(0),
-                .unitFactor = (expr->isConstExpr()) ? expr->unitFactor() : VM_NO_FACTOR,
-                .unitType = expr->unitType(),
-                .isFinal = expr->isFinal()
-            });
-            context->vartable[name] = var;
-            //$$ = new Assignment(var, new IntLiteral(i));
-        } else if ($5->exprType() == INT_EXPR) {
-            if (name[0] != '$')
-                PARSE_WRN(@5, (String("Variable '") + name + "' declared as " + typeStr(declType) + ", integer expression assigned though.").c_str());
-            IntExprRef expr = $5;
-            if (!expr->isConstExpr()) {
-                PARSE_ERR(@5, (String("Assignment to const integer variable '") + name + "' requires const expression.").c_str());
-            }
-            ConstIntVariableRef var = new ConstIntVariable(
-                #if defined(__GNUC__) && !defined(__clang__)
-                (const IntVarDef&) // GCC 8.x requires this cast here (looks like a GCC bug to me); cast would cause an error with clang though
-                #endif
-            {
-                .value = (expr->isConstExpr()) ? expr->evalInt() : 0,
-                .unitFactor = (expr->isConstExpr()) ? expr->unitFactor() : VM_NO_FACTOR,
-                .unitType = expr->unitType(),
-                .isFinal = expr->isFinal()
-            });
-            context->vartable[name] = var;
-            //$$ = new Assignment(var, new IntLiteral(i));
-        } else if ($5->exprType() == EMPTY_EXPR) {
-            PARSE_ERR(@5, "Expression does not result in a value.");
-        } else if (isArray($5->exprType())) {
-            PARSE_ERR(@5, (String("Variable '") + name + "' declared as scalar type, array expression assigned though.").c_str());
-        }
-        $$ = new NoOperation();
     }
     | assignment  {
         $$ = $1;
@@ -793,6 +687,48 @@ args:
 
 arg:
     expr
+
+opt_qualifiers:
+    /* epsilon (empty argument) */  {
+        $$ = QUALIFIER_NONE;
+    }
+    | qualifiers  {
+        $$ = $1;
+    }
+
+qualifiers:
+    qualifier  {
+        $$ = $1;
+    }
+    | qualifiers qualifier  {
+        if ($1 & $2)
+            PARSE_ERR(@2, ("Qualifier '" + qualifierStr($2) + "' must only be listed once.").c_str());
+        $$ = (Qualifier_t) ($1 | $2);
+    }
+
+qualifier:
+    CONST_  {
+        $$ = QUALIFIER_CONST;
+    }
+    | POLYPHONIC  {
+        $$ = QUALIFIER_POLYPHONIC;
+    }
+
+opt_assignment:
+    /* epsilon (empty argument) */  {
+        $$ = ExpressionRef();
+    }
+    | ASSIGNMENT expr  {
+        $$ = $2;
+    }
+
+opt_arr_assignment:
+    /* epsilon (empty argument) */  {
+        $$ = ArgsRef();
+    }
+    | ASSIGNMENT '(' args ')'  {
+        $$ = $3;
+    }
 
 assignment:
     VARIABLE ASSIGNMENT expr  {

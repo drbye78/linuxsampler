@@ -248,6 +248,11 @@ Version SVN trunk (?)
       generalized grammar rules with optional components (i.e. optional value
       assignment and optional variable qualifiers) instead of previous linear
       combinations of grammar rules, which also fixes some edge case.
+    - NKSP language parser: track code block locations also by a) raw byte
+      position in NKSP source code string and b) length of that code block in
+      bytes (along to the already existing code block tracking by line/column);
+      and added appropriate new members to public C++ API classes like
+      'firstByte' and 'lengthBytes' to class VMSourceToken and struct CodeBlock.
 
   * test cases:
     - Fixed compiler errors in test cases.

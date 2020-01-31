@@ -56,4 +56,41 @@ struct _YYSTYPE {
 # define YYSTYPE_IS_DECLARED ///< We tell the lexer / parser that we use our own data structure as defined above.
 #endif
 
+// custom Bison location type to support raw byte positions
+struct _YYLTYPE {
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    int first_byte;
+    int length_bytes;
+};
+#define YYLTYPE _YYLTYPE
+#define YYLTYPE_IS_DECLARED 1
+
+// override Bison's default location passing to support raw byte positions
+#define YYLLOC_DEFAULT(Cur, Rhs, N)                         \
+do                                                          \
+  if (N)                                                    \
+    {                                                       \
+      (Cur).first_line   = YYRHSLOC(Rhs, 1).first_line;     \
+      (Cur).first_column = YYRHSLOC(Rhs, 1).first_column;   \
+      (Cur).last_line    = YYRHSLOC(Rhs, N).last_line;      \
+      (Cur).last_column  = YYRHSLOC(Rhs, N).last_column;    \
+      (Cur).first_byte   = YYRHSLOC(Rhs, 1).first_byte;     \
+      (Cur).length_bytes = (YYRHSLOC(Rhs, N).first_byte  -  \
+                            YYRHSLOC(Rhs, 1).first_byte) +  \
+                            YYRHSLOC(Rhs, N).length_bytes;  \
+    }                                                       \
+  else                                                      \
+    {                                                       \
+      (Cur).first_line   = (Cur).last_line   =              \
+        YYRHSLOC(Rhs, 0).last_line;                         \
+      (Cur).first_column = (Cur).last_column =              \
+        YYRHSLOC(Rhs, 0).last_column;                       \
+      (Cur).first_byte   = YYRHSLOC(Rhs, 0).first_byte;     \
+      (Cur).length_bytes = YYRHSLOC(Rhs, 0).length_bytes;   \
+    }                                                       \
+while (0)
+
 #endif // LS_INSTRSCRIPTSPARSER_SHARED_H

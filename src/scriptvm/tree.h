@@ -944,6 +944,7 @@ public:
 
     void* scanner;
     std::istream* is;
+    int nbytes;
     std::vector<ParserIssue> vErrors;
     std::vector<ParserIssue> vWarnings;
     std::vector<ParserIssue> vIssues;
@@ -982,7 +983,7 @@ public:
     ExecContext* execContext;
 
     ParserContext(VMFunctionProvider* parent) :
-        scanner(NULL), is(NULL),
+        scanner(NULL), is(NULL), nbytes(0),
         globalIntVarCount(0), globalRealVarCount(0), globalStrVarCount(0),
         globalUnitFactorCount(0),
         polyphonicIntVarCount(0), polyphonicRealVarCount(0),
@@ -1000,9 +1001,12 @@ public:
     StringVariableRef globalStrVar(const String& name);
     VariableRef variableByName(const String& name);
     StatementsRef userFunctionByName(const String& name);
-    void addErr(int firstLine, int lastLine, int firstColumn, int lastColumn, const char* txt);
-    void addWrn(int firstLine, int lastLine, int firstColumn, int lastColumn, const char* txt);
-    void addPreprocessorComment(int firstLine, int lastLine, int firstColumn, int lastColumn);
+    void addErr(int firstLine, int lastLine, int firstColumn, int lastColumn,
+                int firstByte, int lengthBytes, const char* txt);
+    void addWrn(int firstLine, int lastLine, int firstColumn, int lastColumn,
+                int firstByte, int lengthBytes, const char* txt);
+    void addPreprocessorComment(int firstLine, int lastLine, int firstColumn,
+                                int lastColumn, int firstByte, int lengthBytes);
     void createScanner(std::istream* is);
     void destroyScanner();
     bool setPreprocessorCondition(const char* name);

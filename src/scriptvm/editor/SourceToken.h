@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 Christian Schoenebeck
+ * Copyright (c) 2015-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -43,13 +43,21 @@ public:
         EVENT_HANDLER_NAME // only NKSP language
     };
 
-    SourceToken() : baseType(END_OF_FILE), extType(NO_EXT), line(0), column(0) {
+    SourceToken() : baseType(END_OF_FILE), extType(NO_EXT), line(0), column(0),
+                    offset(0), length(0)
+    {
     }
 
-    SourceToken(BaseType_t t, String s = "") : baseType(t), extType(NO_EXT), txt(s), line(0), column(0) {
+    SourceToken(BaseType_t t, String s = "") : baseType(t), extType(NO_EXT),
+                                               txt(s), line(0), column(0),
+                                               offset(0), length(0)
+    {
     }
 
-    SourceToken(ExtType_t t, String s = "") : baseType(OTHER), extType(t), txt(s), line(0), column(0) {
+    SourceToken(ExtType_t t, String s = "") : baseType(OTHER), extType(t),
+                                              txt(s), line(0), column(0),
+                                              offset(0), length(0)
+    {
         switch (t) {
             case NO_EXT: baseType = OTHER; break;
             case INTEGER_VARIABLE: baseType = VARIABLE_NAME; break;
@@ -66,10 +74,14 @@ public:
     String txt;
     int line;
     int column;
+    int offset;
+    int length;
 
     String text() const { return txt; }
     int firstLine() const { return line; }
     int firstColumn() const { return column; }
+    int firstByte() const { return offset; }
+    int lengthBytes() const { return length; }
 
     // base types
     bool isEOF() const { return baseType == END_OF_FILE; }

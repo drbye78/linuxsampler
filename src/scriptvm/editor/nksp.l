@@ -31,6 +31,8 @@
 #define YY_USER_ACTION               \
     yyextra->line   = yylineno - 1;  \
     yyextra->column = yycolumn;      \
+    yyextra->offset += (int) yyleng; \
+    yyextra->length =  (int) yyleng; \
     yycolumn += yyleng;
 
 using namespace LinuxSampler;

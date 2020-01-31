@@ -1812,7 +1812,10 @@ ParserContext::~ParserContext() {
     }
 }
 
-void ParserContext::addErr(int firstLine, int lastLine, int firstColumn, int lastColumn, const char* txt) {
+void ParserContext::addErr(int firstLine, int lastLine, int firstColumn,
+                           int lastColumn, int firstByte, int lengthBytes,
+                           const char* txt)
+{
     ParserIssue e;
     e.type = PARSER_ERROR;
     e.txt = txt;
@@ -1820,11 +1823,16 @@ void ParserContext::addErr(int firstLine, int lastLine, int firstColumn, int las
     e.lastLine = lastLine;
     e.firstColumn = firstColumn;
     e.lastColumn = lastColumn;
+    e.firstByte = firstByte;
+    e.lengthBytes = lengthBytes;
     vErrors.push_back(e);
     vIssues.push_back(e);
 }
 
-void ParserContext::addWrn(int firstLine, int lastLine, int firstColumn, int lastColumn, const char* txt) {
+void ParserContext::addWrn(int firstLine, int lastLine, int firstColumn,
+                           int lastColumn, int firstByte, int lengthBytes,
+                           const char* txt)
+{
     ParserIssue w;
     w.type = PARSER_WARNING;
     w.txt = txt;
@@ -1832,16 +1840,23 @@ void ParserContext::addWrn(int firstLine, int lastLine, int firstColumn, int las
     w.lastLine = lastLine;
     w.firstColumn = firstColumn;
     w.lastColumn = lastColumn;
+    w.firstByte = firstByte;
+    w.lengthBytes = lengthBytes;
     vWarnings.push_back(w);
     vIssues.push_back(w);
 }
 
-void ParserContext::addPreprocessorComment(int firstLine, int lastLine, int firstColumn, int lastColumn) {
+void ParserContext::addPreprocessorComment(int firstLine, int lastLine,
+                                           int firstColumn, int lastColumn,
+                                           int firstByte, int lengthBytes)
+{
     CodeBlock block;
     block.firstLine = firstLine;
     block.lastLine = lastLine;
     block.firstColumn = firstColumn;
     block.lastColumn = lastColumn;
+    block.firstByte = firstByte;
+    block.lengthBytes = lengthBytes;
     vPreprocessorComments.push_back(block);
 }
 

@@ -23,7 +23,11 @@
     #define scanner context->scanner
     #define PARSE_ERR(loc,txt)  yyerror(&loc, context, txt)
     #define PARSE_WRN(loc,txt)  InstrScript_warning(&loc, context, txt)
-    #define PARSE_DROP(loc)     context->addPreprocessorComment(loc.first_line, loc.last_line, loc.first_column+1, loc.last_column+1);
+    #define PARSE_DROP(loc) \
+        context->addPreprocessorComment( \
+            loc.first_line, loc.last_line, loc.first_column+1, \
+            loc.last_column+1, loc.first_byte, loc.length_bytes \
+        );
     #define yytnamerr(res,str)  InstrScript_tnamerr(res, str)
 %}
 
@@ -1302,12 +1306,16 @@ mul_expr:
 
 void InstrScript_error(YYLTYPE* locp, LinuxSampler::ParserContext* context, const char* err) {
     //fprintf(stderr, "%d: %s\n", locp->first_line, err);
-    context->addErr(locp->first_line, locp->last_line, locp->first_column+1, locp->last_column+1, err);
+    context->addErr(locp->first_line, locp->last_line, locp->first_column+1,
+                    locp->last_column+1, locp->first_byte, locp->length_bytes,
+                    err);
 }
 
 void InstrScript_warning(YYLTYPE* locp, LinuxSampler::ParserContext* context, const char* txt) {
     //fprintf(stderr, "WRN %d: %s\n", locp->first_line, txt);
-    context->addWrn(locp->first_line, locp->last_line, locp->first_column+1, locp->last_column+1, txt);
+    context->addWrn(locp->first_line, locp->last_line, locp->first_column+1,
+                    locp->last_column+1, locp->first_byte, locp->length_bytes,
+                    txt);
 }
 
 /// Custom implementation of yytnamerr() to ensure quotation is always stripped from token names before printing them to error messages.

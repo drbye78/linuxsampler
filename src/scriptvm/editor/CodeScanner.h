@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 Christian Schoenebeck
+ * Copyright (c) 2015-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -24,6 +24,8 @@ public:
     SourceToken token;
     int line;
     int column;
+    int offset;
+    int length;
 
     CodeScanner(std::istream* is);
     virtual ~CodeScanner();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 Christian Schoenebeck
+ * Copyright (c) 2015-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -13,7 +13,7 @@
 namespace LinuxSampler {
 
 CodeScanner::CodeScanner(std::istream* _is)
-    : scanner(NULL), is(_is), line(0), column(0)
+    : scanner(NULL), is(_is), line(0), column(0), offset(0), length(0)
 {
 }
 
@@ -24,6 +24,8 @@ SourceToken CodeScanner::processOneToken() {
     processScanner();
     token.line   = line;
     token.column = column;
+    token.offset = offset;
+    token.length = length;
     return token;
 }
 

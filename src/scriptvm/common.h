@@ -1734,6 +1734,8 @@ namespace LinuxSampler {
         int lastLine; ///< The last line number of this code block within the script.
         int firstColumn; ///< The first column of this code block within the script (indexed with 1 being the very first column).
         int lastColumn; ///< The last column of this code block within the script.
+        int firstByte; ///< The first byte of this code block within the script.
+        int lengthBytes; ///< Length of this code block within the script (in bytes).
     };
 
     /**
@@ -1911,6 +1913,8 @@ namespace LinuxSampler {
         // position of token in script
         int firstLine() const; ///< First line this source token is located at in script source code (indexed with 0 being the very first line). Most source code tokens are not spanning over multiple lines, the only current exception are comments, in the latter case you need to process text() to get the last line and last column for the comment.
         int firstColumn() const; ///< First column on the first line this source token is located at in script source code (indexed with 0 being the very first column). To get the length of this token use text().length().
+        int firstByte() const; ///< First raw byte position of this source token in script source code.
+        int lengthBytes() const; ///< Raw byte length of this source token (in bytes).
 
         // base types
         bool isEOF() const; ///< Returns true in case this source token represents the end of the source code file.

@@ -25,6 +25,7 @@
 #include "../common/global.h"
 #include "../common/Ref.h"
 #include "../common/ArrayList.h"
+#include "../common/optional.h"
 #include "common.h"
 
 namespace LinuxSampler {
@@ -45,6 +46,12 @@ enum Qualifier_t {
     QUALIFIER_NONE = 0,
     QUALIFIER_CONST = 1,
     QUALIFIER_POLYPHONIC = (1<<1),
+    QUALIFIER_PATCH = (1<<2),
+};
+
+struct PatchVarBlock {
+    CodeBlock nameBlock;
+    optional<CodeBlock> exprBlock;
 };
 
 /**
@@ -81,6 +88,7 @@ inline String qualifierStr(Qualifier_t qualifier) {
         case QUALIFIER_NONE:          return "none";
         case QUALIFIER_CONST:         return "const";
         case QUALIFIER_POLYPHONIC:    return "polyphonic";
+        case QUALIFIER_PATCH:         return "patch";
     }
     return "unknown";
 }
@@ -949,6 +957,7 @@ public:
     std::vector<ParserIssue> vWarnings;
     std::vector<ParserIssue> vIssues;
     std::vector<CodeBlock>   vPreprocessorComments;
+    std::map<String,PatchVarBlock> patchVars;
 
     std::set<String> builtinPreprocessorConditions;
     std::set<String> userPreprocessorConditions;

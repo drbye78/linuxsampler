@@ -754,7 +754,9 @@ namespace LinuxSampler { namespace gig {
     std::set<EngineChannel*> InstrumentResourceManager::GetEngineChannelsUsingScriptSourceCode(const String& code, bool bLock) {
         if (bLock) Lock();
         std::set<EngineChannel*> result;
-        std::set<InstrumentScriptConsumer*> consumers = scripts.ConsumersOf(code);
+        std::set<InstrumentScriptConsumer*> consumers = scripts.ConsumersOf({
+            .code = code, .wildcardPatchVars = true
+        });
         std::set<InstrumentScriptConsumer*>::iterator iter = consumers.begin();
         std::set<InstrumentScriptConsumer*>::iterator end  = consumers.end();
         for (; iter != end; ++iter) {

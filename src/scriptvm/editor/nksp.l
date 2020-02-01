@@ -266,7 +266,7 @@ end {
     return yyextra->token.baseType;
 }
 
-declare|while|if|or|and|not|else|case|select|to|mod|const|polyphonic|function|call|synchronized {
+declare|while|if|or|and|not|else|case|select|to|mod|const|polyphonic|function|call|synchronized|patch {
     yyextra->token = KeywordToken(yytext);
     return yyextra->token.baseType;
 }

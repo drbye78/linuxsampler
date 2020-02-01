@@ -229,14 +229,75 @@ namespace LinuxSampler {
         delete m_varPerfTimer;
     }
 
-    VMParserContext* ScriptVM::loadScript(const String& s) {
-        std::istringstream iss(s);
-        return loadScript(&iss);
+    VMParserContext* ScriptVM::loadScript(std::istream* is,
+                                          const std::map<String,String>& patchVars,
+                                          std::map<String,String>* patchVarsDef)
+    {
+        std::string s(std::istreambuf_iterator<char>(*is),{});
+        return loadScript(s, patchVars, patchVarsDef);
     }
-    
-    VMParserContext* ScriptVM::loadScript(std::istream* is) {
+
+    VMParserContext* ScriptVM::loadScript(const String& s,
+                                          const std::map<String,String>& patchVars,
+                                          std::map<String,String>* patchVarsDef)
+    {
+        ParserContext* context = (ParserContext*) loadScriptOnePass(s);
+        if (!context->vErrors.empty())
+            return context;
+
+        if (!context->patchVars.empty() && (!patchVars.empty() || patchVarsDef)) {
+            String s2 = s;
+
+            typedef std::pair<String,PatchVarBlock> Var;
+            std::map<int,Var> varsByPos;
+            for (const Var& var : context->patchVars) {
+                const String& name = var.first;
+                const PatchVarBlock& block = var.second;
+                const int pos =
+                    (block.exprBlock) ?
+                        block.exprBlock->firstByte :
+                        block.nameBlock.firstByte + block.nameBlock.lengthBytes;
+                varsByPos[pos] = var;
+                if (patchVarsDef) {
+                    (*patchVarsDef)[name] =
+                        (block.exprBlock) ?
+                            s.substr(pos, block.exprBlock->lengthBytes) : "";
+                }
+            }
+
+            if (patchVars.empty())
+                return context;
+
+            for (std::map<int,Var>::reverse_iterator it = varsByPos.rbegin();
+                 it != varsByPos.rend(); ++it)
+            {
+                const String name = it->second.first;
+                if (patchVars.find(name) != patchVars.end()) {
+                    const int pos = it->first;
+                    const PatchVarBlock& block = it->second.second;
+                    const int length =
+                        (block.exprBlock) ? block.exprBlock->lengthBytes : 0;
+                    String value;
+                    if (!length)
+                        value += " := ";
+                    value += patchVars.find(name)->second;
+                    s2.replace(pos, length, value);
+                }
+            }
+
+            if (s2 != s) {
+                delete context;
+                context = (ParserContext*) loadScriptOnePass(s2);
+            }
+        }
+
+        return context;
+    }
+
+    VMParserContext* ScriptVM::loadScriptOnePass(const String& s) {
         ParserContext* context = new ParserContext(this);
         //printf("parserCtx=0x%lx\n", (uint64_t)context);
+        std::istringstream iss(s);
 
         context->registerBuiltInConstIntVariables( builtInConstIntVariables() );
         context->registerBuiltInConstRealVariables( builtInConstRealVariables() );
@@ -244,7 +305,7 @@ namespace LinuxSampler {
         context->registerBuiltInIntArrayVariables( builtInIntArrayVariables() );
         context->registerBuiltInDynVariables( builtInDynamicVariables() );
 
-        context->createScanner(is);
+        context->createScanner(&iss);
 
         InstrScript_parse(context);
         dmsg(2,("Allocating %" PRId64 " bytes of global int VM memory.\n", int64_t(context->globalIntVarCount * sizeof(vmint))));

@@ -28,6 +28,16 @@
             loc.first_line, loc.last_line, loc.first_column+1, \
             loc.last_column+1, loc.first_byte, loc.length_bytes \
         );
+    #define CODE_BLOCK(loc) { \
+        .firstLine = loc.first_line, .lastLine = loc.last_line, \
+        .firstColumn = loc.first_column+1, .lastColumn = loc.last_column+1, \
+        .firstByte = loc.first_byte, .lengthBytes = loc.length_bytes \
+    }
+    #define ASSIGNED_EXPR_BLOCK(loc) { \
+        .firstLine = loc.first_line, .lastLine = loc.last_line, \
+        .firstColumn = loc.first_column+3, .lastColumn = loc.last_column+1, \
+        .firstByte = loc.first_byte+2, .lengthBytes = loc.length_bytes-2 \
+    }
     #define yytnamerr(res,str)  InstrScript_tnamerr(res, str)
 %}
 
@@ -61,6 +71,7 @@
 %token ASSIGNMENT "operator ':='"
 %token CONST_ "keyword 'const'"
 %token POLYPHONIC "keyword 'polyphonic'"
+%token PATCH "keyword 'patch'"
 %token WHILE "keyword 'while'"
 %token SYNCHRONIZED "keyword 'synchronized'"
 %token IF "keyword 'if'"
@@ -205,10 +216,13 @@ statement:
         $$ = new NoOperation; // just as default result value
         const bool qConst      = $2 & QUALIFIER_CONST;
         const bool qPolyphonic = $2 & QUALIFIER_POLYPHONIC;
+        const bool qPatch      = $2 & QUALIFIER_PATCH;
         const char* name = $3;
         ExpressionRef expr = $4;
         //printf("declared var '%s'\n", name);
         const ExprType_t declType = exprTypeOfVarName(name);
+        if (qPatch)
+            context->patchVars[name].nameBlock = CODE_BLOCK(@3);
         if (context->variableByName(name)) {
             PARSE_ERR(@3, (String("Redeclaration of variable '") + name + "'.").c_str());
         } else if (qConst && !expr) {
@@ -249,6 +263,8 @@ statement:
                     }
                 }
             } else {
+                if (qPatch)
+                    context->patchVars[name].exprBlock = ASSIGNED_EXPR_BLOCK(@4);
                 if (qPolyphonic && !isNumber(expr->exprType())) {
                     PARSE_ERR(@3, "Polyphonic variables must only be declared either as integer or real number type.");
                 } else if (expr->exprType() == STRING_EXPR) {
@@ -363,7 +379,10 @@ statement:
         $$ = new NoOperation; // just as default result value
         const bool qConst      = $2 & QUALIFIER_CONST;
         const bool qPolyphonic = $2 & QUALIFIER_POLYPHONIC;
+        const bool qPatch      = $2 & QUALIFIER_PATCH;
         const char* name = $3;
+        if (qPatch)
+            context->patchVars[name].nameBlock = CODE_BLOCK(@3);
         if (!$5->isConstExpr()) {
             PARSE_ERR(@5, (String("Array variable '") + name + "' must be declared with constant array size.").c_str());
         } else if ($5->exprType() != INT_EXPR) {
@@ -394,6 +413,8 @@ statement:
                         PARSE_ERR(@3, (String("Variable '") + name + "' declared as unknown array type: use either '%' or '?' instead of '" + String(name).substr(0,1) + "'.").c_str());
                     }
                 } else {
+                    if (qPatch)
+                        context->patchVars[name].exprBlock = ASSIGNED_EXPR_BLOCK(@7);
                     if (size <= 0) {
                         PARSE_ERR(@5, (String("Array variable '") + name + "' must be declared with positive array size.").c_str());
                     } else if (args->argsCount() > size) {
@@ -716,6 +737,9 @@ qualifier:
     }
     | POLYPHONIC  {
         $$ = QUALIFIER_POLYPHONIC;
+    }
+    | PATCH  {
+        $$ = QUALIFIER_PATCH;
     }
 
 opt_assignment:

@@ -372,6 +372,7 @@ UNIT     (s|(Hz)|B)
 ">=" return GE;
 "const" return CONST_; // note: "CONST" is already defined for C/C++ compilers on Windows by default
 "polyphonic" return POLYPHONIC;
+"patch" return PATCH;
 "mod" return MOD;
 "function" return FUNCTION;
 "call" return CALL;

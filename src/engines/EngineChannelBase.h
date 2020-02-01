@@ -3,9 +3,9 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2008 Christian Schoenebeck                         *
- *   Copyright (C) 2009-2012 Christian Schoenebeck and Grigor Iliev        *
- *   Copyright (C) 2012-2017 Christian Schoenebeck and Andreas Persson     *
+ *   Copyright (C) 2005-2020 Christian Schoenebeck                         *
+ *   Copyright (C) 2009-2012 Grigor Iliev                                  *
+ *   Copyright (C) 2012-2017 Andreas Persson                               *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -545,11 +545,14 @@ namespace LinuxSampler {
              * for the upcoming instrument change.
              *
              * @param text - source code of script
+             * @param patchVars - 'patch' variables being overridden by instrument
              */
-            void LoadInstrumentScript(const String& text) {
+            void LoadInstrumentScript(const String& text,
+                                      const std::map<String,String>& patchVars)
+            {
                 InstrumentChangeCmd<R, I>& cmd = InstrumentChangeCommand.GetConfigForUpdate();
                 // load the new script
-                cmd.pScript->load(text);
+                cmd.pScript->load(text, patchVars);
             }
 
             /**

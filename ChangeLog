@@ -253,6 +253,9 @@ Version SVN trunk (?)
       bytes (along to the already existing code block tracking by line/column);
       and added appropriate new members to public C++ API classes like
       'firstByte' and 'lengthBytes' to class VMSourceToken and struct CodeBlock.
+    - NKSP language: Added support for 'patch' variable qualifier (capture their
+      locations and allow replacement of their assignment expression via VM C++
+      API).
 
   * test cases:
     - Fixed compiler errors in test cases.
@@ -301,6 +304,9 @@ Version SVN trunk (?)
     - If minimum cutoff is defined, remap cutoff controller CC values to really
       span the entire possible cutoff range (and avoiding a dead controller
       zone).
+    - Implemented support for loading instrument scripts with 'patch' variables
+      (by patching these script variables with potentially overridden ones by
+      gig Instrument).
 
   * SFZ format engine:
     - Fixed support for regions with loccN/hiccN conditions on more than one

@@ -3,9 +3,9 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2009 Christian Schoenebeck                         *
- *   Copyright (C) 2009 - 2012 Christian Schoenebeck and Grigor Iliev      *
- *   Copyright (C) 2012 - 2016 Christian Schoenebeck and Andreas Persson   *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
+ *   Copyright (C) 2009 - 2012 Grigor Iliev                                *
+ *   Copyright (C) 2012 - 2016 Andreas Persson                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -132,7 +132,8 @@ namespace LinuxSampler { namespace sfz {
             ::sfz::Script* script = (!newInstrument->scripts.empty()) ? &newInstrument->scripts[0] : NULL;
             if (script) {
                 String sourceCode = script->GetSourceCode();
-                LoadInstrumentScript(sourceCode);
+                std::map<String,String> patchVars; //TODO: we need to invent some new sfz opcode(s) for 'patch' script variables
+                LoadInstrumentScript(sourceCode, patchVars);
             }
         }
         catch (InstrumentManagerException e) {

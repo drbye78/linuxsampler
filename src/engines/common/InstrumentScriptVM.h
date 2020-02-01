@@ -238,7 +238,7 @@ namespace LinuxSampler {
         InstrumentScript(AbstractEngineChannel* pEngineChannel);
         ~InstrumentScript();
 
-        void load(const String& text);
+        void load(const String& text, const std::map<String,String>& patchVars);
         void unload();
         void resetAll();
         void resetEvents();

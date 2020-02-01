@@ -88,8 +88,11 @@ namespace LinuxSampler {
      * channels.
      *
      * @param text - source code of script
+     * @param patchVars - 'patch' variables being overridden by instrument
      */
-    void InstrumentScript::load(const String& text) {
+    void InstrumentScript::load(const String& text,
+                                const std::map<String,String>& patchVars)
+    {
         dmsg(1,("Loading real-time instrument script ... "));
 
         // hand back old script reference and VM execution contexts
@@ -102,7 +105,9 @@ namespace LinuxSampler {
             dynamic_cast<AbstractInstrumentManager*>(pEngineChannel->pEngine->GetInstrumentManager());
 
         // get new script reference
-        parserContext = pManager->scripts.Borrow(text, pEngineChannel);
+        parserContext = pManager->scripts.Borrow(
+            { .code = text, .patchVars = patchVars }, pEngineChannel
+        );
         if (!parserContext->errors().empty()) {
             std::vector<ParserIssue> errors = parserContext->errors();
             std::cerr << "[ScriptVM] Could not load instrument script, there were "

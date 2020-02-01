@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Christian Schoenebeck
+ * Copyright (c) 2014 - 2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -13,9 +13,9 @@
 
 namespace LinuxSampler {
 
-    VMParserContext* AbstractInstrumentManager::ScriptResourceManager::Create(String Key, InstrumentScriptConsumer* pConsumer, void*& pArg) {
+    VMParserContext* AbstractInstrumentManager::ScriptResourceManager::Create(ScriptKey key, InstrumentScriptConsumer* pConsumer, void*& pArg) {
         AbstractEngineChannel* pEngineChannel = dynamic_cast<AbstractEngineChannel*>(pConsumer);
-        return pEngineChannel->pEngine->pScriptVM->loadScript(Key);
+        return pEngineChannel->pEngine->pScriptVM->loadScript(key.code, key.patchVars);
     }
 
     void AbstractInstrumentManager::ScriptResourceManager::Destroy(VMParserContext* pResource, void* pArg) {

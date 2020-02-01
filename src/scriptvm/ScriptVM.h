@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -69,10 +69,43 @@ namespace LinuxSampler {
          * It is your responsibility to free the returned VMParserContext
          * object once you don't need it anymore.
          *
+         * The NKSP language supports so called 'patch' variables, which are
+         * declared by the dedicated keyword 'patch' (as variable qualifier) in
+         * real-time instrument scripts, like e.g.:
+         * @code
+         * on init
+         *   declare patch ~foo := 0.435
+         * end on
+         * @endcode
+         * These 'patch' variables allow to override their initial value (i.e.
+         * on a per instrument basis). In the example above, the script variable
+         * @c ~foo would be initialized with value @c 0.435 by default. However
+         * by simply passing an appropriate key-value pair with argument
+         * @p patchVars when calling this method, the NKSP parser will replace
+         * that default initialization value by the passed replacement value.
+         * So key of the optional @p patchVars map argument is the ('patch')
+         * variable name to be patched, and value is the replacement
+         * initialization value for the respective variable. You can see this as
+         * kind of preprocessor mechanism of the NKSP parser, so you are not
+         * limited to simply replace a scalar value with a different scalar
+         * value, you can actually replace any complex default initialization
+         * expression with a new (potentially complex) replacement expression,
+         * e.g. including function calls, formulas, etc.
+         *
+         * The optional 3rd argument @p patchVarsDef allows you to retrieve the
+         * default initialization value(s) of all 'patch' variables declared in
+         * the passed script itself. This is useful for instrument editors.
+         *
          * @param s - entire source code of the script to be loaded
+         * @param patchVars - (optional) replacement value for patch variables
+         * @param patchVarsDef - (optional) output of original values of patch
+         *                       variables
          * @returns parsed representation of the script
          */
-        VMParserContext* loadScript(const String& s);
+        VMParserContext* loadScript(const String& s,
+                                    const std::map<String,String>& patchVars =
+                                          std::map<String,String>(),
+                                    std::map<String,String>* patchVarsDef = NULL);
 
         /**
          * Same as above's loadScript() method, but this one reads the script's
@@ -80,9 +113,15 @@ namespace LinuxSampler {
          *
          * @param is - input stream from which the entire source code of the
          *             script is to be read and loaded from
+         * @param patchVars - (optional) replacement value for patch variables
+         * @param patchVarsDef - (optional) output of original values of patch
+         *                       variables
          * @returns parsed representation of the script
          */
-        VMParserContext* loadScript(std::istream* is);
+        VMParserContext* loadScript(std::istream* is,
+                                    const std::map<String,String>& patchVars =
+                                          std::map<String,String>(),
+                                    std::map<String,String>* patchVarsDef = NULL);
 
         /**
          * Parses a script's source code (passed as argument @a s to this
@@ -312,6 +351,8 @@ namespace LinuxSampler {
         VMParserContext* currentVMParserContext(); //TODO: should be protected (only usable during exec() calls, intended only for VMFunctions)
         VMExecContext* currentVMExecContext(); //TODO: should be protected (only usable during exec() calls, intended only for VMFunctions)
 
+    private:
+        VMParserContext* loadScriptOnePass(const String& s);
     protected:
         VMEventHandler* m_eventHandler;
         ParserContext* m_parserContext;

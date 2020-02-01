@@ -3,9 +3,9 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003,2004 by Benno Senoner and Christian Schoenebeck    *
- *   Copyright (C) 2005-2008 Christian Schoenebeck                         *
- *   Copyright (C) 2009 - 2012 Christian Schoenebeck and Grigor Iliev      *
- *   Copyright (C) 2012 - 2016 Christian Schoenebeck and Andreas Persson   *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
+ *   Copyright (C) 2009 - 2012 Grigor Iliev                                *
+ *   Copyright (C) 2012 - 2016 Andreas Persson                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -118,7 +118,8 @@ namespace LinuxSampler { namespace gig {
             ::gig::Script* script = newInstrument->GetScriptOfSlot(0);
             if (script) {
                 String sourceCode = script->GetScriptAsText();
-                LoadInstrumentScript(sourceCode);
+                std::map<String,String> patchVars = newInstrument->GetScriptPatchVariables(0);
+                LoadInstrumentScript(sourceCode, patchVars);
             }
             CurrentGigScript = script;
         }

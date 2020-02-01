@@ -755,7 +755,9 @@ namespace LinuxSampler { namespace gig {
         if (bLock) Lock();
         std::set<EngineChannel*> result;
         std::set<InstrumentScriptConsumer*> consumers = scripts.ConsumersOf({
-            .code = code, .wildcardPatchVars = true
+            .code = code,
+            .patchVars = std::map<String,String>(), // just required for GCC
+            .wildcardPatchVars = true
         });
         std::set<InstrumentScriptConsumer*>::iterator iter = consumers.begin();
         std::set<InstrumentScriptConsumer*>::iterator end  = consumers.end();

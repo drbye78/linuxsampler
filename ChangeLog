@@ -51,6 +51,8 @@ Version SVN trunk (?)
       instrument editor.
     - Fixed playing noise at the end of a disk stream under certain conditions.
     - Fixed potential crash with high pitch at end of RAM playback.
+    - Added configure checks whether C++ compiler supports so called
+      'designated initializers'.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

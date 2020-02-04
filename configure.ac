@@ -3,7 +3,7 @@
 
 m4_define(linuxsampler_release_major, 2)
 m4_define(linuxsampler_release_minor, 1)
-m4_define(linuxsampler_release_build, 1.svn46)
+m4_define(linuxsampler_release_build, 1.svn47)
 
 
 AC_INIT([linuxsampler],[linuxsampler_release_major.linuxsampler_release_minor.linuxsampler_release_build])
@@ -192,6 +192,102 @@ if test "$config_check_nptl_bug" = "yes"; then
     ])
 else
     echo "NPTL glibc bug check disabled"
+fi
+
+
+# check whether C++ compiler supports "designated initializers"
+echo -n "Checking whether C++ compiler supports designated initializers (partly)... "
+AC_LANG_PUSH([C++])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+    #include <stdlib.h>
+    struct Foo {
+        int   a;
+        float b;
+        bool  c;
+        char  d;
+    };
+    static void bar(Foo o) {
+    }
+    int main() {
+        bar({
+          .a = 2,
+          .b = 4.3f,
+          .c = true,
+          .d = 'z'
+        });
+        return 0;
+    }
+    ]])],
+    [cxx_designated_init_partly="yes"],
+    [cxx_designated_init_partly="no"]
+)
+AC_LANG_POP([C++])
+if test $cxx_designated_init_partly = "yes"; then
+    echo "yes"
+else
+    echo "NO"
+    echo '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+    echo '!                                                             !'
+    echo '! ERROR: Selected C++ compiler does not support designated    !'
+    echo '! initializers at all, not even partly!                       !'
+    echo '!                                                             !'
+    echo '! Please either update your C++ compiler or select a          !'
+    echo '! different compiler (e.g. GCC >= 8 or clang >= 5). If you    !'
+    echo '! have several C++ compilers installed on your machine, you   !'
+    echo '! can easily select a different compiler by environment       !'
+    echo '! variable, e.g. to compile with clang instead:               !'
+    echo '!                                                             !'
+    echo '! CXX=clang++ CC=clang ./configure && make                    !'
+    echo '!                                                             !'
+    echo '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+    exit -1
+fi
+echo -n "Checking whether C++ compiler fully supports designated initializers... "
+AC_LANG_PUSH([C++])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+    #include <stdlib.h>
+    struct Foo {
+        int   a;
+        float b;
+        bool  c;
+        char  d;
+    };
+    static void bar(Foo o) {
+    }
+    int main() {
+        bar({
+          .d = 'z',
+          .a = 2
+        });
+        return 0;
+    }
+    ]])],
+    [cxx_designated_init_fully="yes"],
+    [cxx_designated_init_fully="no"]
+)
+AC_LANG_POP([C++])
+if test $cxx_designated_init_fully = "yes"; then
+    echo "yes"
+else
+    echo 'NO'
+    echo '***************************************************************'
+    echo '*                                                             *'
+    echo '* WARNING: Selected C++ compiler does not fully support       *'
+    echo '* designated initializers (only partly)!                      *'
+    echo '*                                                             *'
+    echo '* You will be able to compile LinuxSampler, but you will not  *'
+    echo '* be able to compile the test cases. Consider updating your   *'
+    echo '* C++ compiler or switching to a different compiler. Chances  *'
+    echo '* are that LinuxSampler will soon no longer support your      *'
+    echo '* compiler.                                                   *'
+    echo '*                                                             *'
+    echo '* If you have several C++ compilers installed on your machine,*'
+    echo '* you can easily select a different compiler by environment   *'
+    echo '* variable, e.g. to compile with clang instead:               *'
+    echo '*                                                             *'
+    echo '* CXX=clang++ CC=clang ./configure && make                    *'
+    echo '*                                                             *'
+    echo '***************************************************************'
 fi
 
 

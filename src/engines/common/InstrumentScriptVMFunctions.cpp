@@ -1215,7 +1215,9 @@ namespace LinuxSampler {
             attack = 0;
         }
         const float fAttack =
-            (unit) ? attack : float(attack) / float(VM_EG_PAR_MAX_VALUE);
+            (unit) ?
+                float(attack) / 1000000.f /* us -> s */ :
+                float(attack) / float(VM_EG_PAR_MAX_VALUE);
 
         AbstractEngineChannel* pEngineChannel =
             static_cast<AbstractEngineChannel*>(m_vm->m_event->cause.pEngineChannel);
@@ -1345,7 +1347,9 @@ namespace LinuxSampler {
             decay = 0;
         }
         const float fDecay =
-            (unit) ? decay : float(decay) / float(VM_EG_PAR_MAX_VALUE);
+            (unit) ?
+                float(decay) / 1000000.f /* us -> s */ :
+                float(decay) / float(VM_EG_PAR_MAX_VALUE);
 
         AbstractEngineChannel* pEngineChannel =
             static_cast<AbstractEngineChannel*>(m_vm->m_event->cause.pEngineChannel);
@@ -1475,7 +1479,9 @@ namespace LinuxSampler {
             release = 0;
         }
         const float fRelease =
-            (unit) ? release : float(release) / float(VM_EG_PAR_MAX_VALUE);
+            (unit) ?
+                float(release) / 1000000.f /* us -> s */ :
+                float(release) / float(VM_EG_PAR_MAX_VALUE);
 
         AbstractEngineChannel* pEngineChannel =
             static_cast<AbstractEngineChannel*>(m_vm->m_event->cause.pEngineChannel);

@@ -258,6 +258,8 @@ Version SVN trunk (?)
     - NKSP language: Added support for 'patch' variable qualifier (capture their
       locations and allow replacement of their assignment expression via VM C++
       API).
+    - Fixed incorrect EG times if standard measuring unit was passed to built-in
+      functions "change_attack()", "change_decay()" or "change_release()".
 
   * test cases:
     - Fixed compiler errors in test cases.

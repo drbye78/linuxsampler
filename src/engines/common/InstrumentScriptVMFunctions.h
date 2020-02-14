@@ -242,7 +242,8 @@ namespace LinuxSampler {
     protected:
         InstrumentScriptVM* m_vm;
     };
-    
+
+    //TODO: Derive from generalized, shared template class VMChangeSynthParamFunction instead (like e.g. change_cutoff_attack() implementation below already does).
     class InstrumentScriptVMFunction_change_attack FINAL : public VMEmptyResultFunction {
         using Super = VMEmptyResultFunction; // just an alias for the super class
     public:
@@ -260,6 +261,7 @@ namespace LinuxSampler {
         InstrumentScriptVM* m_vm;
     };
 
+    //TODO: Derive from generalized, shared template class VMChangeSynthParamFunction instead (like e.g. change_cutoff_decay() implementation below already does).
     class InstrumentScriptVMFunction_change_decay FINAL : public VMEmptyResultFunction {
         using Super = VMEmptyResultFunction; // just an alias for the super class
     public:
@@ -276,7 +278,8 @@ namespace LinuxSampler {
     protected:
         InstrumentScriptVM* m_vm;
     };
-    
+
+    //TODO: Derive from generalized, shared template class VMChangeSynthParamFunction instead (like e.g. change_cutoff_release() implementation below already does).
     class InstrumentScriptVMFunction_change_release FINAL : public VMEmptyResultFunction {
         using Super = VMEmptyResultFunction; // just an alias for the super class
     public:

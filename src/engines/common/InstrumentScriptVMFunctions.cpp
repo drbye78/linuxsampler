@@ -13,7 +13,7 @@
 #include "../../common/global_private.h"
 
 namespace LinuxSampler {
-    
+
     // play_note() function
 
     InstrumentScriptVMFunction_play_note::InstrumentScriptVMFunction_play_note(InstrumentScriptVM* parent)
@@ -1059,7 +1059,7 @@ namespace LinuxSampler {
     }
 
     // change_reso() function
-    
+
     InstrumentScriptVMFunction_change_reso::InstrumentScriptVMFunction_change_reso(InstrumentScriptVM* parent)
         : m_vm(parent)
     {
@@ -1152,8 +1152,12 @@ namespace LinuxSampler {
 
         return successResult();
     }
-    
+
     // change_attack() function
+    //
+    //TODO: Derive from generalized, shared template class
+    // VMChangeSynthParamFunction instead (like e.g. change_cutoff_attack()
+    // implementation below already does) to ease maintenance.
 
     InstrumentScriptVMFunction_change_attack::InstrumentScriptVMFunction_change_attack(InstrumentScriptVM* parent)
         : m_vm(parent)
@@ -1286,7 +1290,11 @@ namespace LinuxSampler {
     }
 
     // change_decay() function
-    
+    //
+    //TODO: Derive from generalized, shared template class
+    // VMChangeSynthParamFunction instead (like e.g. change_cutoff_decay()
+    // implementation below already does) to ease maintenance.
+
     InstrumentScriptVMFunction_change_decay::InstrumentScriptVMFunction_change_decay(InstrumentScriptVM* parent)
         : m_vm(parent)
     {
@@ -1418,7 +1426,11 @@ namespace LinuxSampler {
     }
 
     // change_release() function
-    
+    //
+    //TODO: Derive from generalized, shared template class
+    // VMChangeSynthParamFunction instead (like e.g. change_cutoff_release()
+    // implementation below already does) to ease maintenance.
+
     InstrumentScriptVMFunction_change_release::InstrumentScriptVMFunction_change_release(InstrumentScriptVM* parent)
         : m_vm(parent)
     {
@@ -2314,7 +2326,7 @@ namespace LinuxSampler {
                     e.Type = Event::type_kill_note;
                     e.Param.Note.ID = id.noteID();
                     e.Param.Note.Key = pNote->hostKey;
-                    
+
                     pEngineChannel->ScheduleEventMicroSec(&e, duration + 1);
                 }
             }
@@ -2648,7 +2660,7 @@ namespace LinuxSampler {
 
     InstrumentScriptVMFunction_wait::InstrumentScriptVMFunction_wait(InstrumentScriptVM* parent)
         : CoreVMFunction_wait(parent)
-    {    
+    {
     }
 
     VMFnResult* InstrumentScriptVMFunction_wait::exec(VMFnArgs* args) {
@@ -2664,7 +2676,7 @@ namespace LinuxSampler {
 
     InstrumentScriptVMFunction_stop_wait::InstrumentScriptVMFunction_stop_wait(InstrumentScriptVM* parent)
         : m_vm(parent)
-    {    
+    {
     }
 
     VMFnResult* InstrumentScriptVMFunction_stop_wait::exec(VMFnArgs* args) {

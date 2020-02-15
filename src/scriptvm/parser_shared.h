@@ -93,4 +93,23 @@ do                                                          \
     }                                                       \
 while (0)
 
+// Force YYCOPY() to use copy by value.
+//
+// By default YYCOPY() is using __builtin_memcpy, which is slightly problematic
+// with our YYSTYPE (see above) since it has dynamic objects as member variables
+// and hence __builtin_memcpy would overwrite their vpointer. In practice though
+// this is more of a theoretical fix and probably just silences compiler
+// warnings. So in practice __builtin_memcpy would probably not cause any
+// misbehaviours, because it is expected that Bison generated parsers only use
+// YYCOPY() to relocate the parser's stack (that is moving objects in memory),
+// but not for really creating duplicates of any objects.
+//
+// In my benchmarks I did not encounter any measurable performance difference by
+// this change, so shutting up the compiler wins for now.
+#define YYCOPY(To, From, Count)                 \
+    do {                                        \
+        for (YYSIZE_T i = 0; i < (Count); ++i)  \
+            (To)[i] = (From)[i];                \
+    } while (YYID (0));                         \
+
 #endif // LS_INSTRSCRIPTSPARSER_SHARED_H

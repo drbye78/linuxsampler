@@ -8904,6 +8904,28 @@ end on
         .expectStringExitResult = "7000ms",
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 700ms
+  exit( int_to_real($foo) / 7.0 )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 100.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 700ms
+  exit( int_to_real($foo) / 7.0 & "" )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "100ms"
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -9005,6 +9027,28 @@ end on
         .expectStringExitResult = "7000ms",
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 700ms
+  exit( real($foo) / 7.0 )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 100.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 700ms
+  exit( real($foo) / 7.0 & "" )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "100ms"
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -9095,6 +9139,28 @@ end on
         .expectStringExitResult = "9000us",
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 700.0ms
+  exit( real_to_int(~foo) / 7 )
+end on
+)NKSP_CODE",
+        .expectIntExitResult = 100,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 700.0ms
+  exit( real_to_int(~foo) / 7 & "" )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "100ms"
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -9183,6 +9249,28 @@ on init
 end on
 )NKSP_CODE",
         .expectStringExitResult = "9000us",
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 700.0ms
+  exit( int(~foo) / 7 )
+end on
+)NKSP_CODE",
+        .expectIntExitResult = 100,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 700.0ms
+  exit( int(~foo) / 7 & "" )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "100ms"
     });
 
     // 'final' ('!') operator tests ...
@@ -9880,6 +9968,28 @@ end on
         .expectExitResultUnit = VM_HERTZ
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit( ceil(9.4ms / 2.0) )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 5.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit( ceil( ceil(8.4us) / 2.0) )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 5.0,
+        .expectExitResultUnitPrefix = { VM_MICRO },
+        .expectExitResultUnit = VM_SECOND
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -9976,6 +10086,28 @@ end on
         .expectRealExitResult = 2.0,
         .expectExitResultUnitPrefix = { VM_KILO },
         .expectExitResultUnit = VM_HERTZ
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit( floor(4.4ms / 2.0) )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 2.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  exit( floor( floor(8.4us) / 4.0) )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 2.0,
+        .expectExitResultUnitPrefix = { VM_MICRO },
+        .expectExitResultUnit = VM_SECOND
     });
 
     // 'final' ('!') operator tests ...

@@ -13,6 +13,7 @@
 #include "../common/global_private.h"
 #include "../common/RTMath.h"
 #include <assert.h>
+#include "CoreVMFunctions.h" // for VMIntResult, VMRealResult
 
 namespace LinuxSampler {
     
@@ -122,7 +123,7 @@ static String _unitFactorToShortStr(vmfloat unitFactor) {
     }
 }
 
-static String _unitToStr(Unit* unit) {
+static String _unitToStr(VMUnit* unit) {
     const StdUnit_t type = unit->unitType();
     String sType;
     switch (type) {
@@ -612,7 +613,26 @@ VMFnResult* FunctionCall::execVMFn() {
     if (!fn) return NULL;
     // assuming here that all argument checks (amount and types) have been made
     // at parse time, to avoid time intensive checks on each function call
-    return fn->exec(dynamic_cast<VMFnArgs*>(&*args));
+    VMFnResult* res = fn->exec(dynamic_cast<VMFnArgs*>(&*args));
+    if (!res) return res;
+
+    VMExpr* expr = res->resultValue();
+    if (!expr) return res;
+
+    // For performance reasons we always only let 'FunctionCall' assign the unit
+    // type to the function's result expression, never by the function
+    // implementation itself, nor by other classes, because a FunctionCall
+    // object solely knows the unit type in O(1).
+    ExprType_t type = expr->exprType();
+    if (type == INT_EXPR) {
+        VMIntResult* intRes = dynamic_cast<VMIntResult*>(res);
+        intRes->unitBaseType = unitType();
+    } else if (type == REAL_EXPR) {
+        VMRealResult* realRes = dynamic_cast<VMRealResult*>(res);
+        realRes->unitBaseType = unitType();
+    }
+
+    return res;
 }
 
 StmtFlags_t FunctionCall::exec() {
@@ -685,10 +705,10 @@ String FunctionCall::evalCastToStr() {
         return strExpr ? strExpr->evalStr() : "";
     } else if (resultType == REAL_EXPR) {
         VMRealExpr* realExpr = dynamic_cast<VMRealExpr*>(result->resultValue());
-        return realExpr ? ToString(realExpr->evalReal()) : "";
+        return realExpr ? ToString(realExpr->evalReal()) + _unitToStr(realExpr) : "";
     } else {
         VMIntExpr* intExpr = dynamic_cast<VMIntExpr*>(result->resultValue());
-        return intExpr ? ToString(intExpr->evalInt()) : "";
+        return intExpr ? ToString(intExpr->evalInt()) + _unitToStr(intExpr) : "";
     }
 }
 

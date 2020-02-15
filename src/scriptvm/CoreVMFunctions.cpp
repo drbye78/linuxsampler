@@ -27,6 +27,25 @@ inline bool _fEqualX(vmfloat a, vmfloat b) {
 }
 
 ///////////////////////////////////////////////////////////////////////////
+// class VMIntResult
+
+VMIntResult::VMIntResult() :
+    flags(STMT_SUCCESS), value(0), unitPrefixFactor(VM_NO_FACTOR),
+    unitBaseType(VM_NO_UNIT)
+{
+}
+
+///////////////////////////////////////////////////////////////////////////
+// class VMRealResult
+
+VMRealResult::VMRealResult() :
+    flags(STMT_SUCCESS), value(0), unitPrefixFactor(VM_NO_FACTOR),
+    unitBaseType(VM_NO_UNIT)
+{
+
+}
+
+///////////////////////////////////////////////////////////////////////////
 // class VMEmptyResultFunction
 
 VMFnResult* VMEmptyResultFunction::errorResult() {
@@ -46,6 +65,7 @@ VMFnResult* VMIntResultFunction::errorResult(vmint i) {
     result.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     result.value = i;
     result.unitPrefixFactor = VM_NO_FACTOR;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -53,6 +73,7 @@ VMFnResult* VMIntResultFunction::successResult(vmint i) {
     result.flags = STMT_SUCCESS;
     result.value = i;
     result.unitPrefixFactor = VM_NO_FACTOR;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -60,6 +81,7 @@ VMFnResult* VMIntResultFunction::errorResult(VMIntFnResDef res) {
     result.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     result.value = res.value;
     result.unitPrefixFactor = res.unitFactor;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -67,6 +89,7 @@ VMFnResult* VMIntResultFunction::successResult(VMIntFnResDef res) {
     result.flags = STMT_SUCCESS;
     result.value = res.value;
     result.unitPrefixFactor = res.unitFactor;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -77,6 +100,7 @@ VMFnResult* VMRealResultFunction::errorResult(vmfloat f) {
     result.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     result.value = f;
     result.unitPrefixFactor = VM_NO_FACTOR;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -84,6 +108,7 @@ VMFnResult* VMRealResultFunction::errorResult(VMRealFnResDef res) {
     result.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     result.value = res.value;
     result.unitPrefixFactor = res.unitFactor;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -91,6 +116,7 @@ VMFnResult* VMRealResultFunction::successResult(vmfloat f) {
     result.flags = STMT_SUCCESS;
     result.value = f;
     result.unitPrefixFactor = VM_NO_FACTOR;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -98,6 +124,7 @@ VMFnResult* VMRealResultFunction::successResult(VMRealFnResDef res) {
     result.flags = STMT_SUCCESS;
     result.value = res.value;
     result.unitPrefixFactor = res.unitFactor;
+    result.unitBaseType = VM_NO_UNIT;
     return &result;
 }
 
@@ -123,6 +150,7 @@ VMFnResult* VMNumberResultFunction::errorResult(vmint i) {
     intResult.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     intResult.value = i;
     intResult.unitPrefixFactor = VM_NO_FACTOR;
+    intResult.unitBaseType = VM_NO_UNIT;
     return &intResult;
 }
 
@@ -130,6 +158,7 @@ VMFnResult* VMNumberResultFunction::errorResult(vmfloat f) {
     realResult.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     realResult.value = f;
     realResult.unitPrefixFactor = VM_NO_FACTOR;
+    intResult.unitBaseType = VM_NO_UNIT;
     return &realResult;
 }
 
@@ -137,6 +166,7 @@ VMFnResult* VMNumberResultFunction::successResult(vmint i) {
     intResult.flags = STMT_SUCCESS;
     intResult.value = i;
     intResult.unitPrefixFactor = VM_NO_FACTOR;
+    intResult.unitBaseType = VM_NO_UNIT;
     return &intResult;
 }
 
@@ -144,6 +174,7 @@ VMFnResult* VMNumberResultFunction::successResult(vmfloat f) {
     realResult.flags = STMT_SUCCESS;
     realResult.value = f;
     realResult.unitPrefixFactor = VM_NO_FACTOR;
+    realResult.unitBaseType = VM_NO_UNIT;
     return &realResult;
 }
 
@@ -151,6 +182,7 @@ VMFnResult* VMNumberResultFunction::errorIntResult(VMIntFnResDef res) {
     intResult.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     intResult.value = res.value;
     intResult.unitPrefixFactor = res.unitFactor;
+    intResult.unitBaseType = VM_NO_UNIT;
     return &intResult;
 }
 
@@ -158,6 +190,7 @@ VMFnResult* VMNumberResultFunction::errorRealResult(VMRealFnResDef res) {
     realResult.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     realResult.value = res.value;
     realResult.unitPrefixFactor = res.unitFactor;
+    realResult.unitBaseType = VM_NO_UNIT;
     return &realResult;
 }
 
@@ -165,6 +198,7 @@ VMFnResult* VMNumberResultFunction::successIntResult(VMIntFnResDef res) {
     intResult.flags = STMT_SUCCESS;
     intResult.value = res.value;
     intResult.unitPrefixFactor = res.unitFactor;
+    intResult.unitBaseType = VM_NO_UNIT;
     return &intResult;
 }
 
@@ -172,6 +206,7 @@ VMFnResult* VMNumberResultFunction::successRealResult(VMRealFnResDef res) {
     realResult.flags = STMT_SUCCESS;
     realResult.value = res.value;
     realResult.unitPrefixFactor = res.unitFactor;
+    realResult.unitBaseType = VM_NO_UNIT;
     return &realResult;
 }
 

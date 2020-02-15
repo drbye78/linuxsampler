@@ -8881,6 +8881,29 @@ end on
         .expectExitResultUnit = VM_BEL
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 7000ms
+  exit( int_to_real($foo) )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 7000.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 7000ms
+  declare @s := "" & int_to_real($foo)
+  exit( @s )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "7000ms",
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -8959,6 +8982,29 @@ end on
         .expectExitResultUnit = VM_BEL
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 7000ms
+  exit( real($foo) )
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 7000.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 7000ms
+  declare @s := "" & real($foo)
+  exit( @s )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "7000ms",
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -9026,6 +9072,29 @@ end on
         .expectExitResultUnit = VM_BEL
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 9000.0us
+  exit( real_to_int(~foo) )
+end on
+)NKSP_CODE",
+        .expectIntExitResult = 9000.0,
+        .expectExitResultUnitPrefix = { VM_MICRO },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 9000.0us
+  declare @s := "" & real_to_int(~foo)
+  exit( @s )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "9000us",
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -9091,6 +9160,29 @@ end on
         .expectIntExitResult = 8,
         .expectExitResultUnitPrefix = { VM_MILLI, VM_DECI },
         .expectExitResultUnit = VM_BEL
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 9000.0us
+  exit( int(~foo) )
+end on
+)NKSP_CODE",
+        .expectIntExitResult = 9000.0,
+        .expectExitResultUnitPrefix = { VM_MICRO },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 9000.0us
+  declare @s := "" & int(~foo)
+  exit( @s )
+end on
+)NKSP_CODE",
+        .expectStringExitResult = "9000us",
     });
 
     // 'final' ('!') operator tests ...

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Christian Schoenebeck
+ * Copyright (c) 2014-2020 Christian Schoenebeck
  *
  * http://www.linuxsampler.org
  *
@@ -44,14 +44,15 @@ public:
     StmtFlags_t flags; ///< general completion status (i.e. success or failure) of the function call
     vmint value; ///< result value of the function call
     vmfloat unitPrefixFactor; ///< unit factor of result value of the function call
+    StdUnit_t unitBaseType; ///< fundamental standard measuring unit type (e.g. seconds), this is ALWAYS and ONLY set (to the actual unit type) by @c FunctionCall class for performance reasons.
 
-    VMIntResult() : flags(STMT_SUCCESS), value(0), unitPrefixFactor(VM_NO_FACTOR) {}
+    VMIntResult();
     vmint evalInt() OVERRIDE { return value; }
     VMExpr* resultValue() OVERRIDE { return this; }
     StmtFlags_t resultFlags() OVERRIDE { return flags; }
     bool isConstExpr() const OVERRIDE { return false; }
     vmfloat unitFactor() const OVERRIDE { return unitPrefixFactor; }
-    StdUnit_t unitType() const OVERRIDE { return VM_NO_UNIT; } // actually never called, VMFunction::returnUnitType() is always used instead
+    StdUnit_t unitType() const OVERRIDE { return unitBaseType; }
     bool isFinal() const OVERRIDE { return false; } // actually never called, VMFunction::returnsFinal() is always used instead
 };
 
@@ -64,14 +65,15 @@ public:
     StmtFlags_t flags; ///< general completion status (i.e. success or failure) of the function call
     vmfloat value; ///< result value of the function call
     vmfloat unitPrefixFactor; ///< unit factor of result value of the function call
+    StdUnit_t unitBaseType; ///< fundamental standard measuring unit type (e.g. seconds), this is ALWAYS and ONLY set (to the actual unit type) by @c FunctionCall class for performance reasons.
 
-    VMRealResult() : flags(STMT_SUCCESS), value(0), unitPrefixFactor(VM_NO_FACTOR) {}
+    VMRealResult();
     vmfloat evalReal() OVERRIDE { return value; }
     VMExpr* resultValue() OVERRIDE { return this; }
     StmtFlags_t resultFlags() OVERRIDE { return flags; }
     bool isConstExpr() const OVERRIDE { return false; }
     vmfloat unitFactor() const OVERRIDE { return unitPrefixFactor; }
-    StdUnit_t unitType() const OVERRIDE { return VM_NO_UNIT; } // actually never called, VMFunction::returnUnitType() is always used instead
+    StdUnit_t unitType() const OVERRIDE { return unitBaseType; }
     bool isFinal() const OVERRIDE { return false; } // actually never called, VMFunction::returnsFinal() is always used instead
 };
 

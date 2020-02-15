@@ -260,6 +260,8 @@ Version SVN trunk (?)
       API).
     - Fixed incorrect EG times if standard measuring unit was passed to built-in
       functions "change_attack()", "change_decay()" or "change_release()".
+    - Fixed intermediate function result values never having reflected any
+      standard measuring unit type.
 
   * test cases:
     - Fixed compiler errors in test cases.

@@ -99,6 +99,7 @@ public:
  */
 class VMEmptyResultFunction : public VMFunction {
 protected:
+    VMEmptyResultFunction() : result(NULL) {}
     virtual ~VMEmptyResultFunction() {}
     ExprType_t returnType(VMFnArgs* args) OVERRIDE { return EMPTY_EXPR; }
     StdUnit_t returnUnitType(VMFnArgs* args) OVERRIDE { return VM_NO_UNIT; }
@@ -106,8 +107,11 @@ protected:
     VMFnResult* errorResult();
     VMFnResult* successResult();
     bool modifiesArg(vmint iArg) const OVERRIDE { return false; }
+    VMFnResult* allocResult(VMFnArgs* args) OVERRIDE { return new VMEmptyResult(); }
+    void bindResult(VMFnResult* res) OVERRIDE;
+    VMFnResult* boundResult() const OVERRIDE;
 protected:
-    VMEmptyResult result;
+    VMEmptyResult* result;
 };
 
 struct VMIntFnResDef {
@@ -126,6 +130,7 @@ struct VMRealFnResDef {
  */
 class VMIntResultFunction : public VMFunction {
 protected:
+    VMIntResultFunction() : result(NULL) {}
     virtual ~VMIntResultFunction() {}
     ExprType_t returnType(VMFnArgs* args) OVERRIDE { return INT_EXPR; }
     VMFnResult* errorResult(vmint i = 0);
@@ -133,8 +138,11 @@ protected:
     VMFnResult* successResult(vmint i = 0);
     VMFnResult* successResult(VMIntFnResDef res);
     bool modifiesArg(vmint iArg) const OVERRIDE { return false; }
+    VMFnResult* allocResult(VMFnArgs* args) OVERRIDE { return new VMIntResult(); }
+    void bindResult(VMFnResult* res) OVERRIDE;
+    VMFnResult* boundResult() const OVERRIDE;
 protected:
-    VMIntResult result;
+    VMIntResult* result;
 };
 
 /**
@@ -143,6 +151,7 @@ protected:
  */
 class VMRealResultFunction : public VMFunction {
 protected:
+    VMRealResultFunction() : result(NULL) {}
     virtual ~VMRealResultFunction() {}
     ExprType_t returnType(VMFnArgs* args) OVERRIDE { return REAL_EXPR; }
     VMFnResult* errorResult(vmfloat f = 0);
@@ -150,8 +159,11 @@ protected:
     VMFnResult* successResult(vmfloat f = 0);
     VMFnResult* successResult(VMRealFnResDef res);
     bool modifiesArg(vmint iArg) const OVERRIDE { return false; }
+    VMFnResult* allocResult(VMFnArgs* args) OVERRIDE { return new VMRealResult(); }
+    void bindResult(VMFnResult* res) OVERRIDE;
+    VMFnResult* boundResult() const OVERRIDE;
 protected:
-    VMRealResult result;
+    VMRealResult* result;
 };
 
 /**
@@ -160,13 +172,17 @@ protected:
  */
 class VMStringResultFunction : public VMFunction {
 protected:
+    VMStringResultFunction() : result(NULL) {}
     virtual ~VMStringResultFunction() {}
     ExprType_t returnType(VMFnArgs* args) OVERRIDE { return STRING_EXPR; }
     VMFnResult* errorResult(const String& s = "");
     VMFnResult* successResult(const String& s = "");
     bool modifiesArg(vmint iArg) const OVERRIDE { return false; }
+    VMFnResult* allocResult(VMFnArgs* args) OVERRIDE { return new VMStringResult(); }
+    void bindResult(VMFnResult* res) OVERRIDE;
+    VMFnResult* boundResult() const OVERRIDE;
 protected:
-    VMStringResult result;
+    VMStringResult* result;
 };
 
 /**
@@ -177,6 +193,7 @@ protected:
  */
 class VMNumberResultFunction : public VMFunction {
 protected:
+    VMNumberResultFunction() : intResult(NULL), realResult(NULL) {}
     virtual ~VMNumberResultFunction() {}
     VMFnResult* errorResult(vmint i);
     VMFnResult* errorResult(vmfloat f);
@@ -187,9 +204,12 @@ protected:
     VMFnResult* successIntResult(VMIntFnResDef res);
     VMFnResult* successRealResult(VMRealFnResDef res);
     bool modifiesArg(vmint iArg) const OVERRIDE { return false; }
+    VMFnResult* allocResult(VMFnArgs* args) OVERRIDE;
+    void bindResult(VMFnResult* res) OVERRIDE;
+    VMFnResult* boundResult() const OVERRIDE;
 protected:
-    VMIntResult intResult;
-    VMRealResult realResult;
+    VMIntResult* intResult;
+    VMRealResult* realResult;
 };
 
 

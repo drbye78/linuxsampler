@@ -576,8 +576,16 @@ FunctionCall::FunctionCall(const char* function, ArgsRef args, VMFunction* fn) :
     Unit(
         (fn) ? fn->returnUnitType(dynamic_cast<VMFnArgs*>(&*args)) : VM_NO_UNIT
     ),
-    functionName(function), args(args), fn(fn), result(NULL)
+    functionName(function), args(args), fn(fn),
+    result( (fn) ? fn->allocResult(dynamic_cast<VMFnArgs*>(&*args)) : NULL )
 {
+}
+
+FunctionCall::~FunctionCall() {
+    if (result) {
+        delete result;
+        result = NULL;
+    }
 }
 
 void FunctionCall::dump(int level) {
@@ -611,9 +619,21 @@ bool FunctionCall::isFinal() const {
 
 VMFnResult* FunctionCall::execVMFn() {
     if (!fn) return NULL;
+
+    // tell function where it shall dump its return value to
+    VMFnResult* oldRes = fn->boundResult();
+    fn->bindResult(result);
+
     // assuming here that all argument checks (amount and types) have been made
     // at parse time, to avoid time intensive checks on each function call
     VMFnResult* res = fn->exec(dynamic_cast<VMFnArgs*>(&*args));
+
+    // restore previous result binding of some potential toplevel or concurrent
+    // caller, i.e. if exactly same function is called more than one time,
+    // concurrently in a term by other FunctionCall objects, e.g.:
+    // ~c := ceil( ceil(~a) + ~b)
+    fn->bindResult(oldRes);
+
     if (!res) return res;
 
     VMExpr* expr = res->resultValue();
@@ -636,14 +656,14 @@ VMFnResult* FunctionCall::execVMFn() {
 }
 
 StmtFlags_t FunctionCall::exec() {
-    result = execVMFn();
+    VMFnResult* result = execVMFn();
     if (!result)
         return StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
     return result->resultFlags();
 }
 
 vmint FunctionCall::evalInt() {
-    result = execVMFn();
+    VMFnResult* result = execVMFn();
     if (!result) return 0;
     VMIntExpr* intExpr = dynamic_cast<VMIntExpr*>(result->resultValue());
     if (!intExpr) return 0;
@@ -651,7 +671,7 @@ vmint FunctionCall::evalInt() {
 }
 
 vmfloat FunctionCall::evalReal() {
-    result = execVMFn();
+    VMFnResult* result = execVMFn();
     if (!result) return 0;
     VMRealExpr* realExpr = dynamic_cast<VMRealExpr*>(result->resultValue());
     if (!realExpr) return 0;
@@ -666,7 +686,7 @@ VMIntArrayExpr* FunctionCall::asIntArray() const {
     // calls to be evaluated at all. This issue should be addressed cleanly by
     // adjusting the API appropriately.
     FunctionCall* rwSelf = const_cast<FunctionCall*>(this);
-    rwSelf->result = rwSelf->execVMFn();
+    VMFnResult* result = rwSelf->execVMFn();
 
     if (!result) return 0;
     VMIntArrayExpr* intArrExpr = dynamic_cast<VMIntArrayExpr*>(result->resultValue());
@@ -681,7 +701,7 @@ VMRealArrayExpr* FunctionCall::asRealArray() const {
     // calls to be evaluated at all. This issue should be addressed cleanly by
     // adjusting the API appropriately.
     FunctionCall* rwSelf = const_cast<FunctionCall*>(this);
-    rwSelf->result = rwSelf->execVMFn();
+    VMFnResult* result = rwSelf->execVMFn();
 
     if (!result) return 0;
     VMRealArrayExpr* realArrExpr = dynamic_cast<VMRealArrayExpr*>(result->resultValue());
@@ -689,7 +709,7 @@ VMRealArrayExpr* FunctionCall::asRealArray() const {
 }
 
 String FunctionCall::evalStr() {
-    result = execVMFn();
+    VMFnResult* result = execVMFn();
     if (!result) return "";
     VMStringExpr* strExpr = dynamic_cast<VMStringExpr*>(result->resultValue());
     if (!strExpr) return "";
@@ -697,7 +717,7 @@ String FunctionCall::evalStr() {
 }
 
 String FunctionCall::evalCastToStr() {
-    result = execVMFn();
+    VMFnResult* result = execVMFn();
     if (!result) return "";
     const ExprType_t resultType = result->resultValue()->exprType();
     if (resultType == STRING_EXPR) {

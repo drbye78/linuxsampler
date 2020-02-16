@@ -525,7 +525,7 @@ namespace LinuxSampler {
     // by_marks() function
 
     InstrumentScriptVMFunction_by_marks::InstrumentScriptVMFunction_by_marks(InstrumentScriptVM* parent)
-        : m_vm(parent)
+        : m_vm(parent), m_result(NULL)
     {
     }
 
@@ -538,15 +538,15 @@ namespace LinuxSampler {
     }
 
     VMFnResult* InstrumentScriptVMFunction_by_marks::errorResult() {
-        m_result.eventGroup = NULL;
-        m_result.flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
-        return &m_result;
+        m_result->eventGroup = NULL;
+        m_result->flags = StmtFlags_t(STMT_ABORT_SIGNALLED | STMT_ERROR_OCCURRED);
+        return m_result;
     }
 
     VMFnResult* InstrumentScriptVMFunction_by_marks::successResult(EventGroup* eventGroup) {
-        m_result.eventGroup = eventGroup;
-        m_result.flags = STMT_SUCCESS;
-        return &m_result;
+        m_result->eventGroup = eventGroup;
+        m_result->flags = STMT_SUCCESS;
+        return m_result;
     }
 
     void InstrumentScriptVMFunction_by_marks::checkArgs(VMFnArgs* args,
@@ -564,6 +564,18 @@ namespace LinuxSampler {
                 return;
             }
         }
+    }
+
+    VMFnResult* InstrumentScriptVMFunction_by_marks::allocResult(VMFnArgs* args) {
+        return new Result;
+    }
+
+    void InstrumentScriptVMFunction_by_marks::bindResult(VMFnResult* res) {
+        m_result = dynamic_cast<Result*>(res);
+    }
+
+    VMFnResult* InstrumentScriptVMFunction_by_marks::boundResult() const {
+        return m_result;
     }
 
     VMFnResult* InstrumentScriptVMFunction_by_marks::exec(VMFnArgs* args) {

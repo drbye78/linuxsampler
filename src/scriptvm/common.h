@@ -817,6 +817,8 @@ namespace LinuxSampler {
      */
     class VMFnResult {
     public:
+        virtual ~VMFnResult();
+
         /**
          * Returns the result value of the function call, represented by a high
          * level expression object.
@@ -1057,11 +1059,49 @@ namespace LinuxSampler {
                                std::function<void(String)> err,
                                std::function<void(String)> wrn);
 
-        /**
+        /** @brief Allocate storage location for function's result value.
+         *
+         * This method is invoked at parse time to allocate object(s) suitable
+         * to store a result value returned after executing this function
+         * implementation. Function implementation returns an instance of some
+         * type (being subclass of @c VMFnArgs) which allows it to store its
+         * result value to appropriately. Life time of the returned object is
+         * controlled by caller which will call delete on returned object once
+         * it no longer needs the storage location anymore (usually when script
+         * is unloaded).
+         *
+         * @param args - function arguments for executing this built-in function
+         * @returns storage location for storing a result value of this function
+         */
+        virtual VMFnResult* allocResult(VMFnArgs* args) = 0;
+
+        /** @brief Bind storage location for a result value to this function.
+         *
+         * This method is called to tell this function implementation where it
+         * shall store its result value to when @c exec() is called
+         * subsequently.
+         *
+         * @param res - storage location for a result value, previously
+         *              allocated by calling @c allocResult()
+         */
+        virtual void bindResult(VMFnResult* res) = 0;
+
+        /** @brief Current storage location bound to this function for result.
+         *
+         * Returns storage location currently being bound for result value of
+         * this function.
+         */
+        virtual VMFnResult* boundResult() const = 0;
+
+        /** @brief Execute this function.
+         *
          * Implements the actual function execution. This exec() method is
          * called by the VM whenever this function implementation shall be
          * executed at script runtime. This method blocks until the function
          * call completed.
+         *
+         * @remarks The actual storage location for returning a result value is
+         * assigned by calling @c bindResult() before invoking @c exec().
          *
          * @param args - function arguments for executing this built-in function
          * @returns function's return value (if any) and general status

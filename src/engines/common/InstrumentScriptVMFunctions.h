@@ -153,6 +153,9 @@ namespace LinuxSampler {
         ExprType_t returnType(VMFnArgs* args) OVERRIDE { return INT_ARR_EXPR; }
         void checkArgs(VMFnArgs* args, std::function<void(String)> err,
                        std::function<void(String)> wrn) OVERRIDE;
+        VMFnResult* allocResult(VMFnArgs* args) OVERRIDE;
+        void bindResult(VMFnResult* res) OVERRIDE;
+        VMFnResult* boundResult() const OVERRIDE;
         VMFnResult* exec(VMFnArgs* args) OVERRIDE;
     protected:
         InstrumentScriptVM* m_vm;
@@ -169,7 +172,7 @@ namespace LinuxSampler {
             VMExpr* resultValue() OVERRIDE { return this; }
             StmtFlags_t resultFlags() OVERRIDE { return flags; }
             bool isConstExpr() const OVERRIDE { return false; }
-        } m_result;
+        } *m_result;
 
         VMFnResult* errorResult();
         VMFnResult* successResult(EventGroup* eventGroup);

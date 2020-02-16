@@ -262,6 +262,9 @@ Version SVN trunk (?)
       functions "change_attack()", "change_decay()" or "change_release()".
     - Fixed intermediate function result values never having reflected any
       standard measuring unit type.
+    - Fixed re-entrant issue with function calls which caused wrong result
+      values if the same function was called multiple times in a term
+      (specifically if metric prefixes were used).
 
   * test cases:
     - Fixed compiler errors in test cases.

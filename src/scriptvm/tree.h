@@ -642,6 +642,7 @@ class FunctionCall : virtual public LeafStatement, virtual public IntExpr, virtu
     VMFnResult* result;
 public:
     FunctionCall(const char* function, ArgsRef args, VMFunction* fn);
+    virtual ~FunctionCall();
     void dump(int level = 0) OVERRIDE;
     StmtFlags_t exec() OVERRIDE;
     vmint evalInt() OVERRIDE;

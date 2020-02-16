@@ -2095,6 +2095,32 @@ end on
         .expectExitResultUnit = VM_SECOND
     });
 
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare ~foo := 1.0  { neutral }
+  declare $bar := 7000ms
+  exit(~foo * real($bar))
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 7000.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
+ runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 1  { neutral }
+  declare $bar := 7000ms
+  exit(real($foo) * real($bar))
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 7000.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
+    });
+
     // 'final' ('!') operator tests ...
 
     runScript({
@@ -2350,6 +2376,19 @@ on init
 end on
 )NKSP_CODE",
         .expectParseError = true // unit types are not matching
+    });
+
+    runScript({
+        .code = R"NKSP_CODE(
+on init
+  declare $foo := 1000000
+  declare $bar := 7000ms
+  exit(real($foo) / 1000000.0 * real($bar))
+end on
+)NKSP_CODE",
+        .expectRealExitResult = 7000.0,
+        .expectExitResultUnitPrefix = { VM_MILLI },
+        .expectExitResultUnit = VM_SECOND
     });
 
     // 'final' ('!') operator tests ...

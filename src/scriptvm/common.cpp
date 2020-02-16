@@ -193,6 +193,12 @@ namespace LinuxSampler {
     }
 
     ///////////////////////////////////////////////////////////////////////
+    // class 'VMFnResult'
+
+    VMFnResult::~VMFnResult() {
+    }
+
+    ///////////////////////////////////////////////////////////////////////
     // class 'VMSourceToken'
 
     VMSourceToken::VMSourceToken() : m_token(NULL) {

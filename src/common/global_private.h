@@ -151,4 +151,6 @@ extern bool g_fireMainThreadCallback;
 int hexToNumber(char hex_digit);
 int hexsToNumber(char hex_digit0, char hex_digit1 = '0');
 
+std::string backtraceAsString();
+
 #endif // __LS_GLOBAL_PRIVATE_H__

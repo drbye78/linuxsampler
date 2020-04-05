@@ -53,6 +53,8 @@ Version SVN trunk (?)
     - Fixed potential crash with high pitch at end of RAM playback.
     - Added configure checks whether C++ compiler supports so called
       'designated initializers'.
+    - Added global backtraceAsString() function for debugging purposes
+      (POSIX systems only, no Windows implementation yet).
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

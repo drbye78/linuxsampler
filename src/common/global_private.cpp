@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2013 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,6 +26,17 @@
 // config.h here and rather used our manually maintained version.h)
 #ifndef OVERRIDE_CONFIG_H
 # include <config.h>
+#endif
+
+#include <stdlib.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string>
+#if !defined(WIN32)
+# include <execinfo.h> // for backtrace() and backtrace_symbols()
+#endif
+#if defined (__APPLE__)
+# include <mach-o/dyld.h>
 #endif
 
 // Make sure all mandatory configuration macros are defined.
@@ -139,4 +150,59 @@ int hexToNumber(char hex_digit) {
 
 int hexsToNumber(char hex_digit0, char hex_digit1) {
     return hexToNumber(hex_digit1)*16 + hexToNumber(hex_digit0);
+}
+
+#if defined (__APPLE__)
+
+static std::string dyldImagesAsString() {
+    std::string s;
+    const uint32_t n = _dyld_image_count();
+    for (uint32_t i = 0; i < n; ++i) {
+        const std::string name = _dyld_get_image_name(i);
+
+        // ignore system frameworks
+        // (as we don't have their source files anyway, do we?)
+        if (name.find("/System/Library/") == 0)
+            continue;
+        if (name.find("/usr/lib/") != std::string::npos)
+            continue;
+
+        const intptr_t slide = _dyld_get_image_vmaddr_slide(i);
+        const struct mach_header* loadaddr = _dyld_get_image_header(i);
+        char* cs = NULL;
+        asprintf(&cs, "%d. '%s' loadaddr %p, slide %p\n", i+1, name.c_str(), loadaddr, (void*)slide);
+        s += cs;
+        free(cs);
+    }
+    return s;
+}
+
+#endif
+
+/** @brief Return a backtrace of call.
+ *
+ * Calling this function will return the calling stack as text representation
+ * for debugging purposes.
+ */
+std::string backtraceAsString() {
+    std::string s;
+    #ifdef WIN32
+    //TODO: Windows implementation using CaptureStackBackTrace() (plus maybe SymFromAddr())
+    s = "not implemented";
+    #else
+    # ifdef __APPLE__
+    s += dyldImagesAsString();
+    s += "   \n\n";
+    # endif
+    const size_t bufSz = 1024;
+    void* array[bufSz];
+    const size_t sz = backtrace(array, bufSz);
+    char** strings = backtrace_symbols(array, sz);
+    for (int i = 0; i < sz; ++i) {
+        s += strings[i];
+        s += "\n";
+    }
+    free(strings);
+    #endif
+    return s;
 }

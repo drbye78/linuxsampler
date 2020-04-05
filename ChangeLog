@@ -55,6 +55,13 @@ Version SVN trunk (?)
       'designated initializers'.
     - Added global backtraceAsString() function for debugging purposes
       (POSIX systems only, no Windows implementation yet).
+    - Thread class: Added new methods pushCancelable(), popCancelable(), name(),
+      nameOfCaller() and setNameOfCaller().
+    - configure: Always check for availability of pthread_testcancel() and use
+      it if so (previously it was only used if explicitly enabled by configure
+      option).
+    - Thread class: raise compiler warning if pthread_testcancel() is not
+      available, because it can lead to deadlocks.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

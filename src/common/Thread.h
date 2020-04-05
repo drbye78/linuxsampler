@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2017 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -127,6 +127,13 @@ class Thread {
             return !munlock(addr, size);
             #endif
         }
+
+        static void pushCancelable(bool cancel);
+        static void popCancelable();
+
+        std::string name();
+        static std::string nameOfCaller();
+        static void setNameOfCaller(std::string name);
 
     protected:
         /**

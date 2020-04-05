@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2017 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -26,9 +26,15 @@
 #if HAVE_CONFIG_H
 # include <config.h>
 #endif
+#include "global_private.h"
 
+#include <list>
 #if DEBUG
 # include <assert.h>
+#endif
+
+#if !CONFIG_PTHREAD_TESTCANCEL
+# warning No pthread_testcancel() available: this may lead to mutex dead locks when threads are stopped!
 #endif
 
 // this is the minimum stack size a thread will be spawned with
@@ -36,6 +42,10 @@
 // thus might lead to dropouts in realtime threads
 // TODO: should be up for testing to get a reasonable good value
 #define MIN_STACK_SIZE		524288
+
+#if !defined(WIN32)
+static thread_local std::list<int> cancelStates;
+#endif
 
 namespace LinuxSampler {
 
@@ -488,5 +498,115 @@ void Thread::pthreadDestructor(void* thread) {
     t->RunningCondition.PreLockedSet(false);
 }
 #endif
+
+/**
+ * Allow or prohibit whether the calling thread may be cancelled, remember its
+ * previous setting on a stack.
+ *
+ * @discussion The POSIX standard defines certaing system calls as implied
+ * thread cancellation points. For instance when a thread calls @c usleep(), the
+ * thread would immediately terminate if the thread was requested to be stopped.
+ * The problem with this is that a thread typically has critical sections where
+ * it may not simply terminate unexpectedly, e.g. if a thread is currently
+ * holding a mutex lock and then would call @c usleep() this may end up in a
+ * dead lock, since the lock would then never be unlocked again. For that reason
+ * a thread should first disable itself being cancelable before entering a
+ * critical section by calling @c pushCancelable(false) and it should
+ * re-enable thread cancelation by calling @c popCancelable() after having left
+ * the critical section(s). Refer to the following link for a list of functions
+ * being defined as implied cancelation points:
+ * http://man7.org/linux/man-pages/man7/pthreads.7.html
+ *
+ * @b NOTE: This method is currently not implemented for Windows yet!
+ *
+ * @param cancel - @c true: thread may be cancelled, @c false: thread may not
+ *                 be cancelled until re-enabled with either pushCancelable() or
+ *                 popCancelable()
+ * @see popCancelable() as counter part
+ */
+void Thread::pushCancelable(bool cancel) {
+    #if defined(WIN32)
+    //TODO: implementation for Windows
+    #else
+    int old;
+    pthread_setcancelstate(cancel ? PTHREAD_CANCEL_ENABLE : PTHREAD_CANCEL_DISABLE, &old);
+    cancelStates.push_back(old);
+    #endif
+}
+
+/**
+ * Restore previous cancellation setting of calling thread by restoring it from
+ * stack.
+ *
+ * @b NOTE: This method is currently not implemented for Windows yet!
+ *
+ * @see pushCancelable() for details
+ */
+void Thread::popCancelable() {
+    #if defined(WIN32)
+    //TODO: implementation for Windows
+    #else
+    int cancel = cancelStates.back();
+    cancelStates.pop_back();
+    pthread_setcancelstate(cancel ? PTHREAD_CANCEL_ENABLE : PTHREAD_CANCEL_DISABLE, NULL);
+    #endif
+}
+
+/**
+ * Return this thread's name (intended just for debugging purposes).
+ *
+ * @b NOTE: This method is currently not implemented for Windows yet!
+ */
+std::string Thread::name() {
+    #if defined(WIN32)
+    //TODO: implementation for Windows
+    return "not implemented";
+    #else
+    char buf[16] = {};
+    pthread_getname_np(__thread_id, buf, 16);
+    std::string s = buf;
+    if (s.empty())
+        s = "tid=" + ToString(__thread_id);
+    return s;
+    #endif
+}
+
+/**
+ * Return calling thread's name (intended just for debugging purposes).
+ *
+ * @b NOTE: This method is currently not implemented for Windows yet!
+ */
+std::string Thread::nameOfCaller() {
+    #if defined(WIN32)
+    //TODO: implementation for Windows
+    return "not implemented";
+    #else
+    char buf[16] = {};
+    pthread_getname_np(pthread_self(), buf, 16);
+    std::string s = buf;
+    if (s.empty())
+        s = "tid=" + ToString(pthread_self());
+    return s;
+    #endif
+}
+
+/**
+ * Give calling thread a name (intended just for debugging purposes).
+ *
+ * @b NOTE: POSIX defines a limit of max. 16 characters for @a name.
+ *
+ * @b NOTE: This method is currently not implemented for Windows yet!
+ *
+ * @param name - arbitrary, i.e. human readable name for calling thread
+ */
+void Thread::setNameOfCaller(std::string name) {
+    #if defined(WIN32)
+    //TODO: implementation for Windows
+    #elif __APPLE__
+    pthread_setname_np(name.c_str());
+    #else // Linux, NetBSD, FreeBSD, ...
+    pthread_setname_np(pthread_self(), name.c_str());
+    #endif
+}
 
 } // namespace LinuxSampler

@@ -3,7 +3,7 @@
 
 m4_define(linuxsampler_release_major, 2)
 m4_define(linuxsampler_release_minor, 1)
-m4_define(linuxsampler_release_build, 1.svn51)
+m4_define(linuxsampler_release_build, 1.svn52)
 
 
 AC_INIT([linuxsampler],[linuxsampler_release_major.linuxsampler_release_minor.linuxsampler_release_build])
@@ -860,16 +860,12 @@ if test "$config_rt_exceptions" = "yes"; then
   AC_DEFINE_UNQUOTED(CONFIG_RT_EXCEPTIONS, 1, [Define to 1 to allow exceptions in the realtime context.])
 fi
 
-config_pthread_testcancel="$mac"
-AC_ARG_ENABLE(pthread-testcancel,
-  [  --enable-pthread-testcancel
-                          Enable pthread_testcancel() calls and avoid
-                          asynchronous cancel of pthreads (default=yes
-                          for Mac targets, no otherwise).],
-  [config_pthread_testcancel="$enableval"],
-  [])
+AC_CHECK_FUNC(pthread_testcancel,
+  [config_pthread_testcancel="yes"],
+  [config_pthread_testcancel="no"]
+)
 if test "$config_pthread_testcancel" = "yes"; then
-  AC_DEFINE_UNQUOTED(CONFIG_PTHREAD_TESTCANCEL, 1, [Define to 1 to enable pthread_testcancel() calls.])
+  AC_DEFINE_UNQUOTED(CONFIG_PTHREAD_TESTCANCEL, 1, [Define to 1 if pthread_testcancel() is available.])
 fi
 
 AC_ARG_ENABLE(preload-samples,

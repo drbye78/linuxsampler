@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright (C) 2005 - 2017 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -98,11 +98,17 @@ namespace LinuxSampler {
 
     // Entry point for the task thread.
     int InstrumentManagerThread::Main() {
+        #if DEBUG
+        Thread::setNameOfCaller("InstrumentMngr");
+        #endif
+
         while (true) {
 
-            #if CONFIG_PTHREAD_TESTCANCEL
             TestCancel();
-            #endif
+
+            // prevent thread from being cancelled
+            // (e.g. to prevent deadlocks while holding mutex lock(s))
+            pushCancelable(false);
 
             while (true) {
                 command_t cmd;
@@ -145,6 +151,10 @@ namespace LinuxSampler {
                     }
                 }
             }
+
+            // now allow thread being cancelled again
+            // (since all mutexes are now unlocked)
+            popCancelable();
 
             // nothing left to do, sleep until new jobs arrive
             conditionJobsLeft.WaitIf(false);

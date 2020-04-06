@@ -84,6 +84,8 @@ static atomic_t running = ATOMIC_INIT(1);
 
 int main(int argc, char **argv) {
 
+    Thread::setNameOfCaller("ls-main");
+
     lscp_addr = htonl(LSCP_ADDR);
     lscp_port = htons(LSCP_PORT);
 

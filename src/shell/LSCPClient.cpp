@@ -1,7 +1,7 @@
 /*
  * LSCP Shell
  *
- * Copyright (c) 2014 - 2016 Christian Schoenebeck
+ * Copyright (c) 2014 - 2020 Christian Schoenebeck
  *
  * This program is part of LinuxSampler and released under the same terms.
  */
@@ -316,8 +316,17 @@ optional<String> LSCPClient::receiveLine() {
  * internal FIFO buffer.
  */
 int LSCPClient::Main() {
+    #if DEBUG
+    Thread::setNameOfCaller("LSCPClient");
+    #endif
+
     while (true) {
         optional<String> pLine = receiveLine();
+
+        // prevent thread from being cancelled
+        // (e.g. to prevent deadlocks while holding mutex lock(s))
+        pushCancelable(false);
+
         if (pLine) { // if there was a line received ...
             //lscpLog("[client receiveLine] '%s'\n", pLine->c_str());
             String s = *pLine;
@@ -348,6 +357,11 @@ int LSCPClient::Main() {
             if (m_sync.GetUnsafe()) m_sync.Set(false);
             else if (m_callback) (*m_callback)(this);
         } else if (m_errorCallback) (*m_errorCallback)(this);
+
+        // now allow thread being cancelled again
+        // (since all mutexes are now unlocked)
+        popCancelable();
+
         TestCancel();
     }
     return 0; // just to avoid a warning with some old compilers

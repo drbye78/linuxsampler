@@ -4,7 +4,7 @@
  *                                                                         *
  *   Copyright (C) 2009 Grigor Iliev                                       *
  *   Copyright (C) 2011-2013 Andreas Persson                               *
- *   Copyright (C) 2014-2017 Christian Schoenebeck                         *
+ *   Copyright (C) 2014-2020 Christian Schoenebeck                         *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -309,6 +309,11 @@ namespace LinuxSampler {
      */
     int AudioOutputDeviceCoreAudio::Main() {
         dmsg(1,("CoreAudio thread started\n"));
+
+        #if DEBUG
+        Thread::setNameOfCaller("CoreAudio");
+        #endif
+
         OSStatus res;
         if(aqPlayerState.mQueue == NULL) {
             /*

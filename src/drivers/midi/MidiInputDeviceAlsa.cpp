@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2014 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -291,6 +291,11 @@ namespace LinuxSampler {
     }
 
     int MidiInputDeviceAlsa::Main() {
+
+        #if DEBUG
+        Thread::setNameOfCaller("AlsaMidi");
+        #endif
+
         int npfd;
         struct pollfd* pfd;
         snd_seq_event_t* ev;
@@ -299,8 +304,15 @@ namespace LinuxSampler {
         pfd = (struct pollfd*) alloca(npfd * sizeof(struct pollfd));
         snd_seq_poll_descriptors(hAlsaSeq, pfd, npfd, POLLIN);
         while (true) {
+            // poll() is defined as thread cancelation point by POSIX
             if (poll(pfd, npfd, 100000) > 0) {
                 do {
+                    TestCancel();
+
+                    // prevent thread from being cancelled
+                    // (e.g. to prevent deadlocks while holding mutex lock(s))
+                    pushCancelable(false);
+
                     snd_seq_event_input(hAlsaSeq, &ev);
                     int port = (int) ev->dest.port;
                     MidiInputPort* pMidiInputPort = Ports[port];
@@ -348,6 +360,11 @@ namespace LinuxSampler {
                             break;
                     }
                     snd_seq_free_event(ev);
+
+                    // now allow thread being cancelled again
+                    // (since all mutexes are now unlocked)
+                    popCancelable();
+
                 } while (snd_seq_event_input_pending(hAlsaSeq, 0) > 0);
             }
         }

@@ -1,6 +1,7 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright (C) 2007 - 2013 Christian Schoenebeck, Grigor Iliev         *
+ *   Copyright (C) 2007 - 2020 Christian Schoenebeck                       *
+ *   Copyright (C) 2007 - 2013 Grigor Iliev                                *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -37,11 +38,19 @@ namespace LinuxSampler {
 
     // Entry point for the worker thread.
     int WorkerThread::Main() {
+
+        #if DEBUG
+        Thread::setNameOfCaller("LSWorker");
+        #endif
+
         while (true) {
 
-            #if CONFIG_PTHREAD_TESTCANCEL
             TestCancel();
-            #endif
+
+            // prevent worker thread from being cancelled
+            // (e.g. to prevent deadlocks while holding mutex lock(s))
+            pushCancelable(false);
+
             while (true) {
                 Runnable* pJob;
 
@@ -65,6 +74,10 @@ namespace LinuxSampler {
 
                 delete pJob;
             }
+
+            // now allow worker thread being cancelled again
+            // (since all mutexes are now unlocked)
+            popCancelable();
 
             // nothing left to do, sleep until new jobs arrive
             conditionJobsLeft.WaitIf(false);

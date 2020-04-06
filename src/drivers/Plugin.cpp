@@ -86,10 +86,24 @@ namespace LinuxSampler {
     }
 
     int EventThread::Main() {
+
+        #if DEBUG
+        Thread::setNameOfCaller("HostPlugin");
+        #endif
+
         for (;;) {
             TestCancel();
             sleep(1);
+
+            // prevent thread from being cancelled
+            // (e.g. to prevent deadlocks while holding mutex lock(s))
+            pushCancelable(false);
+
             pSampler->fireStatistics();
+
+            // now allow thread being cancelled again
+            // (since all mutexes are now unlocked)
+            popCancelable();
         }
         return 0;
     }

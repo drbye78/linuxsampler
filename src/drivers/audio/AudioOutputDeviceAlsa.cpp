@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2007 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -744,7 +744,16 @@ namespace LinuxSampler {
      * Entry point for the thread.
      */
     int AudioOutputDeviceAlsa::Main() {
+        #if DEBUG
+        Thread::setNameOfCaller("AlsaAudio");
+        #endif
+
         while (true) {
+            TestCancel();
+
+            // prevent thread from being cancelled
+            // (e.g. to prevent deadlocks while holding mutex lock(s))
+            pushCancelable(false);
 
             // let all connected engines render 'FragmentSize' sample points
             RenderAudio(FragmentSize);
@@ -768,6 +777,10 @@ namespace LinuxSampler {
                 fprintf(stderr, "Alsa: Audio output error, exiting.\n");
                 exit(EXIT_FAILURE);
             }
+
+            // now allow thread being cancelled again
+            // (since all mutexes are now unlocked)
+            popCancelable();
         }
         // just to suppress compiler warning
         return EXIT_FAILURE;

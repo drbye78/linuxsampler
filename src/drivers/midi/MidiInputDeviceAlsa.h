@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2013 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -129,9 +129,9 @@ namespace LinuxSampler {
             static String Description();
             static String Version();
 
-            MidiInputPortAlsa* CreateMidiPort();
+            MidiInputPortAlsa* CreateMidiPort() OVERRIDE;
         protected:
-            int Main(); ///< Implementation of virtual method from class Thread
+            int Main() OVERRIDE; ///< Implementation of virtual method from class Thread
         private:
             snd_seq_t* hAlsaSeq;
             int        hAlsaSeqClient;       ///< Alsa Sequencer client ID

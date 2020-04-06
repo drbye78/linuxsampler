@@ -19,9 +19,7 @@ int ThreadTest::DummyThread::Main() {
     wasRunning = true;
     while (true) {
 		someVariable = -1;
-#if CONFIG_PTHREAD_TESTCANCEL
 		TestCancel();
-#endif
 	}
 	return 0;
 }

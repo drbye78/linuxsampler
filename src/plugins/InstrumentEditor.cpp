@@ -50,6 +50,11 @@ namespace LinuxSampler {
 
     int InstrumentEditor::Main() {
         dmsg(1,("InstrumentEditor::Main()\n"));
+
+        #if DEBUG
+        Thread::setNameOfCaller("InstrEditorPlug");
+        #endif
+
         // run the editor's main loop
         int iResult = Main(pInstrument, sTypeName, sTypeVersion, pUserData);
         // reset editor parameters

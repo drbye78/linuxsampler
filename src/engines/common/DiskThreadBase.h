@@ -3,9 +3,9 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2008 Christian Schoenebeck                       *
- *   Copyright (C) 2009 - 2012 Christian Schoenebeck and Grigor Iliev      *
- *   Copyright (C) 2013 - 2016 Christian Schoenebeck and Andreas Persson   *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
+ *   Copyright (C) 2009 - 2012 Grigor Iliev                                *
+ *   Copyright (C) 2013 - 2016 Andreas Persson                             *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -456,14 +456,20 @@ namespace LinuxSampler {
             // Implementation of virtual method from class Thread
             int Main() {
                 dmsg(3,("Disk thread running\n"));
+
+                #if DEBUG
+                Thread::setNameOfCaller("DiskIO");
+                #endif
+
                 while (true) {
-                    #if !defined(WIN32)
-                    pthread_testcancel(); // mandatory for OSX
-                    #endif
-                    #if CONFIG_PTHREAD_TESTCANCEL
+
                     TestCancel();
-                    #endif
+
                     IsIdle = true; // will be set to false if a stream got filled
+
+                    // prevent disk thread from being cancelled
+                    // (e.g. to prevent deadlocks while holding mutex lock(s))
+                    pushCancelable(false);
 
                     // if there are ghost streams, delete them
                     for (int i = 0; i < GhostQueue->read_space(); i++) { //FIXME: unefficient
@@ -526,16 +532,22 @@ namespace LinuxSampler {
 
                     RefillStreams(); // refill the most empty streams
 
-                    // if nothing was done during this iteration (eg no streambuffer
-                    // filled with data) then sleep for 30ms
-                    if (IsIdle) usleep(30000);
-
                     int streamsInUsage = 0;
                     for (int i = Streams - 1; i >= 0; i--) {
                         if (pStreams[i]->GetState() != Stream::state_unused) streamsInUsage++;
                     }
                     SetActiveStreamCount(streamsInUsage);
                     if (streamsInUsage > ActiveStreamCountMax) ActiveStreamCountMax = streamsInUsage;
+
+                    // now allow disk thread being cancelled again
+                    // (since all mutexes are now unlocked and data structures
+                    // are at consistent states)
+                    popCancelable();
+
+                    // if nothing was done during this iteration (i.e. no
+                    // stream buffer filled with data) then sleep for 30ms
+                    if (IsIdle)
+                        usleep(30000); //NOTE: defined as cancellation point by POSIX
                 }
 
                 return EXIT_FAILURE;

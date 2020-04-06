@@ -1,6 +1,6 @@
 /***************************************************************************
  *                                                                         *
- *   Copyright (C) 2006 Christian Schoenebeck                              *
+ *   Copyright (C) 2006 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -169,7 +169,17 @@ namespace LinuxSampler {
      * Entry point for the thread.
      */
     int AudioOutputDeviceArts::Main() {
+
+        #if DEBUG
+        Thread::setNameOfCaller("ArtsAudio");
+        #endif
+
         while (true) {
+            TestCancel();
+
+            // prevent thread from being cancelled
+            // (e.g. to prevent deadlocks while holding mutex lock(s))
+            pushCancelable(false);
 
             // let all connected engines render 'FragmentSize' sample points
             RenderAudio(FragmentSize);
@@ -192,6 +202,10 @@ namespace LinuxSampler {
                 fprintf(stderr, "AudioOutputDeviceArts: Audio output error, exiting.\n");
                 exit(EXIT_FAILURE);
             }
+
+            // now allow thread being cancelled again
+            // (since all mutexes are now unlocked)
+            popCancelable();
         }
     }
 

@@ -49,9 +49,7 @@ int ConditionTest::ConditionCheckerLocking::Main() {
     resource++;
     while (!doUnlock) {
 		usleep(1000); // sleep until ordered to unlock the condition again
-#if CONFIG_PTHREAD_TESTCANCEL
 		TestCancel();
-#endif
 	}
     staticcondition.Unlock();
     return 0;

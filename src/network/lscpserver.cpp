@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2016 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This library is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -380,6 +380,10 @@ int LSCPServer::WaitUntilInitialized(long TimeoutSeconds, long TimeoutNanoSecond
 }
 
 int LSCPServer::Main() {
+    #if DEBUG
+    Thread::setNameOfCaller("LSCPServer");
+    #endif
+
 	#if defined(WIN32)
 	WSADATA wsaData;
 	int iResult;
@@ -446,9 +450,13 @@ int LSCPServer::Main() {
     timeval timeout;
 
     while (true) {
-	#if CONFIG_PTHREAD_TESTCANCEL
+
 		TestCancel();
-	#endif
+
+        // prevent thread from being cancelled
+        // (e.g. to prevent deadlocks while holding mutex lock(s))
+        pushCancelable(false);
+
         // check if some engine channel's parameter / status changed, if so notify the respective LSCP event subscribers
         {
             LockGuard lock(EngineChannelFactory::EngineChannelsMutex);
@@ -532,6 +540,10 @@ int LSCPServer::Main() {
             }
             bufferedNotifies.clear();
         }
+
+        // now allow thread being cancelled again
+        // (since all mutexes are now unlocked)
+        popCancelable();
 
         fd_set selectSet = fdSet;
         timeout.tv_sec  = 0;

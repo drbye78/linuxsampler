@@ -1,7 +1,7 @@
 /*
  * LSCP Shell
  *
- * Copyright (c) 2014 - 2017 Christian Schoenebeck
+ * Copyright (c) 2014 - 2020 Christian Schoenebeck
  *
  * This program is part of LinuxSampler and released under the same terms.
  */
@@ -37,9 +37,17 @@ void KeyboardReader::callback(bool b) {
 }
 
 int KeyboardReader::Main() {
+    #if DEBUG
+    Thread::setNameOfCaller("KeyboardReader");
+    #endif
+
     while (true) {
         std::vector<char> v = TerminalCtrl::getChars(1, 1);
         if (!v.empty()) {
+            // prevent thread from being cancelled
+            // (e.g. to prevent deadlocks while holding mutex lock(s))
+            pushCancelable(false);
+
             m_fifoMutex.Lock();
             m_fifo.push_back(v[0]);
             if (m_sync.GetUnsafe()) {
@@ -56,6 +64,10 @@ int KeyboardReader::Main() {
                 m_fifoMutex.Unlock();
                 if (m_callback && m_doCallback) (*m_callback)(this);
             }
+
+            // now allow thread being cancelled again
+            // (since all mutexes are now unlocked)
+            popCancelable();
         }
         TestCancel();
     }

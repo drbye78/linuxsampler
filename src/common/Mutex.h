@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2017 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -23,6 +23,10 @@
 
 #ifndef __MUTEX_H__
 #define __MUTEX_H__
+
+// enable this for detecting mutex misusage and for debugging dead locks
+// (these features then still need to be enabled by Mutex::setDebugEnabled())
+//#define DEBUG_MUTEX 1
 
 #if defined(WIN32)
 #include <windows.h>
@@ -121,6 +125,30 @@ class Mutex {
          */
         void Unlock();
 
+#if DEBUG_MUTEX
+    /** @brief Enable bug detection and debugging features.
+     *
+     * By passing @c true to this method, bug detection and debugging features
+     * will be enabled for this Mutex object. For instance this will trigger an
+     * assertion fault if a thread attempts to Unlock() a thread it does not own
+     * a lock on, or when locking more than once while not using mutex type
+     * @c RECURSIVE and much more. Additionally this will also record the name
+     * of the thread currently holding a lock, and the backtrace of that
+     * thread's lock. The latter information can then be used to debug
+     * deadlocks.
+     *
+     * By default this is turned off and must be enabled for individual Mutex
+     * objects, because otherwise it would cause a large number of false
+     * positives (i.e. in certain edge cases like thread constructors /
+     * destructors for instance).
+     *
+     * @param b - whether to enable bug detection / debugging features
+     */
+    void setDebugEnabled(bool b) {
+        debugSelf = b;
+    }
+#endif
+
     protected:
     #if defined(WIN32)
         HANDLE hMutex;
@@ -129,6 +157,12 @@ class Mutex {
         pthread_mutexattr_t __posix_mutexattr;
     #endif
         type_t type;
+    #if DEBUG_MUTEX
+        std::string owner; ///< Name of the thread owning the current lock.
+        long long int count; ///< How many times the owner currently acquired the lock recursively.
+        std::string backtrace; ///< Call stack trace of (last) lock.
+        bool debugSelf; ///< Whether bug detection and debugging features are enabled.
+    #endif
 };
 
 // Lock guard for exception safe locking

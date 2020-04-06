@@ -62,6 +62,8 @@ Version SVN trunk (?)
       option).
     - Thread class: raise compiler warning if pthread_testcancel() is not
       available, because it can lead to deadlocks.
+    - Mutex class: Implemented optional bug detection and deadlock debugging
+      features.
 
   * Real-time instrument scripts:
     - Added method ScriptVM::setExitResultEnabled() which allows to

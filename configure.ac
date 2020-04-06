@@ -3,7 +3,7 @@
 
 m4_define(linuxsampler_release_major, 2)
 m4_define(linuxsampler_release_minor, 1)
-m4_define(linuxsampler_release_build, 1.svn52)
+m4_define(linuxsampler_release_build, 1.svn53)
 
 
 AC_INIT([linuxsampler],[linuxsampler_release_major.linuxsampler_release_minor.linuxsampler_release_build])

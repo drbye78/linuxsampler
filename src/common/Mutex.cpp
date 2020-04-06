@@ -3,7 +3,7 @@
  *   LinuxSampler - modular, streaming capable sampler                     *
  *                                                                         *
  *   Copyright (C) 2003, 2004 by Benno Senoner and Christian Schoenebeck   *
- *   Copyright (C) 2005 - 2019 Christian Schoenebeck                       *
+ *   Copyright (C) 2005 - 2020 Christian Schoenebeck                       *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -55,6 +55,12 @@
 
 #include "Mutex.h"
 
+#if DEBUG_MUTEX
+# include "Thread.h"
+# include <assert.h>
+# include "global_private.h"
+#endif
+
 namespace LinuxSampler {
 
 Mutex::Mutex(type_t type) {
@@ -87,6 +93,10 @@ Mutex::Mutex(type_t type) {
     }
     pthread_mutex_init(&__posix_mutex, &__posix_mutexattr);
 #endif
+#if DEBUG_MUTEX
+    debugSelf = false;
+    count = 0;
+#endif
 }
 
 Mutex::~Mutex() {
@@ -104,20 +114,56 @@ void Mutex::Lock() {
 #else
     pthread_mutex_lock(&__posix_mutex);
 #endif
+#if DEBUG_MUTEX
+    if (debugSelf) {
+        std::string caller = Thread::nameOfCaller();
+        ++count;
+        assert(count > 0);
+        if (type != RECURSIVE)
+            assert(count == 1);
+        if (!owner.empty())
+            assert(owner == caller);
+        owner = caller;
+        backtrace = backtraceAsString();
+    }
+#endif
 }
 
 bool Mutex::Trylock() {
 #if defined(WIN32)
     if( WaitForSingleObject(hMutex, 0) == WAIT_TIMEOUT) return false;
-    return true;
 #else
     if (pthread_mutex_trylock(&__posix_mutex) == EBUSY)
         return false;
-    return true;
 #endif
+#if DEBUG_MUTEX
+    if (debugSelf) {
+        std::string caller = Thread::nameOfCaller();
+        ++count;
+        assert(count > 0);
+        if (type != RECURSIVE)
+            assert(count == 1);
+        if (!owner.empty())
+            assert(owner == caller);
+        owner = caller;
+        backtrace = backtraceAsString();
+    }
+#endif
+    return true;
 }
 
 void Mutex::Unlock() {
+#if DEBUG_MUTEX
+    if (debugSelf) {
+        std::string caller = Thread::nameOfCaller();
+        assert(count > 0);
+        --count;
+        assert(count >= 0);
+        assert(owner == caller);
+        if (!count)
+            owner.clear();
+    }
+#endif
 #if defined(WIN32)
     ReleaseMutex(hMutex);
 #else

@@ -35,7 +35,8 @@
 #define ssize_t ptrdiff_t
 #define atomic_t std::atomic_uint32_t
 
-#define GIT_BUILD
+#define GIT_BUILD_IDENT "$Id$"
+#define GIT_BUILD() String(GIT_BUILD_IDENT).substr(5, 40);
 
 #include <../src/common/global.h>
 #include <../src/common/global_private.h>

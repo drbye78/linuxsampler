@@ -176,8 +176,12 @@ namespace LinuxSampler { namespace sf2 {
     }
 
     String Engine::Version() {
+#ifndef GIT_BUILD_IDENT
         String s = "$Revision$";
         return s.substr(11, s.size() - 13); // cut dollar signs, spaces and CVS macro keyword
+#else
+        return GIT_BUILD();
+#endif
     }
 
 }} // namespace LinuxSampler::sf2

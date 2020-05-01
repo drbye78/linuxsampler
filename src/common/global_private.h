@@ -91,9 +91,13 @@ struct result_t {
 };
 
 template<class T> inline String ToString(T o) {
-	std::stringstream ss;
-	ss << o;
-	return ss.str();
+    std::stringstream ss;
+    ss << o;
+    return ss.str();
+}
+
+inline String ToString(const unsigned char* str) {
+    return (str == NULL) ? "" : String((const char *)str);
 }
 
 inline int ToInt(const std::string& s) throw(LinuxSampler::Exception) {

@@ -1536,7 +1536,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Value = value;
 
                             // if there's a RPN script handler, run it ...
-                            if (pChannel->pScript->handlerRpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerRpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the RPN script handler
@@ -1576,7 +1576,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.NRPN.Value = value;
 
                             // if there's a NRPN script handler, run it ...
-                            if (pChannel->pScript->handlerNrpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerNrpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the NRPN script handler
@@ -1625,7 +1625,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Value = value;
 
                             // if there's a RPN script handler, run it ...
-                            if (pChannel->pScript->handlerRpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerRpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the RPN script handler
@@ -1659,7 +1659,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.NRPN.Value = value;
 
                             // if there's a NRPN script handler, run it ...
-                            if (pChannel->pScript->handlerNrpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerNrpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the NRPN script handler
@@ -1770,7 +1770,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Value = value;
 
                             // if there's a RPN script handler, run it ...
-                            if (pChannel->pScript->handlerRpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerRpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the RPN script handler
@@ -1804,7 +1804,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.NRPN.Value = value;
 
                             // if there's a NRPN script handler, run it ...
-                            if (pChannel->pScript->handlerNrpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerNrpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the NRPN script handler
@@ -1842,7 +1842,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.RPN.Value = value;
 
                             // if there's a RPN script handler, run it ...
-                            if (pChannel->pScript->handlerRpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerRpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the RPN script handler
@@ -1876,7 +1876,7 @@ namespace LinuxSampler {
                             itControlChangeEvent->Param.NRPN.Value = value;
 
                             // if there's a NRPN script handler, run it ...
-                            if (pChannel->pScript->handlerNrpn) {
+                            if (pChannel->pScript && pChannel->pScript->handlerNrpn) {
                                 const event_id_t eventID =
                                     pEventPool->getID(itControlChangeEvent);
                                 // run the NRPN script handler

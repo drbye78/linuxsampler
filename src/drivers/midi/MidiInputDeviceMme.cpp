@@ -339,7 +339,7 @@ void MidiInputDeviceMme::MidiInputPortMme::MmeCallbackDispatcher(HMIDIIN handle,
     }
 
     String MidiInputDeviceMme::Version() {
-#ifndef GIT_BUILD_IDENT
+#ifndef GIT_BUILD
         String s = "$Revision$";
         return s.substr(11, s.size() - 13); // cut dollar signs, spaces and CVS macro keyword
 #else

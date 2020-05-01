@@ -906,6 +906,9 @@
     <ClCompile Include="..\src\engines\common\DiskThreadBase.cpp">
       <Filter>Source Files\engines\common</Filter>
     </ClCompile>
+    <ClCompile Include="revision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Bison Include="..\src\scriptvm\parser.y">

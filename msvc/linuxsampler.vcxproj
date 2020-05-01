@@ -422,6 +422,7 @@
     <ClCompile Include="..\src\scriptvm\ScriptVM.cpp" />
     <ClCompile Include="..\src\scriptvm\ScriptVMFactory.cpp" />
     <ClCompile Include="..\src\scriptvm\tree.cpp" />
+    <ClCompile Include="revision.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

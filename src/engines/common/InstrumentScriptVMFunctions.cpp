@@ -476,7 +476,8 @@ namespace LinuxSampler {
             }
         }
 
-        pEngineChannel->pScript->eventGroups[groupID].insert(id);
+        if (pEngineChannel->pScript)
+            pEngineChannel->pScript->eventGroups[groupID].insert(id);
 
         return successResult();
     }
@@ -517,7 +518,8 @@ namespace LinuxSampler {
         AbstractEngineChannel* pEngineChannel =
             static_cast<AbstractEngineChannel*>(m_vm->m_event->cause.pEngineChannel);
 
-        pEngineChannel->pScript->eventGroups[groupID].erase(id);
+        if (pEngineChannel->pScript)
+            pEngineChannel->pScript->eventGroups[groupID].erase(id);
 
         return successResult();
     }

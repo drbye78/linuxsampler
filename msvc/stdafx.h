@@ -35,9 +35,7 @@
 #define ssize_t ptrdiff_t
 #define atomic_t std::atomic_uint32_t
 
-#define GIT_BUILD_IDENT "$Id: 6cfd31a9224560a7e8beb59aa887b5853397ef5b $"
-#define GIT_BUILD() String(GIT_BUILD_IDENT).substr(5, 40);
-
+#ifndef _DEBUG
 #include <../src/common/global.h>
 #include <../src/common/global_private.h>
 #include <../src/common/optional.h>
@@ -50,4 +48,8 @@
 #include <../src/engines/AbstractEngineChannel.h>
 #include <gig.h>
 
+#define GIT_BUILD() repoBuildNumber()
+String repoBuildNumber();
 
+
+#endif

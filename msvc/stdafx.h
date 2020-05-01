@@ -35,6 +35,8 @@
 #define ssize_t ptrdiff_t
 #define atomic_t std::atomic_uint32_t
 
+#define GIT_BUILD
+
 #include <../src/common/global.h>
 #include <../src/common/global_private.h>
 #include <../src/common/optional.h>

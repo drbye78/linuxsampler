@@ -973,8 +973,13 @@ String AudioOutputDeviceAsio::Description() {
 }
 
 String AudioOutputDeviceAsio::Version() {
+#ifndef GIT_BUILD
     String s = "$Revision$";
     return s.substr(11, s.size() - 13); // cut dollar signs, spaces and CVS macro keyword
+#else
+    String s = "$Id$";
+    return s.substr(11, s.size() - 13); // cut dollar signs, spaces and CVS macro keyword
+#endif
 }
 
 } // namespace LinuxSampler

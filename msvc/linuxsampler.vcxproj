@@ -1,0 +1,461 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{A48AAD21-E123-451B-9A3B-AC2BFBFE8748}</ProjectGuid>
+    <RootNamespace>linuxsampler</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <IntDir>$(Platform)\$(Configuration)\$(RootNamespace)\</IntDir>
+    <AsioRoot>$(VcpkgRoot)include\asiosdk\</AsioRoot>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_CONSOLE;HAVE_CONFIG_H</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\..\libgig\src;$(SolutionDir)..\..\liblscp;$(SolutionDir);$(SolutionDir)compat;$(SolutionDir)$(Platform)\include;$(SolutionDir)$(Platform)\include\asiosdk\common;$(SolutionDir)$(Platform)\include\asiosdk\host;$(SolutionDir)$(Platform)\include\asiosdk\host\pc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>ws2_32.lib;winmm.lib;rpcrt4.lib;dbghelp.lib;flac.lib;ogg.lib;vorbis.lib;sqlite3.lib;libsndfile.lib%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\lib;</AdditionalLibraryDirectories>
+    </Link>
+    <PreBuildEvent>
+      <Command>call bootstrap.bat</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="tools\custom_build_rules\win_flex_bison_custom_build.props" />
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>26451;26495;26812</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="config.h" />
+    <ClInclude Include="..\src\common\ArrayList.h" />
+    <ClInclude Include="..\src\common\atomic.h" />
+    <ClInclude Include="..\src\common\ChangeFlagRelaxed.h" />
+    <ClInclude Include="..\src\common\Condition.h" />
+    <ClInclude Include="..\src\common\ConditionServer.h" />
+    <ClInclude Include="..\src\common\ConstCapacityArray.h" />
+    <ClInclude Include="..\src\common\DynamicLibraries.h" />
+    <ClInclude Include="..\src\common\Exception.h" />
+    <ClInclude Include="..\src\common\Features.h" />
+    <ClInclude Include="..\src\common\File.h" />
+    <ClInclude Include="..\src\common\global.h" />
+    <ClInclude Include="..\src\common\global_private.h" />
+    <ClInclude Include="..\src\common\IDGenerator.h" />
+    <ClInclude Include="..\src\common\ladspa.h" />
+    <ClInclude Include="..\src\common\lsatomic.h" />
+    <ClInclude Include="..\src\common\Mutex.h" />
+    <ClInclude Include="..\src\common\optional.h" />
+    <ClInclude Include="..\src\common\Path.h" />
+    <ClInclude Include="..\src\common\Pool.h" />
+    <ClInclude Include="..\src\common\Ref.h" />
+    <ClInclude Include="..\src\common\ResourceManager.h" />
+    <ClInclude Include="..\src\common\RingBuffer.h" />
+    <ClInclude Include="..\src\common\RTAVLTree.h" />
+    <ClInclude Include="..\src\common\RTMath.h" />
+    <ClInclude Include="..\src\common\stacktrace.h" />
+    <ClInclude Include="..\src\common\SynchronizedConfig.h" />
+    <ClInclude Include="..\src\common\Thread.h" />
+    <ClInclude Include="..\src\common\WorkerThread.h" />
+    <ClInclude Include="..\src\config.h" />
+    <ClInclude Include="..\src\db\InstrumentsDb.h" />
+    <ClInclude Include="..\src\db\InstrumentsDbUtilities.h" />
+    <ClInclude Include="..\src\drivers\audio\AudioChannel.h" />
+    <ClInclude Include="..\src\drivers\audio\AudioOutputDevice.h" />
+    <ClInclude Include="..\src\drivers\audio\AudioOutputDeviceAsio.h" />
+    <ClInclude Include="..\src\drivers\audio\AudioOutputDeviceFactory.h" />
+    <ClInclude Include="..\src\drivers\audio\AudioOutputDevicePlugin.h" />
+    <ClInclude Include="..\src\drivers\audio\iasiothiscallresolver.h" />
+    <ClInclude Include="..\src\drivers\Device.h" />
+    <ClInclude Include="..\src\drivers\DeviceParameter.h" />
+    <ClInclude Include="..\src\drivers\DeviceParameterFactory.h" />
+    <ClInclude Include="..\src\drivers\midi\midi.h" />
+    <ClInclude Include="..\src\drivers\midi\MidiInputDevice.h" />
+    <ClInclude Include="..\src\drivers\midi\MidiInputDeviceFactory.h" />
+    <ClInclude Include="..\src\drivers\midi\MidiInputDeviceMme.h" />
+    <ClInclude Include="..\src\drivers\midi\MidiInputDevicePlugin.h" />
+    <ClInclude Include="..\src\drivers\midi\MidiInputPort.h" />
+    <ClInclude Include="..\src\drivers\midi\MidiInstrumentMapper.h" />
+    <ClInclude Include="..\src\drivers\midi\VirtualMidiDevice.h" />
+    <ClInclude Include="..\src\drivers\Plugin.h" />
+    <ClInclude Include="..\src\effects\Effect.h" />
+    <ClInclude Include="..\src\effects\EffectChain.h" />
+    <ClInclude Include="..\src\effects\EffectControl.h" />
+    <ClInclude Include="..\src\effects\EffectFactory.h" />
+    <ClInclude Include="..\src\effects\EffectInfo.h" />
+    <ClInclude Include="..\src\effects\LadspaEffect.h" />
+    <ClInclude Include="..\src\engines\AbstractEngine.h" />
+    <ClInclude Include="..\src\engines\AbstractEngineChannel.h" />
+    <ClInclude Include="..\src\engines\common\AbstractInstrumentManager.h" />
+    <ClInclude Include="..\src\engines\common\AbstractVoice.h" />
+    <ClInclude Include="..\src\engines\common\BiquadFilter.h" />
+    <ClInclude Include="..\src\engines\common\DiskThreadBase.h" />
+    <ClInclude Include="..\src\engines\common\EaseInEaseOut.h" />
+    <ClInclude Include="..\src\engines\common\EG.h" />
+    <ClInclude Include="..\src\engines\common\Event.h" />
+    <ClInclude Include="..\src\engines\common\Fade.h" />
+    <ClInclude Include="..\src\engines\common\InstrumentScriptVM.h" />
+    <ClInclude Include="..\src\engines\common\InstrumentScriptVMDynVars.h" />
+    <ClInclude Include="..\src\engines\common\InstrumentScriptVMFunctions.h" />
+    <ClInclude Include="..\src\engines\common\LFOBase.h" />
+    <ClInclude Include="..\src\engines\common\LFOTriangleDiHarmonic.h" />
+    <ClInclude Include="..\src\engines\common\LFOTriangleIntAbsMath.h" />
+    <ClInclude Include="..\src\engines\common\LFOTriangleIntMath.h" />
+    <ClInclude Include="..\src\engines\common\MidiKeyboardManager.h" />
+    <ClInclude Include="..\src\engines\common\Note.h" />
+    <ClInclude Include="..\src\engines\common\PulseLFO.h" />
+    <ClInclude Include="..\src\engines\common\Resampler.h" />
+    <ClInclude Include="..\src\engines\common\Sample.h" />
+    <ClInclude Include="..\src\engines\common\SampleFile.h" />
+    <ClInclude Include="..\src\engines\common\SampleManager.h" />
+    <ClInclude Include="..\src\engines\common\SawLFO.h" />
+    <ClInclude Include="..\src\engines\common\SignalUnit.h" />
+    <ClInclude Include="..\src\engines\common\SignalUnitRack.h" />
+    <ClInclude Include="..\src\engines\common\SineLFO.h" />
+    <ClInclude Include="..\src\engines\common\Stream.h" />
+    <ClInclude Include="..\src\engines\common\StreamBase.h" />
+    <ClInclude Include="..\src\engines\common\Voice.h" />
+    <ClInclude Include="..\src\engines\common\VoiceBase.h" />
+    <ClInclude Include="..\src\engines\Engine.h" />
+    <ClInclude Include="..\src\engines\EngineBase.h" />
+    <ClInclude Include="..\src\engines\EngineChannel.h" />
+    <ClInclude Include="..\src\engines\EngineChannelBase.h" />
+    <ClInclude Include="..\src\engines\EngineChannelFactory.h" />
+    <ClInclude Include="..\src\engines\EngineFactory.h" />
+    <ClInclude Include="..\src\engines\FxSend.h" />
+    <ClInclude Include="..\src\engines\gig\DiskThread.h" />
+    <ClInclude Include="..\src\engines\gig\EGADSR.h" />
+    <ClInclude Include="..\src\engines\gig\EGDecay.h" />
+    <ClInclude Include="..\src\engines\gig\Engine.h" />
+    <ClInclude Include="..\src\engines\gig\EngineChannel.h" />
+    <ClInclude Include="..\src\engines\gig\EngineGlobals.h" />
+    <ClInclude Include="..\src\engines\gig\Filter.h" />
+    <ClInclude Include="..\src\engines\gig\InstrumentResourceManager.h" />
+    <ClInclude Include="..\src\engines\gig\InstrumentScriptVM.h" />
+    <ClInclude Include="..\src\engines\gig\InstrumentScriptVMFunctions.h" />
+    <ClInclude Include="..\src\engines\gig\Profiler.h" />
+    <ClInclude Include="..\src\engines\gig\SmoothVolume.h" />
+    <ClInclude Include="..\src\engines\gig\Stream.h" />
+    <ClInclude Include="..\src\engines\gig\SynthesisParam.h" />
+    <ClInclude Include="..\src\engines\gig\Synthesizer.h" />
+    <ClInclude Include="..\src\engines\gig\Voice.h" />
+    <ClInclude Include="..\src\engines\InstrumentManager.h" />
+    <ClInclude Include="..\src\engines\InstrumentManagerBase.h" />
+    <ClInclude Include="..\src\engines\InstrumentManagerThread.h" />
+    <ClInclude Include="..\src\engines\sf2\DiskThread.h" />
+    <ClInclude Include="..\src\engines\sf2\Engine.h" />
+    <ClInclude Include="..\src\engines\sf2\EngineChannel.h" />
+    <ClInclude Include="..\src\engines\sf2\InstrumentResourceManager.h" />
+    <ClInclude Include="..\src\engines\sf2\SF2SignalUnitRack.h" />
+    <ClInclude Include="..\src\engines\sf2\Stream.h" />
+    <ClInclude Include="..\src\engines\sf2\Voice.h" />
+    <ClInclude Include="..\src\engines\sfz\DiskThread.h" />
+    <ClInclude Include="..\src\engines\sfz\EG.h" />
+    <ClInclude Include="..\src\engines\sfz\EGADSR.h" />
+    <ClInclude Include="..\src\engines\sfz\Engine.h" />
+    <ClInclude Include="..\src\engines\sfz\EngineChannel.h" />
+    <ClInclude Include="..\src\engines\sfz\InstrumentResourceManager.h" />
+    <ClInclude Include="..\src\engines\sfz\InstrumentScriptVM.h" />
+    <ClInclude Include="..\src\engines\sfz\LookupTable.h" />
+    <ClInclude Include="..\src\engines\sfz\sfz.h" />
+    <ClInclude Include="..\src\engines\sfz\SfzSignalUnitRack.h" />
+    <ClInclude Include="..\src\engines\sfz\Stream.h" />
+    <ClInclude Include="..\src\engines\sfz\Voice.h" />
+    <ClInclude Include="..\src\EventListeners.h" />
+    <ClInclude Include="..\src\network\lscp.h" />
+    <ClInclude Include="..\src\network\lscpevent.h" />
+    <ClInclude Include="..\src\network\lscpparser.h" />
+    <ClInclude Include="..\src\network\lscpresultset.h" />
+    <ClInclude Include="..\src\network\lscpserver.h" />
+    <ClInclude Include="..\src\network\lscpsymbols.h" />
+    <ClInclude Include="..\src\network\lscp_shell_reference.h" />
+    <ClInclude Include="..\src\plugins\InstrumentEditor.h" />
+    <ClInclude Include="..\src\plugins\InstrumentEditorFactory.h" />
+    <ClInclude Include="..\src\Sampler.h" />
+    <ClInclude Include="..\src\scriptvm\common.h" />
+    <ClInclude Include="..\src\scriptvm\CoreVMDynVars.h" />
+    <ClInclude Include="..\src\scriptvm\CoreVMFunctions.h" />
+    <ClInclude Include="..\src\scriptvm\editor\CodeScanner.h" />
+    <ClInclude Include="..\src\scriptvm\editor\NkspScanner.h" />
+    <ClInclude Include="..\src\scriptvm\editor\SourceToken.h" />
+    <ClInclude Include="..\src\scriptvm\parser.h" />
+    <ClInclude Include="..\src\scriptvm\parser_shared.h" />
+    <ClInclude Include="..\src\scriptvm\ScriptVM.h" />
+    <ClInclude Include="..\src\scriptvm\ScriptVMFactory.h" />
+    <ClInclude Include="..\src\scriptvm\tree.h" />
+    <ClInclude Include="stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\common\Condition.cpp" />
+    <ClCompile Include="..\src\common\ConditionServer.cpp" />
+    <ClCompile Include="..\src\common\DynamicLibraries.cpp" />
+    <ClCompile Include="..\src\common\Features.cpp" />
+    <ClCompile Include="..\src\common\File.cpp" />
+    <ClCompile Include="..\src\common\global_private.cpp" />
+    <ClCompile Include="..\src\common\IDGenerator.cpp" />
+    <ClCompile Include="..\src\common\Mutex.cpp" />
+    <ClCompile Include="..\src\common\optional.cpp" />
+    <ClCompile Include="..\src\common\Path.cpp" />
+    <ClCompile Include="..\src\common\Ref.cpp" />
+    <ClCompile Include="..\src\common\RTMath.cpp" />
+    <ClCompile Include="..\src\common\stacktrace.c">
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\src\common\Thread.cpp" />
+    <ClCompile Include="..\src\common\WorkerThread.cpp" />
+    <ClCompile Include="..\src\db\InstrumentsDb.cpp" />
+    <ClCompile Include="..\src\db\InstrumentsDbUtilities.cpp" />
+    <ClCompile Include="..\src\drivers\audio\asiosdk-asio.cpp" />
+    <ClCompile Include="..\src\drivers\audio\asiosdk-asiodrivers.cpp" />
+    <ClCompile Include="..\src\drivers\audio\asiosdk-asiolist.cpp" />
+    <ClCompile Include="..\src\drivers\audio\AudioChannel.cpp" />
+    <ClCompile Include="..\src\drivers\audio\AudioOutputDevice.cpp" />
+    <ClCompile Include="..\src\drivers\audio\AudioOutputDeviceAsio.cpp" />
+    <ClCompile Include="..\src\drivers\audio\AudioOutputDeviceFactory.cpp" />
+    <ClCompile Include="..\src\drivers\audio\AudioOutputDevicePlugin.cpp" />
+    <ClCompile Include="..\src\drivers\audio\iasiothiscallresolver.cpp" />
+    <ClCompile Include="..\src\drivers\Device.cpp" />
+    <ClCompile Include="..\src\drivers\DeviceParameter.cpp" />
+    <ClCompile Include="..\src\drivers\DeviceParameterFactory.cpp" />
+    <ClCompile Include="..\src\drivers\midi\MidiInputDevice.cpp" />
+    <ClCompile Include="..\src\drivers\midi\MidiInputDeviceFactory.cpp" />
+    <ClCompile Include="..\src\drivers\midi\MidiInputDeviceMme.cpp" />
+    <ClCompile Include="..\src\drivers\midi\MidiInputDevicePlugin.cpp" />
+    <ClCompile Include="..\src\drivers\midi\MidiInputPort.cpp" />
+    <ClCompile Include="..\src\drivers\midi\MidiInstrumentMapper.cpp" />
+    <ClCompile Include="..\src\drivers\midi\VirtualMidiDevice.cpp" />
+    <ClCompile Include="..\src\drivers\Plugin.cpp" />
+    <ClCompile Include="..\src\effects\Effect.cpp" />
+    <ClCompile Include="..\src\effects\EffectChain.cpp" />
+    <ClCompile Include="..\src\effects\EffectControl.cpp" />
+    <ClCompile Include="..\src\effects\EffectFactory.cpp" />
+    <ClCompile Include="..\src\effects\LadspaEffect.cpp" />
+    <ClCompile Include="..\src\engines\AbstractEngine.cpp" />
+    <ClCompile Include="..\src\engines\AbstractEngineChannel.cpp" />
+    <ClCompile Include="..\src\engines\common\AbstractInstrumentManager.cpp" />
+    <ClCompile Include="..\src\engines\common\AbstractVoice.cpp" />
+    <ClCompile Include="..\src\engines\common\DiskThreadBase.cpp" />
+    <ClCompile Include="..\src\engines\common\EG.cpp" />
+    <ClCompile Include="..\src\engines\common\Event.cpp" />
+    <ClCompile Include="..\src\engines\common\InstrumentScriptVM.cpp" />
+    <ClCompile Include="..\src\engines\common\InstrumentScriptVMDynVars.cpp" />
+    <ClCompile Include="..\src\engines\common\InstrumentScriptVMFunctions.cpp" />
+    <ClCompile Include="..\src\engines\common\ModulatorGraph.cpp" />
+    <ClCompile Include="..\src\engines\common\SampleFile.cpp" />
+    <ClCompile Include="..\src\engines\common\SignalUnit.cpp" />
+    <ClCompile Include="..\src\engines\common\StreamBase.cpp" />
+    <ClCompile Include="..\src\engines\Engine.cpp" />
+    <ClCompile Include="..\src\engines\EngineChannel.cpp" />
+    <ClCompile Include="..\src\engines\EngineChannelFactory.cpp" />
+    <ClCompile Include="..\src\engines\EngineFactory.cpp" />
+    <ClCompile Include="..\src\engines\FxSend.cpp" />
+    <ClCompile Include="..\src\engines\gig\DiskThread.cpp">
+      <ObjectFileName>$(IntDir)DiskThread_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\EGADSR.cpp">
+      <ObjectFileName>$(IntDir)EGADSR_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\EGDecay.cpp" />
+    <ClCompile Include="..\src\engines\gig\Engine.cpp">
+      <ObjectFileName>$(IntDir)Engine_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\EngineChannel.cpp">
+      <ObjectFileName>$(IntDir)EngineChannel_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\Filter.cpp" />
+    <ClCompile Include="..\src\engines\gig\InstrumentResourceManager.cpp">
+      <ObjectFileName>$(IntDir)InstrumentResourceManager_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\InstrumentScriptVM.cpp">
+      <ObjectFileName>$(IntDir)InstrumentScriptVM_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\InstrumentScriptVMFunctions.cpp">
+      <ObjectFileName>$(IntDir)InstrumentScriptVMFunctions_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\Profiler.cpp" />
+    <ClCompile Include="..\src\engines\gig\SmoothVolume.cpp" />
+    <ClCompile Include="..\src\engines\gig\Stream.cpp">
+      <ObjectFileName>$(IntDir)Stream_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\gig\Synthesizer.cpp" />
+    <ClCompile Include="..\src\engines\gig\Voice.cpp">
+      <ObjectFileName>$(IntDir)Voice_GIG.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\InstrumentManager.cpp" />
+    <ClCompile Include="..\src\engines\InstrumentManagerThread.cpp" />
+    <ClCompile Include="..\src\engines\sf2\DiskThread.cpp">
+      <ObjectFileName>$(IntDir)DiskThread_SF2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sf2\Engine.cpp">
+      <ObjectFileName>$(IntDir)Engine_SF2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sf2\EngineChannel.cpp">
+      <ObjectFileName>$(IntDir)EngineChannel_SF2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sf2\InstrumentResourceManager.cpp">
+      <ObjectFileName>$(IntDir)InstrumentResourceManager_SF2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sf2\SF2SignalUnitRack.cpp" />
+    <ClCompile Include="..\src\engines\sf2\Stream.cpp">
+      <ObjectFileName>$(IntDir)Stream_SF2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sf2\Voice.cpp">
+      <ObjectFileName>$(IntDir)Voice_SF2.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\DiskThread.cpp">
+      <ObjectFileName>$(IntDir)DiskThread_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\EG.cpp">
+      <ObjectFileName>$(IntDir)EG_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\EGADSR.cpp">
+      <ObjectFileName>$(IntDir)EGADSR_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\Engine.cpp">
+      <ObjectFileName>$(IntDir)Engine_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\EngineChannel.cpp">
+      <ObjectFileName>$(IntDir)EngineChannel_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\InstrumentResourceManager.cpp">
+      <ObjectFileName>$(IntDir)InstrumentResourceManager_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\InstrumentScriptVM.cpp">
+      <ObjectFileName>$(IntDir)InstrumentScriptVM_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\LookupTable.cpp" />
+    <ClCompile Include="..\src\engines\sfz\sfz.cpp" />
+    <ClCompile Include="..\src\engines\sfz\SfzSignalUnitRack.cpp" />
+    <ClCompile Include="..\src\engines\sfz\Stream.cpp">
+      <ObjectFileName>$(IntDir)Stream_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\engines\sfz\Voice.cpp">
+      <ObjectFileName>$(IntDir)Voice_SFZ.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\src\linuxsampler.cpp" />
+    <ClCompile Include="..\src\network\lscpevent.cpp" />
+    <ClCompile Include="..\src\network\lscpparser.cpp" />
+    <ClCompile Include="..\src\network\lscpresultset.cpp" />
+    <ClCompile Include="..\src\network\lscpserver.cpp" />
+    <ClCompile Include="..\src\network\lscp_shell_reference.cpp" />
+    <ClCompile Include="..\src\plugins\InstrumentEditor.cpp" />
+    <ClCompile Include="..\src\plugins\InstrumentEditorFactory.cpp" />
+    <ClCompile Include="..\src\Sampler.cpp" />
+    <ClCompile Include="..\src\scriptvm\common.cpp" />
+    <ClCompile Include="..\src\scriptvm\CoreVMDynVars.cpp" />
+    <ClCompile Include="..\src\scriptvm\CoreVMFunctions.cpp" />
+    <ClCompile Include="..\src\scriptvm\editor\CodeScanner.cpp" />
+    <ClCompile Include="..\src\scriptvm\editor\nksp.flex.cpp" />
+    <ClCompile Include="..\src\scriptvm\editor\NkspScanner.cpp" />
+    <ClCompile Include="..\src\scriptvm\parser.cpp" />
+    <ClCompile Include="..\src\scriptvm\scanner.flex.cpp" />
+    <ClCompile Include="..\src\scriptvm\ScriptVM.cpp" />
+    <ClCompile Include="..\src\scriptvm\ScriptVMFactory.cpp" />
+    <ClCompile Include="..\src\scriptvm\tree.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <VcpkgPackage Include="asiosdk" />
+    <VcpkgPackage Include="libsndfile" />
+    <VcpkgPackage Include="sqlite3" />
+    <VcpkgPackage Include="libvorbis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="libgig.vcxproj">
+      <Project>{867b3b94-df81-4c63-9838-5515bb77dad6}</Project>
+    </ProjectReference>
+    <ProjectReference Include="liblscp.vcxproj">
+      <Project>{8e2b53d3-4518-4074-bf0f-f69fb606fd89}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Bison Include="..\src\network\lscp.y">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">lscpparser.cpp</OutputFile>
+      <DefinesFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">lscpsymbols.h</DefinesFile>
+    </Bison>
+    <Bison Include="..\src\scriptvm\parser.y">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">parser.cpp</OutputFile>
+      <DefinesFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">parser.h</DefinesFile>
+    </Bison>
+  </ItemGroup>
+  <ItemGroup>
+    <Flex Include="..\src\scriptvm\editor\nksp.l" />
+    <Flex Include="..\src\scriptvm\scanner.l" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="tools\custom_build_rules\win_flex_bison_custom_build.targets" />
+  </ImportGroup>
+</Project>

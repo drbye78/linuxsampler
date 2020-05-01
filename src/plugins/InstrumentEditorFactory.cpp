@@ -119,8 +119,8 @@ namespace LinuxSampler {
                 // XP and higher, so we call it dynamically
                 HMODULE k32 = GetModuleHandleA("kernel32.dll");
                 if (k32) {
-                    BOOL WINAPI (*setDllDirectory)(LPCSTR) =
-                        (BOOL WINAPI (*)(LPCSTR))GetProcAddress(k32, "SetDllDirectoryA");
+                    typedef BOOL(WINAPI* fnDllDirectory)(LPCSTR);
+                    fnDllDirectory setDllDirectory = reinterpret_cast<fnDllDirectory>(GetProcAddress(k32, "SetDllDirectoryA"));
                     if (setDllDirectory) {
                         setDllDirectory(installDir.c_str());
                     }

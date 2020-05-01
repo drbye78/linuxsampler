@@ -1207,7 +1207,9 @@ public:
             .unitFactor = getUnitFactor()
         };
     }
+#ifndef _MSC_VER
 protected:
+#endif
     inline T_value getPrimValue() const {
         return T_accessor::getPrimaryValue( this->m_array, this->m_index );
     }
@@ -1254,6 +1256,11 @@ public:
     inline ArrElemRef operator*() {
         return ArrElemRef(this->m_array, this->m_index);
     }
+#ifdef _MSC_VER
+    inline ArrElemRef operator[](difference_type  index) const {
+        return ArrElemRef(this->m_array, this->m_index + index);
+    }
+#endif
     inline ArrExprIter& operator++() { // prefix increment
         ++(this->m_index);
         return *this;

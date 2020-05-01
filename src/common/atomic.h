@@ -229,6 +229,19 @@ static __inline__ int atomic_dec_if_positive(atomic_t *v)
 
 #  else  /* !PPC */
 
+#if defined(_MSC_VER)
+
+#include <atomic>
+
+#define atomic_inc(x) (*x)++
+#define atomic_dec(x) (*x)--
+#define atomic_read(x) (*x)
+#define ATOMIC_INIT(x) x
+#define atomic_set(x, y) (*x) = y
+#define atomic_sub(diff, x) (*x) -= diff;
+
+#else
+
 #if defined(__i386__) || defined(__x86_64__)
 
 #ifndef __ARCH_I386_ATOMIC__
@@ -1239,7 +1252,7 @@ static __inline__ int atomic_inc_and_test(atomic_t *v)
 #  endif /* sparc */
 #  endif /* i386 */
 #  endif /* ppc */
-
+#endif
 /***********************************************************************/
 
 #else   /* !linux */

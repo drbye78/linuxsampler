@@ -1,0 +1,12 @@
+.vs
+*.user
+msvc/x64
+msvc/x86
+msvc/vcpkg
+
+src/network/lscpparser.cpp
+src/network/lscpsymbols.h
+src/scriptvm/editor/nksp.flex.cpp
+src/scriptvm/parser.cpp
+src/scriptvm/parser.h
+src/scriptvm/scanner.flex.cpp

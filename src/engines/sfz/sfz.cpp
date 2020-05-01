@@ -1434,6 +1434,7 @@ namespace sfz
     void
     File::push_opcode(std::string token)
     {
+#ifndef _MSC_VER
         if (_current_section == UNKNOWN)
             return;
 
@@ -2071,8 +2072,8 @@ namespace sfz
         else {
             std::cerr << "The opcode '" << key << "' is unsupported by libsfz!" << std::endl;
         }
+#endif
     }
-
     int File::parseKey(const std::string& s) {
         int i;
         std::istringstream iss(s);

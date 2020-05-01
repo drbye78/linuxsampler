@@ -20,7 +20,11 @@
 class ChangeFlagRelaxed {
 public:
     ChangeFlagRelaxed() {
+#ifdef _MSC_VER
+        newval = ATOMIC_INIT(0);
+#else
         newval = (atomic_t) ATOMIC_INIT(0);
+#endif
         oldval = 0;
     }
     

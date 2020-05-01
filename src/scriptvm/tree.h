@@ -122,6 +122,7 @@ class Unit : virtual public VMUnit, virtual public Node {
     StdUnit_t unit;
 public:
     Unit(StdUnit_t type) : unit(type) {}
+    Unit() : unit(StdUnit_t::VM_NO_UNIT) {}
     StdUnit_t unitType() const OVERRIDE { return unit; }
     static vmint convIntToUnitFactor(vmint iValue, VMUnit* srcUnit, VMUnit* dstUnit);
     static vmint convIntToUnitFactor(vmint iValue, vmfloat srcFactor, vmfloat dstFactor);

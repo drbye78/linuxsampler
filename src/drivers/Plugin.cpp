@@ -314,7 +314,7 @@ namespace LinuxSampler {
         std::stringstream s(State);
         s >> GLOBAL_VOLUME;
 
-        EngineChannel* engine_channel;
+        EngineChannel* engine_channel = NULL;
         int midiMapId;
         std::map<int, int> oldToNewId;
         int type;

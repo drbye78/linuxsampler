@@ -81,8 +81,8 @@
 
 // if C++11 and gcc 4.7 or later is used, then use the standard
 // implementation
-#if __cplusplus >= 201103L && \
-    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))
+#if defined(_MSC_VER) || (__cplusplus >= 201103L && \
+    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))
 
 #include <atomic>
 

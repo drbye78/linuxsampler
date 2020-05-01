@@ -35,15 +35,29 @@ namespace LinuxSampler {
         atomic_t zero = ATOMIC_INIT(0);
         atomic_t defaultVelocity = ATOMIC_INIT(127);
         atomic_t defaultCCValue = ATOMIC_INIT(0);
+#ifndef _MSC_VER
         p->notesChanged = zero;
         p->ccsChanged   = zero;
+#else
+        p->notesChanged = zero.load();
+        p->ccsChanged = zero.load();
+#endif
         for (int i = 0; i < MIDI_KEYS; i++) {
+#ifndef _MSC_VER
             p->pNoteChanged[i]  = zero;
             p->pNoteIsActive[i] = zero;
             p->pNoteOnVelocity[i] = defaultVelocity;
             p->pNoteOffVelocity[i] = defaultVelocity;
             p->pCCChanged[i] = zero;
             p->pCCValue[i]   = defaultCCValue;
+#else
+            p->pNoteChanged[i] = zero.load();
+            p->pNoteIsActive[i] = zero.load();
+            p->pNoteOnVelocity[i] = defaultVelocity.load();
+            p->pNoteOffVelocity[i] = defaultVelocity.load();
+            p->pCCChanged[i] = zero.load();
+            p->pCCValue[i] = defaultCCValue.load();
+#endif
         }
     }
 

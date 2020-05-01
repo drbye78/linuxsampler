@@ -73,6 +73,8 @@ RTMathBase::time_stamp_t RTMathBase::CreateTimeStamp() {
     return t;
     #elif defined(__APPLE__)
     return (time_stamp_t) mach_absolute_time();
+    #elif defined(_MSC_VER)
+    return __rdtsc();
     #else // we don't want to use a slow generic solution
     #  error "Sorry, LinuxSampler lacks time stamp code for your system."
     #  error "Please report this error and the CPU you are using to the LinuxSampler developers mailing list!"

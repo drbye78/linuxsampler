@@ -133,6 +133,10 @@ static void floatToASIOSTInt32LSB(float* in, void* dest, int numSamples) {
     }
 }
 
+static void floatToASIOSTFloat(float* in, void* dest, int numSamples) {
+    memcpy(dest, (void*)in, sizeof(float) * numSamples);
+}
+
 std::vector<String> getAsioDriverNames();
 
 static bool ASIO_loadAsioDriver(const char* name) {
@@ -396,7 +400,12 @@ ASIOTime* AudioOutputDeviceAsio::bufferSwitchTimeInfo(ASIOTime *timeInfo, long i
                                   (int32_t*)asioDriverInfo.bufferInfos[i].buffers[index], buffSize);
             break;
         case ASIOSTFloat32LSB: // IEEE 754 32 bit float, as found on Intel x86 architecture
+#ifdef _MSC_VER
+            floatToASIOSTFloat(GlobalAudioOutputDeviceAsioThisPtr->Channels[i]->Buffer(),
+                asioDriverInfo.bufferInfos[i].buffers[index], buffSize);
+#else
             throw AudioOutputException("ASIO Error: ASIOSTFloat32LSB not yet supported! report to LinuxSampler developers.");
+#endif
             break;
         case ASIOSTFloat64LSB: // IEEE 754 64 bit double float, as found on Intel x86 architecture
             throw AudioOutputException("ASIO Error: ASIOSTFloat64LSB not yet supported! report to LinuxSampler developers.");

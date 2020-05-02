@@ -112,6 +112,7 @@ namespace LinuxSampler {
                 if (pRegionPool[0]) delete pRegionPool[0];
                 if (pRegionPool[1]) delete pRegionPool[1];
                 ResetSuspendedRegions();
+                MidiInputPort::RemoveSysexListener(this);
             }
 
             // implementation of abstract methods derived from class 'LinuxSampler::Engine'

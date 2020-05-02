@@ -35,7 +35,7 @@
 #define ssize_t ptrdiff_t
 #define atomic_t std::atomic_uint32_t
 
-#ifndef _DEBUG
+#ifndef _DEBUG_CORE
 #include <../src/common/global.h>
 #include <../src/common/global_private.h>
 #include <../src/common/optional.h>

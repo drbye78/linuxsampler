@@ -55,6 +55,8 @@ namespace LinuxSampler {
              */
             class Listener {
                 public:
+                    virtual ~Listener() {}
+
                     /**
                      * Invoked when the number of instrument directories
                      * in a specific directory has changed.

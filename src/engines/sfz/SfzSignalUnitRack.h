@@ -234,6 +234,7 @@ namespace LinuxSampler { namespace sfz {
     
     class AbstractLfo {
         public:
+            virtual ~AbstractLfo() {}
             virtual float Render() = 0;
             virtual void Update(const uint16_t& ExtControlValue) = 0;
             virtual void Trigger(float Frequency, LFO::start_level_t StartLevel, uint16_t InternalDepth, uint16_t ExtControlDepth, bool FlipPhase, unsigned int SampleRate) = 0;

@@ -30,6 +30,7 @@
 namespace LinuxSampler {
     class EG {
     public:
+        virtual ~EG() {}
 
         /**
          * Used to define what kind of segment the envelope currently is at.

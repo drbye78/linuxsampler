@@ -46,6 +46,7 @@ namespace LinuxSampler {
     template <class S /* Sample */, class C /* Sample Consumer */>
     class SampleManager {
         public:
+            virtual ~SampleManager() {}
             /**
              * Adds the specified sample to the sample manager
              */

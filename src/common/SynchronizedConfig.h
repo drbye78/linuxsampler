@@ -223,6 +223,7 @@ namespace LinuxSampler {
     template<class T>
     class Synchronizer {
     public:
+        virtual ~Synchronizer() {}
         /**
          * Signal intention to enter a synchronized code block. Depending
          * on the actual implementation, this call may block the calling
@@ -302,6 +303,8 @@ namespace LinuxSampler {
     template<class T>
     class BackBuffer : public SynchronizedConfig<T>, public Synchronizer<T> {
     public:
+        virtual ~BackBuffer() {}
+
         virtual void beginSync() OVERRIDE {
             mutex.Lock();
         }

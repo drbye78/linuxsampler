@@ -43,6 +43,7 @@ namespace LinuxSampler {
 template<class T_res>
 class ResourceConsumer {
     public:
+        virtual ~ResourceConsumer() {}
         /**
          * Will be called by the ResourceManager to inform the
          * consumer that a resource currently used by him is going

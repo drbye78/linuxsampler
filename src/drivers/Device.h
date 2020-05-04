@@ -34,6 +34,7 @@ namespace LinuxSampler {
      */
     class Device {
     public:
+        virtual ~Device() {}
         /**
          * Determines whether the device is an autonomous instance of some
          * driver or not autonomous (that is bound to some other entity).

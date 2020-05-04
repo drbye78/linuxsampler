@@ -97,6 +97,7 @@ int EffectChain::EffectCount() const {
 }
     
 void EffectChain::Reconnect(AudioOutputDevice* pDevice) {
+    this->pDevice = pDevice;
     for (int i = 0; i < vEntries.size(); ++i) {
         Effect* pEffect = vEntries[i].pEffect;
         pEffect->InitEffect(pDevice);

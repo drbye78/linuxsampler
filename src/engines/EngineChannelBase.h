@@ -46,12 +46,14 @@ namespace LinuxSampler {
     template<class R>
     class RegionPools {
         public:
+            virtual ~RegionPools() {}
             virtual Pool<R*>* GetRegionPool(int index) = 0;
     };
 
     template<class V>
     class NotePool {
         public:
+            virtual ~NotePool() {}
             /**
              * Pool from where Voice objects are allocated from (and freed back to).
              */

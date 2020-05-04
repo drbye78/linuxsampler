@@ -259,6 +259,7 @@ namespace LinuxSampler {
      */
     class InstrumentEditorListener {
     public:
+        virtual ~InstrumentEditorListener() {}
         /** @brief Called after the instrument editor stopped running.
          *
          * Automatically called after the instrument editor application stopped

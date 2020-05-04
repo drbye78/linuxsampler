@@ -1701,7 +1701,7 @@ namespace LinuxSampler {
 
     String InstrumentsDb::GetDirectoryPath(String File) {
         if (File.empty()) return String("");
-        if (File.at(0) != '/') String("");
+        if (File.at(0) != '/') return String("");
         if (File.length() == 1) return File;
         if (File.at(File.length() - 1) == '/') return File.substr(0, File.length() - 1);
         int i = (int) File.rfind('/', File.length() - 1);
@@ -1712,7 +1712,7 @@ namespace LinuxSampler {
 
     String InstrumentsDb::GetFileName(String Path) {
         if (Path.length() < 2) return String("");
-        if (Path.at(0) != '/') String("");
+        if (Path.at(0) != '/') return String("");
         if (Path.at(Path.length() - 1) == '/') return String("");
         int i = (int) Path.rfind('/', Path.length() - 1);
         return Path.substr(i + 1);
@@ -1734,7 +1734,7 @@ namespace LinuxSampler {
     
     String InstrumentsDb::GetParentDirectory(String Dir) {
         if (Dir.length() < 2) return String("");
-        if (Dir.at(0) != '/') String("");
+        if (Dir.at(0) != '/') return String("");
         int i = (int) Dir.rfind('/', Dir.length() - 2);
         if (i == 0) return "/";
         return Dir.substr(0, i);

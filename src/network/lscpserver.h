@@ -464,6 +464,7 @@ class LSCPServer : public Thread {
 #if HAVE_SQLITE3
         class DbInstrumentsEventHandler : public InstrumentsDb::Listener {
             public:
+                virtual ~DbInstrumentsEventHandler() {}
                 virtual void DirectoryCountChanged(String Dir);
                 virtual void DirectoryInfoChanged(String Dir);
                 virtual void DirectoryNameChanged(String Dir, String NewName);

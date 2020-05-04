@@ -846,6 +846,8 @@ namespace LinuxSampler {
 
             class EventHandler : public EngineChangeListener, public FxSendCountListener {
                 public:
+                    virtual ~EventHandler() {}
+
                     void SetSampler(Sampler* pSampler) { this->pSampler = pSampler; }
 
                     /**

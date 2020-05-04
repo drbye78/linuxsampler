@@ -97,6 +97,7 @@ namespace LinuxSampler {
      */
     class ChannelCountListener {
         public:
+            virtual ~ChannelCountListener() {}
             /**
              * Invoked when the number of sampler channels has changed.
              * @param NewCount The new number of sampler channels.

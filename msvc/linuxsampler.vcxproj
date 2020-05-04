@@ -37,7 +37,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ws2_32.lib;winmm.lib;rpcrt4.lib;dbghelp.lib;flac.lib;ogg.lib;vorbis.lib;sqlite3.lib;libsndfile.lib%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>pthreadVC3.lib;ws2_32.lib;winmm.lib;rpcrt4.lib;dbghelp.lib;flac.lib;ogg.lib;vorbis.lib;sqlite3.lib;libsndfile.lib%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\lib;</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
@@ -74,10 +74,10 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <DisableSpecificWarnings>26451;26495;26812</DisableSpecificWarnings>
+      <DisableSpecificWarnings>26451;26495;26812;4464;4267;5039;4263;4800;4668;4388;4264;4355;4458;4201;4437;4456;4571;4623;4263;4264;4127;4061;5045;4242;4435;4018;4477;4244;4820;4100;4710;4365;4625;4101;4061;4626;5026;5027;</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -127,7 +127,6 @@
     <ClInclude Include="..\src\common\SynchronizedConfig.h" />
     <ClInclude Include="..\src\common\Thread.h" />
     <ClInclude Include="..\src\common\WorkerThread.h" />
-    <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\db\InstrumentsDb.h" />
     <ClInclude Include="..\src\db\InstrumentsDbUtilities.h" />
     <ClInclude Include="..\src\drivers\audio\AudioChannel.h" />

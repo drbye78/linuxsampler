@@ -25,7 +25,7 @@
 #define __LS_THREAD_H__
 
 //FIXME: this is a temorary solution because of problems with condition variables we use a polling lock in SignalStartThread()
-#if defined(WIN32)
+#if defined(WIN32) && !defined(HAVE_PTHREAD)
 #define WIN32_SIGNALSTARTTHREAD_WORKAROUND 1
 #endif
 
@@ -35,6 +35,10 @@
 
 #if defined(WIN32)
 #include <windows.h>
+#if defined(HAVE_PTHREAD)
+#include <sched.h>
+#include <pthread.h>
+#endif
 #else
 #include <sched.h>
 #include <sys/mman.h>
@@ -174,7 +178,7 @@ class Thread {
             DETACHED
         };
 
-    #if defined(WIN32)
+    #if defined(WIN32) && !defined(HAVE_PTHREAD)
         HANDLE hThread;
         DWORD lpThreadId;
         #if defined(WIN32_SIGNALSTARTTHREAD_WORKAROUND)
@@ -192,7 +196,7 @@ class Thread {
         bool            bLockedMemory;
         state_t         state;
 
-    #if defined(WIN32)
+    #if defined(WIN32) && !defined(HAVE_PTHREAD)
         static DWORD WINAPI win32threadLauncher(LPVOID lpParameter);
     #else
         static void* pthreadLauncher(void* thread);

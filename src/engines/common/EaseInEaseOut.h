@@ -62,6 +62,7 @@ public:
             return;
         }
         this->endValue = endValue;
+        this->duration = duration;
         steps = duration * sampleRate;
         c = M_PI / duration / sampleRate;
         denormalizer = (value - endValue) * 0.5f;

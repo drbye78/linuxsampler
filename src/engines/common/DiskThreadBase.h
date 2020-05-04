@@ -173,7 +173,7 @@ namespace LinuxSampler {
             }
 
             Stream::Handle CreateHandle() {
-                static uint32_t counter = 0;
+                static uint32_t counter = 1;
                 if (counter == 0xffffffff) counter = 1; // we use '0' as 'invalid handle' only, so we skip 0
                 else                       counter++;
                 return counter;

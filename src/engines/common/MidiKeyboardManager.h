@@ -41,6 +41,7 @@ namespace LinuxSampler {
      */
     class MidiKeyboardListener {
         public:
+            virtual ~MidiKeyboardListener() {}
             /** Called before the engine start processing the note on event */
             virtual void PreProcessNoteOn(uint8_t key, uint8_t velocity) = 0;
 
@@ -84,6 +85,7 @@ namespace LinuxSampler {
      */
     class MidiKeyboardAdapter : public MidiKeyboardListener {
         public:
+            virtual ~MidiKeyboardAdapter() {}
             virtual void PreProcessNoteOn(uint8_t key, uint8_t velocity) { }
             virtual void PostProcessNoteOn(uint8_t key, uint8_t velocity) { }
             virtual void PreProcessNoteOff(uint8_t key, uint8_t velocity) { }
@@ -143,6 +145,7 @@ namespace LinuxSampler {
         uint32_t              RoundRobinIndexes[128];
         int8_t                KeyDown[128]; ///< True if the respective key is currently pressed down. Currently only used as built-in instrument script array variable %KEY_DOWN. It is currently not used by the sampler for any other purpose.
 
+        virtual ~MidiKeyboardManagerBase() {}
         virtual void ProcessReleaseTriggerBySustain(RTList<Event>::Iterator& itEvent) = 0;
     };
 
@@ -213,6 +216,8 @@ namespace LinuxSampler {
              */
             class VoiceHandler {
                 public:
+                    virtual ~VoiceHandler() {}
+
                     /**
                      * @returns true if the voices on the specified key should be processed
                      * adn false to cancel the processing of the active voices for the

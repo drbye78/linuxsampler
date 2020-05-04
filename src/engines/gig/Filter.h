@@ -91,6 +91,7 @@ namespace LinuxSampler {
      */
     class FilterBase {
     public:
+        virtual ~FilterBase() {}
         virtual float Apply(FilterData& d, float x) const = 0;
         virtual void SetParameters(FilterData& d, float fc, float r,
                                    float fs) const = 0;

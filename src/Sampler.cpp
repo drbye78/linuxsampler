@@ -84,7 +84,7 @@ namespace LinuxSampler {
         if (!pNewEngineChannel) throw Exception("Unknown engine type");
 
         // remember current MIDI input connections
-        std::vector<MidiInputPort*> vMidiInputs = GetMidiInputPorts();
+        std::vector<MidiInputPort*> curMidiInputs = GetMidiInputPorts();
         midi_chan_t midiChannel = GetMidiInputChannel();
         
         try {
@@ -111,8 +111,8 @@ namespace LinuxSampler {
                 pAudioOutputDevice->Connect(pNewEngineChannel->GetEngine());
             }
             pNewEngineChannel->SetMidiChannel(midiChannel);
-            for (int i = 0; i < vMidiInputs.size(); ++i) {
-                pNewEngineChannel->Connect(vMidiInputs[i]);
+            for (int i = 0; i < curMidiInputs.size(); ++i) {
+                pNewEngineChannel->Connect(curMidiInputs[i]);
             }
         } catch (...) {
             EngineChannelFactory::Destroy(pNewEngineChannel);

@@ -155,6 +155,7 @@ namespace LinuxSampler {
 
     class DirectoryHandler {
         public:
+            virtual ~DirectoryHandler() {}
             virtual void ProcessDirectory(String Path, int DirId) = 0;
     };
 

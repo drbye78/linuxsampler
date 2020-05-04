@@ -47,6 +47,8 @@ public:
     {
     }
 
+    ~LFOCluster() {}
+
     /**
      * Calculates exactly one sample point of the LFO wave.
      *

@@ -210,6 +210,7 @@ namespace LinuxSampler {
      */
     class VMUnit {
     public:
+        virtual ~VMUnit() {}
         /**
          * Returns the metric prefix(es) of this unit as unit factor. A metric
          * prefix essentially is just a mathematical scale factor that should be
@@ -301,6 +302,7 @@ namespace LinuxSampler {
      */
     class VMExpr {
     public:
+        virtual ~VMExpr() {};
         /**
          * Identifies the data type to which the result of this expression
          * evaluates to. This abstract method must be implemented by deriving
@@ -789,6 +791,7 @@ namespace LinuxSampler {
      */
     class VMFnArgs {
     public:
+        virtual ~VMFnArgs() {};
         /**
          * Returns the amount of arguments going to be passed to the script
          * function.
@@ -859,6 +862,7 @@ namespace LinuxSampler {
      */
     class VMFunction {
     public:
+        virtual ~VMFunction() {};
         /**
          * Script data type of the function's return value. If the function does
          * not return any value (void), then it returns EMPTY_EXPR here.
@@ -1152,6 +1156,7 @@ namespace LinuxSampler {
      * handle each of them differently.
      */
     struct VMIntPtr {
+        virtual ~VMIntPtr() {};
         virtual vmint evalInt() = 0;
         virtual void assign(vmint i) = 0;
         virtual bool isAssignable() const = 0;
@@ -1569,6 +1574,7 @@ namespace LinuxSampler {
      */
     class VMFunctionProvider {
     public:
+        virtual ~VMFunctionProvider() {};
         /**
          * Returns pointer to the built-in function with the given function
          * @a name, or NULL if there is no built-in function with that function
@@ -1737,6 +1743,7 @@ namespace LinuxSampler {
      */
     class VMEventHandler {
     public:
+        virtual ~VMEventHandler() {};
         /**
          * Type of this event handler, which identifies its purpose. For example
          * for a "on note ... end on" script callback block,

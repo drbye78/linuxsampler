@@ -115,6 +115,7 @@ namespace LinuxSampler {
                 
                 
                 Parameter() : pUnit(NULL), Coeff(1) { }
+                virtual ~Parameter() {}
 
                 /**
                  * @param unit The source unit used to influence this parameter.
@@ -396,6 +397,7 @@ namespace LinuxSampler {
             /** Listener which will be notified when the level of the unit is changed. */
             class Listener {
                 public:
+                    virtual ~Listener() {}
                     virtual void ValueChanged(CCSignalUnit* pUnit) = 0;
             };
             

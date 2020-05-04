@@ -43,7 +43,7 @@
 // TODO: should be up for testing to get a reasonable good value
 #define MIN_STACK_SIZE		524288
 
-#if !defined(WIN32)
+#if !defined(WIN32) || HAVE_PTHREAD
 static thread_local std::list<int> cancelStates;
 #endif
 
@@ -55,10 +55,11 @@ Thread::Thread(bool LockMemory, bool RealTime, int PriorityMax, int PriorityDelt
     this->PriorityDelta     = PriorityDelta;
     this->PriorityMax       = PriorityMax;
     this->state = NOT_RUNNING;
-#if defined(WIN32)
+#if defined(WIN32) && !defined(HAVE_PTHREAD)
 # if defined(WIN32_SIGNALSTARTTHREAD_WORKAROUND)
     win32isRunning = false;
 # endif
+    this->hThread = NULL;
 #else
     __thread_destructor_key = 0;
     pthread_attr_init(&__thread_attr);
@@ -77,7 +78,7 @@ Thread::~Thread() {
         StopThread();
     }
 #endif
-#if !defined(WIN32)
+#if !defined(WIN32) || defined(HAVE_PTHREAD)
     pthread_attr_destroy(&__thread_attr);
 #endif
 }
@@ -114,7 +115,7 @@ int Thread::StartThread() {
     // thread in this case, because otherwise it will cause a thread leak.
     if (state == PENDING_JOIN) {
         state = DETACHED;
-        #if !defined(WIN32)
+        #if !defined(WIN32) || defined(HAVE_PTHREAD)
         pthread_detach(__thread_id);
         #endif
     }
@@ -145,7 +146,7 @@ int Thread::StartThread() {
  */
 int Thread::SignalStartThread() {
     state = RUNNING;
-#if defined(WIN32)
+#if defined(WIN32) && !defined(HAVE_PTHREAD)
     LPVOID lpParameter;
     hThread = CreateThread(
                NULL, // no security attributes
@@ -240,7 +241,7 @@ int Thread::StopThread() {
 #else
     // LockGuard cannot be used here, because this is a bit more tricky here
     RunningCondition.Lock();
-    #if !defined(WIN32)
+    #if !defined(WIN32) || defined(HAVE_PTHREAD)
     // if thread was calling StopThread() on itself
     if (pthread_equal(__thread_id, pthread_self())) {
         RunningCondition.PreLockedSet(false);
@@ -255,7 +256,7 @@ int Thread::StopThread() {
         SignalStopThread();
         // wait until thread stopped execution
         RunningCondition.PreLockedWaitAndUnlockIf(true);
-        #if !defined(WIN32)
+        #if !defined(WIN32) || defined(HAVE_PTHREAD)
         pthread_join(__thread_id, NULL);
         #endif
         RunningCondition.Lock();
@@ -266,7 +267,7 @@ int Thread::StopThread() {
     // thread in this case, because otherwise it will cause a thread leak.
     if (state == PENDING_JOIN) {
         state = DETACHED;
-        #if !defined(WIN32)
+        #if !defined(WIN32) || defined(HAVE_PTHREAD)
         pthread_detach(__thread_id);
         #endif
     }
@@ -288,16 +289,18 @@ int Thread::StopThread() {
  */
 int Thread::SignalStopThread() {
     //FIXME: segfaults when thread is not yet running
-#if defined(WIN32)
-    BOOL res;
-    res = TerminateThread(hThread, 0); // we set ExitCode to 0
-    //res = WaitForSingleObject( hThread, INFINITE);
-    //myprint(("Thread::SignalStopThread:  WaitForSingleObject( hThread, INFINITE) res=%d\n",res));
-    #if defined(WIN32_SIGNALSTARTTHREAD_WORKAROUND)
-    win32isRunning = false;
-    #else
-    RunningCondition.Set(false);
-    #endif
+#if defined(WIN32) && !defined(HAVE_PTHREAD)
+    if (hThread != NULL) {
+        BOOL res;
+        res = TerminateThread(hThread, 0); // we set ExitCode to 0
+        //res = WaitForSingleObject( hThread, INFINITE);
+        //myprint(("Thread::SignalStopThread:  WaitForSingleObject( hThread, INFINITE) res=%d\n",res));
+#if defined(WIN32_SIGNALSTARTTHREAD_WORKAROUND)
+        win32isRunning = false;
+#else
+        RunningCondition.Set(false);
+#endif
+    }
 #else
     pthread_cancel(__thread_id);
 #endif	
@@ -329,7 +332,7 @@ bool Thread::IsRunning() {
  *  current priority).
  */
 int Thread::SetSchedulingPriority() {
-#if defined(WIN32)
+#if defined(WIN32) && !defined(HAVE_PTHREAD)
     DWORD dwPriorityClass;
     int nPriority;
 
@@ -427,7 +430,7 @@ void Thread::EnableDestructor() {
     return;	
 #endif
     LockGuard g(RunningCondition);
-#if !defined(WIN32)
+#if !defined(WIN32) || defined(HAVE_PTHREAD)
     pthread_key_create(&__thread_destructor_key, pthreadDestructor);
     pthread_setspecific(__thread_destructor_key, this);
 #endif
@@ -444,12 +447,12 @@ int Thread::onThreadEnd() {
 }
 
 void Thread::TestCancel() {
-#if !defined(WIN32)
+#if !defined(WIN32) || defined(HAVE_PTHREAD)
     pthread_testcancel();
 #endif
 }
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(HAVE_PTHREAD)
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
 // make sure stack is 16-byte aligned for SSE instructions
 __attribute__((force_align_arg_pointer))
@@ -483,7 +486,7 @@ void* Thread::pthreadLauncher(void* thread) {
 }
 #endif
 
-#if !defined(WIN32)
+#if !defined(WIN32) || defined(HAVE_PTHREAD)
 /// Callback function for the POSIX thread API
 void Thread::pthreadDestructor(void* thread) {
     Thread* t;
@@ -525,7 +528,7 @@ void Thread::pthreadDestructor(void* thread) {
  * @see popCancelable() as counter part
  */
 void Thread::pushCancelable(bool cancel) {
-    #if defined(WIN32)
+    #if defined(WIN32) && !defined(HAVE_PTHREAD)
     //TODO: implementation for Windows
     #else
     int old;
@@ -543,7 +546,7 @@ void Thread::pushCancelable(bool cancel) {
  * @see pushCancelable() for details
  */
 void Thread::popCancelable() {
-    #if defined(WIN32)
+    #if defined(WIN32) && !defined(HAVE_PTHREAD)
     //TODO: implementation for Windows
     #else
     int cancel = cancelStates.back();
@@ -558,15 +561,16 @@ void Thread::popCancelable() {
  * @b NOTE: This method is currently not implemented for Windows yet!
  */
 std::string Thread::name() {
-    #if defined(WIN32)
+    #if defined(WIN32) && !defined(HAVE_PTHREAD)
     //TODO: implementation for Windows
     return "not implemented";
     #else
     char buf[16] = {};
     pthread_getname_np(__thread_id, buf, 16);
     std::string s = buf;
-    if (s.empty())
-        s = "tid=" + ToString(__thread_id);
+    if (s.empty()) {
+        s = "tid=" + ToString((ptrdiff_t)(void*)&__thread_id);
+    }
     return s;
     #endif
 }
@@ -577,7 +581,7 @@ std::string Thread::name() {
  * @b NOTE: This method is currently not implemented for Windows yet!
  */
 std::string Thread::nameOfCaller() {
-    #if defined(WIN32)
+    #if defined(WIN32) && !defined(HAVE_PTHREAD)
     //TODO: implementation for Windows
     return "not implemented";
     #else
@@ -585,7 +589,7 @@ std::string Thread::nameOfCaller() {
     pthread_getname_np(pthread_self(), buf, 16);
     std::string s = buf;
     if (s.empty())
-        s = "tid=" + ToString(pthread_self());
+        s = "tid=" + ToString((ptrdiff_t)(void*)&pthread_self());
     return s;
     #endif
 }
@@ -600,7 +604,7 @@ std::string Thread::nameOfCaller() {
  * @param name - arbitrary, i.e. human readable name for calling thread
  */
 void Thread::setNameOfCaller(std::string name) {
-    #if defined(WIN32)
+    #if defined(WIN32) && !defined(HAVE_PTHREAD)
     //TODO: implementation for Windows
     #elif __APPLE__
     pthread_setname_np(name.c_str());

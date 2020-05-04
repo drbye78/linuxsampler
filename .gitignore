@@ -10,3 +10,5 @@ src/scriptvm/editor/nksp.flex.cpp
 src/scriptvm/parser.cpp
 src/scriptvm/parser.h
 src/scriptvm/scanner.flex.cpp
+*.tab.cpp
+*.tab.h

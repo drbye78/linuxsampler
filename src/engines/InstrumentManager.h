@@ -89,6 +89,8 @@ namespace LinuxSampler {
                 uint8_t KeySwitchBindings[128];
             };
 
+            virtual ~InstrumentManager() {}
+
             /**
              * Returns all managed instruments.
              *

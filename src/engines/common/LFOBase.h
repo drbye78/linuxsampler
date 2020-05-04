@@ -77,6 +77,8 @@ namespace LinuxSampler {
                 this->pFinalFrequency = NULL;
             }
 
+            virtual ~LFOBase() {}
+
             /**
              * Calculates exactly one sample point of the LFO wave. This
              * inline method has to be implemented by the descendant.

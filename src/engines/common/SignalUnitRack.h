@@ -128,6 +128,7 @@ namespace LinuxSampler {
             SignalUnitRack(int maxUnitCount): CurrentStep(0), bHasEq(false),
                                               releaseStageEntered(false), Units(maxUnitCount) { }
             
+            virtual ~SignalUnitRack() {}
             uint GetCurrentStep() { return CurrentStep; }
 
             virtual EndpointSignalUnit* GetEndpointUnit() = 0;

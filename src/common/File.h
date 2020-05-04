@@ -42,6 +42,7 @@ namespace LinuxSampler {
         public:
             class DirectoryWalker {
                 public:
+                    virtual ~DirectoryWalker() {}
                     virtual void DirectoryEntry(std::string Path) = 0;
                     virtual void FileEntry(std::string Path) = 0;
             };

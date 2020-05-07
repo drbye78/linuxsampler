@@ -9,6 +9,7 @@
 
 #define NOMINMAX
 #define __STDC_VERSION__ __cplusplus
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING     	
 
 #include <windows.h>
 #undef RELATIVE

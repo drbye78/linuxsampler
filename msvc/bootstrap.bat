@@ -16,7 +16,7 @@ if exist %arch%\include goto quit
 	echo.
 	echo Building dependencies ...
 	echo.
-	vcpkg\vcpkg install --triplet %triplet% sqlite3 libsndfile asiosdk
+	vcpkg\vcpkg install --triplet %triplet% sqlite3 libsndfile asiosdk pthread
 	
 	if not exist %arch% mkdir %arch%
 	set src=vcpkg\installed\%triplet%\

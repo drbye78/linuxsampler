@@ -37,7 +37,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>pthreadVC3.lib;ws2_32.lib;winmm.lib;rpcrt4.lib;dbghelp.lib;flac.lib;ogg.lib;vorbis.lib;sqlite3.lib;libsndfile.lib%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>portaudio_static_x64.lib;pthreadVC3.lib;ws2_32.lib;winmm.lib;rpcrt4.lib;dbghelp.lib;flac.lib;ogg.lib;vorbis.lib;sqlite3.lib;libsndfile.lib%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\lib;</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
@@ -98,6 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\drivers\audio\AudioOutputDevicePortAudio.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="..\src\common\ArrayList.h" />
     <ClInclude Include="..\src\common\atomic.h" />
@@ -282,6 +283,7 @@
     <ClCompile Include="..\src\drivers\audio\AudioOutputDeviceAsio.cpp" />
     <ClCompile Include="..\src\drivers\audio\AudioOutputDeviceFactory.cpp" />
     <ClCompile Include="..\src\drivers\audio\AudioOutputDevicePlugin.cpp" />
+    <ClCompile Include="..\src\drivers\audio\AudioOutputDevicePortAudio.cpp" />
     <ClCompile Include="..\src\drivers\audio\iasiothiscallresolver.cpp" />
     <ClCompile Include="..\src\drivers\Device.cpp" />
     <ClCompile Include="..\src\drivers\DeviceParameter.cpp" />

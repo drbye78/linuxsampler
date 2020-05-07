@@ -38,7 +38,7 @@
 #endif
 
 #if CONFIG_DEBUG_LEVEL > 0
-#  define dmsg(debuglevel,x)	if (CONFIG_DEBUG_LEVEL >= debuglevel) {printf x; fflush(stdout);}
+#  define dmsg(debuglevel,x)	if constexpr (CONFIG_DEBUG_LEVEL >= debuglevel) {printf x; fflush(stdout);}
 #else
 #  define dmsg(debuglevel,x)
 #endif // CONFIG_DEBUG_LEVEL > 0

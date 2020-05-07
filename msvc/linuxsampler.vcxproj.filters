@@ -553,6 +553,9 @@
     <ClInclude Include="..\src\scriptvm\ScriptVM.h">
       <Filter>Header Files\scriptvm</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\drivers\audio\AudioOutputDevicePortAudio.h">
+      <Filter>Header Files\drivers\audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\common\DynamicLibraries.cpp">
@@ -908,6 +911,9 @@
     </ClCompile>
     <ClCompile Include="..\src\drivers\Plugin.cpp">
       <Filter>Source Files\drivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\drivers\audio\AudioOutputDevicePortAudio.cpp">
+      <Filter>Source Files\drivers\audio</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -2,7 +2,7 @@
 
 #include "AudioOutputDeviceFactory.h"
 #include "portaudio.h"
-#include "pa_debugprint.h"
+#include "../portaudio/src/common/pa_debugprint.h"
 
 
 namespace LinuxSampler
@@ -16,9 +16,16 @@ namespace LinuxSampler
 	REGISTER_AUDIO_OUTPUT_DRIVER_PARAMETER(AudioOutputDevicePortAudio, ParameterSampleRate);
 	REGISTER_AUDIO_OUTPUT_DRIVER_PARAMETER(AudioOutputDevicePortAudio, ParameterChannels);
 	/* Driver specific parameters */
-	REGISTER_AUDIO_OUTPUT_DRIVER_PARAMETER(AudioOutputDevicePortAudio, ParameterInterface);
+	//REGISTER_AUDIO_OUTPUT_DRIVER_PARAMETER(AudioOutputDevicePortAudio, ParameterInterface);
 	REGISTER_AUDIO_OUTPUT_DRIVER_PARAMETER(AudioOutputDevicePortAudio, ParameterCard);
 	REGISTER_AUDIO_OUTPUT_DRIVER_PARAMETER(AudioOutputDevicePortAudio, ParameterFragmentSize);
+
+	#define DEFAULT_RATE 44100
+	#define DEFAULT_LATENCY 50.0
+	#define DEFAULT_CHANNELS 2
+	#define LATENCY_SCALE 1000.0f
+
+	static std::vector PossibleRates = { 22500, 44100, 48000, 96000 };
 
 	static bool bootstrap = true;
 
@@ -94,17 +101,24 @@ namespace LinuxSampler
 
 		_sampleRate = sampleRate->ValueAsInt();
 		_channels = channels->ValueAsInt();
-		_fragment = fragmentSize->ValueAsFloat();
+		_fragment = fragmentSize->ValueAsInt();
+		_shouldStop = true;
 
-		uint fragSize = 1 << int(log2(_sampleRate * _fragment));
+		uint fragSize = 1 << int(log2(_sampleRate * _fragment / LATENCY_SCALE));
 		
 		PaStreamParameters streamParams = {_device, _channels, paFloat32, _fragment, nullptr};
 		auto res = Pa_IsFormatSupported(nullptr, &streamParams, _sampleRate);
-		if (res < 0)
-			throw PaException("output audio format is unsupported", res);
+		auto handler = &StreamCallback<float>;
+		if (res < 0) {
+			streamParams.sampleFormat = paInt16;
+			res = Pa_IsFormatSupported(nullptr, &streamParams, _sampleRate);
+			if (res < 0)
+				throw PaException("output audio format is unsupported", res);
+			handler = &StreamCallback<int16_t>;
+		}
 
 		res = Pa_OpenStream(&_stream, nullptr, &streamParams, _sampleRate, fragSize,
-		                    paDitherOff, &SysStreamCallback, this);
+		                    paDitherOff, handler, this);
 		if (res < 0)
 			throw PaException("Failed to create output stream", res);
 
@@ -140,24 +154,17 @@ namespace LinuxSampler
 	{
 		if (_stream != nullptr)
 		{
+			_shouldStop = false;
 			if (Pa_IsStreamStopped(_stream) == 1)
-				apiCheck(Pa_StartStream(_stream), "Failed to start stream");
+				apiWarn(Pa_StartStream(_stream), "Failed to start stream");
 		}
 	}
 
-	int AudioOutputDevicePortAudio::StreamCallback(
-		const void* input, void* output,
-		unsigned long frameCount,
-		const PaStreamCallbackTimeInfo* timeInfo,
-		PaStreamCallbackFlags statusFlags)
+	template<> void AudioOutputDevicePortAudio::Render(const void* input, float* output, unsigned long frameCount,
+		const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlag)
 	{
-		auto res = RenderAudio(frameCount);
-		if (res != 0)
-			printf("RENDER: %.5f %.5f, %p, %ld, %d --> %d\n", timeInfo->currentTime, timeInfo->outputBufferDacTime, output,
-				frameCount, static_cast<int>(statusFlags), res);
-
 		const auto channels = ChannelCount();
-		auto work = static_cast<float*>(output);
+		auto work = output;
 		for (auto i = 0; i < channels; i++)
 		{
 			auto dest = work++;
@@ -165,22 +172,34 @@ namespace LinuxSampler
 			for (auto n = 0; n < frameCount; n++, dest += channels)
 				*dest = *src++;
 		}
-
-		return paContinue;
 	}
 
+	template<> void AudioOutputDevicePortAudio::Render(const void* input, int16_t* output, unsigned long frameCount,
+		const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlag)
+	{
+		const auto channels = ChannelCount();
+		auto work = output;
+		for (auto i = 0; i < channels; i++)
+		{
+			auto dest = work++;
+			auto src = Channels[i]->Buffer();
+			for (auto n = 0; n < frameCount; n++, dest += channels)
+				*dest = (int16_t)std::clamp((int)(*src++ * 32768.0f), -32767, 32768);
+		}
+	}
 
 	bool AudioOutputDevicePortAudio::IsPlaying()
 	{
-		return (_stream != nullptr) && (Pa_IsStreamActive(_stream) == 0);
+		return (_stream != nullptr) && (Pa_IsStreamActive(_stream) == 1);
 	}
 
 	void AudioOutputDevicePortAudio::Stop()
 	{
 		if (_stream != nullptr)
 		{
+			_shouldStop = true;
 			if (Pa_IsStreamActive(_stream) == 1)
-				apiCheck(Pa_StopStream(_stream), "Failed to stop stream");
+				apiWarn(Pa_StopStream(_stream), "Failed to stop stream");
 		}
 	}
 
@@ -191,7 +210,7 @@ namespace LinuxSampler
 
 	uint AudioOutputDevicePortAudio::MaxSamplesPerCycle()
 	{
-		return uint(_fragment * _sampleRate * 4);
+		return 1 << uint(log2(_fragment * _sampleRate / LATENCY_SCALE * 2));
 	}
 
 	uint AudioOutputDevicePortAudio::SampleRate()
@@ -224,7 +243,10 @@ namespace LinuxSampler
 		return Pa_GetVersionText();
 	}
 
+	/////////////////////
 	// 'INTERFACE'
+	/////////////////////
+
 	int AudioOutputDevicePortAudio::TraitsInterface::GetCount()
 	{
 		return Pa_GetHostApiCount();
@@ -235,24 +257,19 @@ namespace LinuxSampler
 		return Pa_GetHostApiInfo(index);
 	}
 
+	PaHostApiIndex AudioOutputDevicePortAudio::TraitsInterface::GetDefault()
+	{
+		return Pa_GetDefaultHostApi();
+	}
+
 	const char* AudioOutputDevicePortAudio::TraitsInterface::Prefix()
 	{
 		return "Host_";
 	}
 
-
-	String AudioOutputDevicePortAudio::ParameterInterface::Name()
+	const char* AudioOutputDevicePortAudio::TraitsInterface::ParamName()
 	{
 		return "Host";
-	}
-
-	AudioOutputDevicePortAudio::ParameterInterface::ParameterInterface() : DeviceCreationParameterString()
-	{
-		InitWithDefault();
-	}
-
-	AudioOutputDevicePortAudio::ParameterInterface::ParameterInterface(String s) : DeviceCreationParameterString(s)
-	{
 	}
 
 	String AudioOutputDevicePortAudio::ParameterInterface::Description()
@@ -260,71 +277,32 @@ namespace LinuxSampler
 		return "Host interface to be used";
 	}
 
-	bool AudioOutputDevicePortAudio::ParameterInterface::Fix()
-	{
-		return false;
-	}
-
-	bool AudioOutputDevicePortAudio::ParameterInterface::Mandatory()
-	{
-		return true;
-	}
-
 	std::map<String, DeviceCreationParameter*> AudioOutputDevicePortAudio::ParameterInterface::DependsAsParameters()
 	{
-		return std::map<String, DeviceCreationParameter*>();
-	}
-
-	optional<String> AudioOutputDevicePortAudio::ParameterInterface::DefaultAsString(
-		std::map<String, String> Parameters)
-	{
-		ApiLock lock;
-
-		const auto res = Pa_GetDefaultHostApi();
-		optional<String> result;
-		if (res >= 0)
-		{
-			const auto info = TraitsInterface::GetItem(res);
-			if (info != nullptr)
-			{
-				result = TraitsInterface::SafeValue(res, info);
-			}
-		}
-		return result;
-	}
-
-	std::vector<String> AudioOutputDevicePortAudio::ParameterInterface::PossibilitiesAsString(
-		std::map<String, String> Parameters)
-	{
-		ApiLock lock;
-
-		const auto count = TraitsInterface::GetCount();
-		std::vector<String> list;
-		for (auto i = 0; i < count; i++)
-		{
-			const auto info = TraitsInterface::GetItem(i);
-			if (info != nullptr)
-			{
-				list.push_back(TraitsInterface::SafeValue(i, info));
-			}
-		}
-		return list;
+		return {};
 	}
 
 	void AudioOutputDevicePortAudio::ParameterInterface::OnSetValue(String s) throw (Exception)
 	{
 	}
 
+	/////////////////////
 	// 'CARD'
+	/////////////////////
 
 	int AudioOutputDevicePortAudio::TraitsDevice::GetCount()
 	{
 		return Pa_GetDeviceCount();
 	}
 
-	const PaDeviceInfo* AudioOutputDevicePortAudio::TraitsDevice::GetItem(PaHostApiIndex index)
+	const PaDeviceInfo* AudioOutputDevicePortAudio::TraitsDevice::GetItem(PaDeviceIndex index)
 	{
 		return Pa_GetDeviceInfo(index);
+	}
+
+	PaDeviceIndex AudioOutputDevicePortAudio::TraitsDevice::GetDefault()
+	{
+		return Pa_GetDefaultOutputDevice();
 	}
 
 	const char* AudioOutputDevicePortAudio::TraitsDevice::Prefix()
@@ -332,18 +310,9 @@ namespace LinuxSampler
 		return "Device_";
 	}
 
-	String AudioOutputDevicePortAudio::ParameterCard::Name()
+	const char* AudioOutputDevicePortAudio::TraitsDevice::ParamName()
 	{
 		return "Card";
-	}
-
-	AudioOutputDevicePortAudio::ParameterCard::ParameterCard() : DeviceCreationParameterString()
-	{
-		InitWithDefault();
-	}
-
-	AudioOutputDevicePortAudio::ParameterCard::ParameterCard(String s) : DeviceCreationParameterString(s)
-	{
 	}
 
 	String AudioOutputDevicePortAudio::ParameterCard::Description()
@@ -351,19 +320,9 @@ namespace LinuxSampler
 		return "Sound card to play audio";
 	}
 
-	bool AudioOutputDevicePortAudio::ParameterCard::Fix()
-	{
-		return false;
-	}
-
-	bool AudioOutputDevicePortAudio::ParameterCard::Mandatory()
-	{
-		return true;
-	}
-
 	std::map<String, DeviceCreationParameter*> AudioOutputDevicePortAudio::ParameterCard::DependsAsParameters()
 	{
-#if 0
+#ifdef USE_HOST
 		return { {ParameterInterface::Name(),  nullptr} };
 #else
 		return {};
@@ -373,8 +332,8 @@ namespace LinuxSampler
 	optional<String> AudioOutputDevicePortAudio::ParameterCard::DefaultAsString(std::map<String, String> Parameters)
 	{
 		ApiLock lock;
+#if USE_HOST
 		optional<String> result;
-#if 0
 		const auto host = TraitsInterface::FromParameters(Parameters);
 		if (host.second != nullptr && host.second->defaultOutputDevice >= 0) {
 			const auto dev = TraitsDevice::GetItem(host.second->defaultOutputDevice);
@@ -383,21 +342,10 @@ namespace LinuxSampler
 				result = TraitsDevice::SafeValue(host.second->defaultOutputDevice, dev);
 			}
 		}
-#elif 1
-		auto items = PossibilitiesAsString(Parameters);
-		if (items.size() > 0)
-			result = items[0];
-#else
-		const auto idx = Pa_GetDefaultOutputDevice();
-		if (idx >= 0) {
-			const auto dev = TraitsDevice::GetItem(idx);
-			if (dev != nullptr)
-			{
-				result = TraitsDevice::SafeValue(idx, dev);
-			}
-		}
-#endif
 		return result;
+#else
+		return IndexedParameter::DefaultAsString(Parameters);
+#endif
 	}
 
 	std::vector<String> AudioOutputDevicePortAudio::ParameterCard::PossibilitiesAsString(
@@ -405,7 +353,7 @@ namespace LinuxSampler
 	{
 		ApiLock lock;
 		std::vector<String> result;
-#if 1
+#if USE_HOST
 		const auto host = TraitsInterface::FromParameters(Parameters);
 		PaHostApiIndex hostId;
 		TraitsInterface::ValueType hostInfo;
@@ -437,7 +385,7 @@ namespace LinuxSampler
 		for(auto i = 0; i < TraitsDevice::GetCount(); i++)
 		{
 			const auto devInfo = TraitsDevice::GetItem(i);
-			if (devInfo != nullptr)
+			if (devInfo != nullptr && devInfo->maxOutputChannels > 0)
 				result.push_back(TraitsDevice::SafeValue(i, devInfo));
 		}
 #endif
@@ -448,44 +396,31 @@ namespace LinuxSampler
 	{
 	}
 
+
+	/////////////////////
 	// 'SAMPLE RATE'
-#define DEFAULT_RATE 44100
-#define DEFAULT_LATENCY 0.05
-#define DEFAULT_CHANNELS 2
-
-	static std::vector PossibleRates = {22500, 44100, 48000, 96000};
-
-
-	AudioOutputDevicePortAudio::ParameterSampleRate::ParameterSampleRate() : CardParameter<
-		AudioOutputDevice::ParameterSampleRate>()
-	{
-	}
-
-	AudioOutputDevicePortAudio::ParameterSampleRate::ParameterSampleRate(String s) : CardParameter<
-		AudioOutputDevice::ParameterSampleRate>(s)
-	{
-	}
+	/////////////////////
 
 	optional<int> AudioOutputDevicePortAudio::ParameterSampleRate::DefaultAsInt(std::map<String, String> Parameters)
 	{
 		ApiLock lock;
-
 		const auto card = FromParams(Parameters);
-		return (card.second != nullptr) ? static_cast<int>(card.second->defaultSampleRate) : DEFAULT_RATE;
+		if (card.second) 
+			return static_cast<int>(card.second->defaultSampleRate); 
+		else 
+			return optional<int>::nothing;
 	}
 
 	std::vector<int> AudioOutputDevicePortAudio::ParameterSampleRate::PossibilitiesAsInt(
 		std::map<String, String> Parameters)
 	{
 		ApiLock lock;
-
-		const auto card = FromParams(Parameters);
 		std::vector<int> rates;
+		const auto card = FromParams(Parameters);
 
 		if (card.second != nullptr)
 		{
 			PaStreamParameters params = {card.first, 2, paFloat32, card.second->defaultLowOutputLatency, nullptr};
-
 			for (auto rate : PossibleRates)
 			{
 				if (Pa_IsFormatSupported(nullptr, &params, rate) == 0)
@@ -495,32 +430,29 @@ namespace LinuxSampler
 		return rates;
 	}
 
+
+	/////////////////////
 	// 'CHANNELS'
-
-	AudioOutputDevicePortAudio::ParameterChannels::ParameterChannels() : CardParameter<
-		AudioOutputDevice::ParameterChannels>()
-	{
-	}
-
-	AudioOutputDevicePortAudio::ParameterChannels::ParameterChannels(String s) : CardParameter<
-		AudioOutputDevice::ParameterChannels>(s)
-	{
-	}
+	/////////////////////
 
 	optional<int> AudioOutputDevicePortAudio::ParameterChannels::DefaultAsInt(std::map<String, String> Parameters)
 	{
 		ApiLock lock;
-
-		const auto card = FromParams(Parameters);
-		return (card.second != nullptr) ? std::min(card.second->maxOutputChannels, DEFAULT_CHANNELS) : DEFAULT_CHANNELS;
+		const auto card = ParameterCard::FromParams(Parameters);
+		if (card.second) 
+			return card.second->maxOutputChannels; 
+		else 
+			return optional<int>::nothing;
 	}
 
 	optional<int> AudioOutputDevicePortAudio::ParameterChannels::RangeMinAsInt(std::map<String, String> Parameters)
 	{
 		ApiLock lock;
-
 		const auto card = FromParams(Parameters);
-		return (card.second != nullptr) ? std::min(card.second->maxOutputChannels, 1) : 1;
+		if (card.second) 
+			return 1; 
+		else 
+			return optional<int>::nothing;
 	}
 
 	optional<int> AudioOutputDevicePortAudio::ParameterChannels::RangeMaxAsInt(std::map<String, String> Parameters)
@@ -528,75 +460,54 @@ namespace LinuxSampler
 		ApiLock lock;
 
 		const auto card = FromParams(Parameters);
-		return (card.second != nullptr) ? card.second->maxOutputChannels : DEFAULT_CHANNELS;
+		if (card.second) 
+			return card.second->maxOutputChannels; 
+		else 
+			return optional<int>::nothing;
 	}
 
 	// 'FRAGMENT SIZE'
-
-	AudioOutputDevicePortAudio::ParameterFragmentSize::ParameterFragmentSize() : CardParameter<
-		DeviceCreationParameterFloat>()
-	{
-	}
-
-	AudioOutputDevicePortAudio::ParameterFragmentSize::ParameterFragmentSize(String s) : CardParameter<
-		DeviceCreationParameterFloat>(s)
-	{
-	}
 
 	String AudioOutputDevicePortAudio::ParameterFragmentSize::Description()
 	{
 		return "Preferred latency during playback (ms)";
 	}
 
-	optional<float> AudioOutputDevicePortAudio::ParameterFragmentSize::DefaultAsFloat(
+	optional<int> AudioOutputDevicePortAudio::ParameterFragmentSize::DefaultAsInt(
 		std::map<String, String> Parameters)
 	{
 		ApiLock lock;
-
-		optional<float> result;
 		const auto card = FromParams(Parameters);
-		if (card.second != nullptr) result = card.second->defaultLowInputLatency;
-		else result = 0.1f;
-		return result;
+		if (card.second) 
+			return card.second->defaultLowOutputLatency * LATENCY_SCALE;
+		else
+			return optional<int>::nothing;
 	}
 
-	optional<float> AudioOutputDevicePortAudio::ParameterFragmentSize::RangeMinAsFloat(
+	optional<int> AudioOutputDevicePortAudio::ParameterFragmentSize::RangeMinAsInt(
 		std::map<String, String> Parameters)
 	{
-		return DefaultAsFloat(Parameters);
+		return DefaultAsInt(Parameters);
 	}
 
-	optional<float> AudioOutputDevicePortAudio::ParameterFragmentSize::RangeMaxAsFloat(
-		std::map<String, String> Parameters)
-	{
-		ApiLock lock;
-
-		optional<float> result;
-		const auto card = FromParams(Parameters);
-		if (card.second != nullptr) result = card.second->defaultHighOutputLatency;
-		return result;
-	}
-
-	std::vector<float> AudioOutputDevicePortAudio::ParameterFragmentSize::PossibilitiesAsFloat(
+	optional<int> AudioOutputDevicePortAudio::ParameterFragmentSize::RangeMaxAsInt(
 		std::map<String, String> Parameters)
 	{
 		ApiLock lock;
-
-		std::vector<float> values;
 		const auto card = FromParams(Parameters);
-		if (card.second != nullptr)
-		{
-			for (auto lat = card.second->defaultLowOutputLatency; lat < card.second->defaultHighOutputLatency; lat *=
-			     1.5)
-			{
-				values.push_back(lat);
-			}
-			values.push_back(card.second->defaultHighOutputLatency);
-		}
-		return values;
+		if (card.second != nullptr) 
+			return std::max(card.second->defaultHighOutputLatency * LATENCY_SCALE, 200.0);
+		else
+			return optional<int>::nothing;
 	}
 
-	void AudioOutputDevicePortAudio::ParameterFragmentSize::OnSetValue(float value) throw (Exception)
+	std::vector<int> AudioOutputDevicePortAudio::ParameterFragmentSize::PossibilitiesAsInt(
+		std::map<String, String> Parameters)
+	{
+		return {};
+	}
+
+	void AudioOutputDevicePortAudio::ParameterFragmentSize::OnSetValue(int value) throw (Exception)
 	{
 	}
 

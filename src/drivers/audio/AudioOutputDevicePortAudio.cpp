@@ -101,10 +101,10 @@ namespace LinuxSampler
 
 		_sampleRate = sampleRate->ValueAsInt();
 		_channels = channels->ValueAsInt();
-		_fragment = fragmentSize->ValueAsInt();
+		_fragment = fragmentSize->ValueAsInt() / LATENCY_SCALE;
 		_shouldStop = true;
 
-		uint fragSize = 1 << int(log2(_sampleRate * _fragment / LATENCY_SCALE));
+		_fragmentSize = 1 << static_cast<int>(log2(_sampleRate * _fragment));
 		
 		PaStreamParameters streamParams = {_device, _channels, paFloat32, _fragment, nullptr};
 		auto res = Pa_IsFormatSupported(nullptr, &streamParams, _sampleRate);
@@ -117,7 +117,7 @@ namespace LinuxSampler
 			handler = &StreamCallback<int16_t>;
 		}
 
-		res = Pa_OpenStream(&_stream, nullptr, &streamParams, _sampleRate, fragSize,
+		res = Pa_OpenStream(&_stream, nullptr, &streamParams, _sampleRate, _fragmentSize,
 		                    paDitherOff, handler, this);
 		if (res < 0)
 			throw PaException("Failed to create output stream", res);
@@ -163,15 +163,19 @@ namespace LinuxSampler
 	template<> void AudioOutputDevicePortAudio::Render(const void* input, float* output, unsigned long frameCount,
 		const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlag)
 	{
+		float mm = -5;
 		const auto channels = ChannelCount();
 		auto work = output;
 		for (auto i = 0; i < channels; i++)
 		{
 			auto dest = work++;
 			auto src = Channels[i]->Buffer();
-			for (auto n = 0; n < frameCount; n++, dest += channels)
+			for (auto n = 0; n < frameCount; n++, dest += channels) {
 				*dest = *src++;
+				if (*dest > mm) mm = *dest;
+			}
 		}
+		//printf("%.3f %d %.3f\n", timeInfo->outputBufferDacTime, (int)frameCount, mm);
 	}
 
 	template<> void AudioOutputDevicePortAudio::Render(const void* input, int16_t* output, unsigned long frameCount,
@@ -210,7 +214,7 @@ namespace LinuxSampler
 
 	uint AudioOutputDevicePortAudio::MaxSamplesPerCycle()
 	{
-		return 1 << uint(log2(_fragment * _sampleRate / LATENCY_SCALE * 2));
+		return _fragmentSize * 2;
 	}
 
 	uint AudioOutputDevicePortAudio::SampleRate()
@@ -385,8 +389,10 @@ namespace LinuxSampler
 		for(auto i = 0; i < TraitsDevice::GetCount(); i++)
 		{
 			const auto devInfo = TraitsDevice::GetItem(i);
-			if (devInfo != nullptr && devInfo->maxOutputChannels > 0)
+			if (devInfo != nullptr && devInfo->maxOutputChannels > 1) {
+				dmsg(1, ("PA ENUM: %d. %s\n", i, devInfo->name));
 				result.push_back(TraitsDevice::SafeValue(i, devInfo));
+			}
 		}
 #endif
 		return result;

@@ -375,6 +375,7 @@ namespace LinuxSampler { //
         uint _sampleRate;
         float _fragment;
         atomic<bool> _shouldStop;
+        uint _fragmentSize;
 
         template<typename _Fmt> void Render(const void* input, _Fmt* output, unsigned long frameCount,
             const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlag);

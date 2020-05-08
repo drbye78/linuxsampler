@@ -475,6 +475,195 @@ namespace LinuxSampler {
      *
      *  @param itSysexEvent - sysex data size and time stamp of the sysex event
      */
+
+    using ByteReader = RingBuffer<uint8_t, false>::NonVolatileReader;
+
+	class Addr24 {
+	public:
+        uint8_t aa;
+        uint8_t bb;
+        uint8_t cc;
+
+		Addr24(ByteReader& reader)
+		{
+			_valid = reader.pop(&aa) && reader.pop(&bb) && reader.pop(&cc);
+            _reader = reader;
+		}
+
+		inline void operator++()
+		{
+			if (++cc == 0)
+			{
+				// since SYSEX should not exceed 128 bytes would never happen but nevertheless
+                if (++bb == 0)
+                    ++cc;
+			}
+		}
+
+		inline operator bool() const
+		{
+            return _valid;
+		}
+
+		inline void operator+=(int delta)
+		{
+            skip(delta);
+		}
+
+		inline int available()
+		{
+            return _reader.read_space();
+		}
+
+		inline bool pop(uint8_t& value)
+		{
+            if (_valid) 
+            {
+                const auto tmp = _reader.pop();
+                if (tmp != nullptr)
+                {
+                    value = *tmp;
+                    next();
+                }
+                else
+                    _valid = false;
+            }
+            return _valid;
+		}
+
+		inline bool read(uint8_t* buffer, int count)
+		{
+            if (_valid)
+            {
+                if (count == _reader.read(buffer, count))
+                    skip(count);
+                else
+                    _valid = false;
+            }
+            return _valid;
+		}
+	private:
+        bool _valid;
+        ByteReader& _reader;
+
+		inline void next()
+		{
+            if (++cc == 0)
+                ++bb;
+		}
+
+		inline void skip(uint8_t delta)
+		{
+            uint8_t tmp = cc;
+            cc += delta;
+            if (tmp > cc)
+                ++bb;
+		}
+	};
+
+    void ProcessSysexGM(ByteReader& reader)
+    {
+        uint8_t device, sub1, sub2;
+
+        if (!reader.pop(&device) || !reader.pop(&sub1) || !reader.pop(&sub2))
+            return;
+
+    	if (sub1 == 0x09)
+    	{
+    		if (sub2 == 0x01)
+    		{
+    			// GM ON
+    		}
+    	}
+    }
+
+    void ProcessSysexRTGM(ByteReader& reader)
+    {
+        uint8_t device, sub1, sub2;
+
+        if (!reader.pop(&device) || !reader.pop(&sub1) || !reader.pop(&sub2))
+            return;
+    }
+
+    void ProcessSysexGS(ByteReader& reader)
+    {
+        uint8_t deviceId, modelId, commandId;
+
+    	if (!reader.pop(&deviceId) || !reader.pop(&modelId) || !reader.pop(&commandId))
+            return;
+
+    	if (modelId == 0x45)
+    	{
+    		// NOTHING TO DO WITH GS DISPLAY DATA
+            return;
+    	}
+    	
+    	if (modelId == 0x42 && commandId == 0x12)
+    	{
+            auto left = reader.read_space() - 5;
+            if (left <= 0)
+                return;
+    		
+            Addr24 addr(reader);
+            for(; (left > 0) && addr;)
+            {
+	            if (addr.aa == 0x00)
+	            {
+	            	// GS SYSTEM BLOCK
+		            if (addr.bb == 0x00)
+		            {
+			            
+		            } else if (addr.bb == 0x01)
+	            } else if (addr.aa == 0x40)
+	            {
+	            	// GS PATCH BLOCK
+		            
+	            } else if (addr.aa == 0x41)
+	            {
+		            // GS DRUM BLOCK
+	            }
+            }
+    		
+    		
+    	}
+    }
+
+    void ProcessSysexXG(ByteReader& reader)
+    {
+
+    }
+
+    void ProcessSysex(ByteReader& reader)
+    {
+        uint8_t exclusive_status, id;
+
+        if (!reader.pop(&exclusive_status) || exclusive_status != 0xf0)
+            return;
+
+        if (!reader.pop(&id))
+            return;
+
+    	switch(id)
+    	{
+        case 0x7f:
+    		// realtime GM SYSEX
+            ProcessSysexRTGM(reader);
+            break;
+        case 0x7e:
+    		// non-realtime GM SYSEX
+            ProcessSysexGM(reader);
+            break;
+        case 0x41:
+    		// ROLAND SYSEX
+            ProcessSysexGS(reader);
+            break;
+        case 0x43:
+    		// YAMAHA SYSEX
+            ProcessSysexXG(reader);
+            break;
+    	}
+    }
+
     void AbstractEngine::ProcessSysex(Pool<Event>::Iterator& itSysexEvent) {
         RingBuffer<uint8_t,false>::NonVolatileReader reader = pSysexBuffer->get_non_volatile_reader();
 

@@ -478,13 +478,13 @@ namespace LinuxSampler {
 
     using ByteReader = RingBuffer<uint8_t, false>::NonVolatileReader;
 
-	class Addr24 {
+	class SysexReader {
 	public:
         uint8_t aa;
         uint8_t bb;
         uint8_t cc;
 
-		Addr24(ByteReader& reader) : _reader(reader)
+        SysexReader(ByteReader& reader) : _reader(reader)
 		{
 			_valid = reader.pop(&aa) && reader.pop(&bb) && reader.pop(&cc);
 		}
@@ -605,36 +605,86 @@ namespace LinuxSampler {
 
     }
 
-    int gsHandle_400xxx(AbstractEngine& engine, ByteReader& reader)
+    int gsHandle_400xxx(AbstractEngine& engine, SysexReader& reader, uint8_t lead)
     {
-        return -1;
+        auto addr = reader.bb << 8 + reader.cc;
+    	switch(addr)
+    	{
+    	// MASTER TUNE
+        case 0x000:
+            uint8_t tune[3];
+            if (reader.read(tune, 3) != 3)
+                return -1;
+            return 3;
+            break;
+
+    	// MASTER VOLUME
+        case 0x004:
+            break;
+
+    	// MASTER KEY-SHIFT
+        case 0x005:
+            break;
+
+    	// MASTER PAN
+        case 0x006:
+            break;
+
+    	// MODE SET
+        case 0x07f:
+            if (lead == 0x00)
+                gsReset(engine);
+            break;
+
+    	// REVERB MACRO
+        case 0x130:
+            break;
+
+        // CHORUS MACRO
+        case 0x138:
+            break;
+
+        // DELAY MACRO
+        case 0x150:
+            break;
+
+    	// EQ LOW FREQ
+        case 0x200:
+            break;
+
+    	// EFX TYPE
+        case 0x300:
+            break;
+        }
+        return 0;
     }
 
-    int gsHandle_40xxxx(AbstractEngine& engine, ByteReader& reader)
+    int gsHandle_40xxxx(AbstractEngine& engine, SysexReader& reader, uint8_t lead)
     {
-        return -1;
+        int channel = reader.bb & 0x0f;
+        return 0;
     }
 
     void gsProcessSysex(AbstractEngine& engine, ByteReader& reader)
     {
-        uint8_t deviceId, modelId, commandId;
+        uint8_t head[3];
 
-    	if (!reader.pop(&deviceId) || !reader.pop(&modelId) || !reader.pop(&commandId))
+    	if (reader.read(head, 3) != 3)
             return;
 
-    	if (modelId == 0x45)
+    	if (head[1] == 0x45)
     	{
     		// NOTHING TO DO WITH GS DISPLAY DATA
             return;
     	}
     	
-    	if (modelId == 0x42 && commandId == 0x12)
+    	if (head[1] == 0x42 && head[2] == 0x12)
     	{
             auto left = reader.read_space() - 5;
             if (left <= 0)
                 return;
     		
-            Addr24 addr(reader);
+            SysexReader addr(reader);
             for(; (left > 0) && addr;)
             {
                 uint8_t lead = *addr.pop();
@@ -658,10 +708,10 @@ namespace LinuxSampler {
 	            {
 	            	// GS PATCH BLOCK
                     int count;
-                    if (reader.bb < 0x10)
-                        count = gsHandle_400xxx(engine, reader);
+                    if (addr.bb < 0x10)
+                        count = gsHandle_400xxx(engine, addr, lead);
                     else 
-                        count = gsHandle_40xxxx(engine, reader);
+                        count = gsHandle_40xxxx(engine, addr, lead);
 
                     if (count < 0)
                         return;
@@ -671,8 +721,6 @@ namespace LinuxSampler {
 		            // GS DRUM BLOCK
 	            }
             }
-    		
-    		
     	}
     }
 

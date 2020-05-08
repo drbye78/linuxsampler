@@ -484,10 +484,9 @@ namespace LinuxSampler {
         uint8_t bb;
         uint8_t cc;
 
-		Addr24(ByteReader& reader)
+		Addr24(ByteReader& reader) : _reader(reader)
 		{
 			_valid = reader.pop(&aa) && reader.pop(&bb) && reader.pop(&cc);
-            _reader = reader;
 		}
 
 		inline void operator++()
@@ -515,9 +514,9 @@ namespace LinuxSampler {
             return _reader.read_space();
 		}
 
-		inline bool pop(uint8_t& value)
-		{
-            if (_valid) 
+        inline bool pop(uint8_t& value)
+        {
+            if (_valid)
             {
                 const auto tmp = _reader.pop();
                 if (tmp != nullptr)
@@ -529,9 +528,25 @@ namespace LinuxSampler {
                     _valid = false;
             }
             return _valid;
-		}
+        }
 
-		inline bool read(uint8_t* buffer, int count)
+        inline uint8_t* pop()
+        {
+            if (_valid)
+            {
+                const auto tmp = _reader.pop();
+                if (tmp != nullptr)
+                {
+                    next();
+                    return tmp;
+                }
+                else
+                    _valid = false;
+            }
+            return nullptr;
+        }
+
+        inline bool read(uint8_t* buffer, int count)
 		{
             if (_valid)
             {
@@ -561,7 +576,7 @@ namespace LinuxSampler {
 		}
 	};
 
-    void ProcessSysexGM(ByteReader& reader)
+    void ProcessSysexGM(AbstractEngine& engine, ByteReader& reader)
     {
         uint8_t device, sub1, sub2;
 
@@ -577,7 +592,7 @@ namespace LinuxSampler {
     	}
     }
 
-    void ProcessSysexRTGM(ByteReader& reader)
+    void ProcessSysexRTGM(AbstractEngine& engine, ByteReader& reader)
     {
         uint8_t device, sub1, sub2;
 
@@ -585,7 +600,22 @@ namespace LinuxSampler {
             return;
     }
 
-    void ProcessSysexGS(ByteReader& reader)
+    void gsReset(AbstractEngine& engine)
+    {
+
+    }
+
+    int gsHandle_400xxx(AbstractEngine& engine, ByteReader& reader)
+    {
+        return -1;
+    }
+
+    int gsHandle_40xxxx(AbstractEngine& engine, ByteReader& reader)
+    {
+        return -1;
+    }
+
+    void gsProcessSysex(AbstractEngine& engine, ByteReader& reader)
     {
         uint8_t deviceId, modelId, commandId;
 
@@ -607,17 +637,35 @@ namespace LinuxSampler {
             Addr24 addr(reader);
             for(; (left > 0) && addr;)
             {
+                uint8_t lead = *addr.pop();
+                left--;
+
 	            if (addr.aa == 0x00)
 	            {
 	            	// GS SYSTEM BLOCK
 		            if (addr.bb == 0x00)
 		            {
-			            
-		            } else if (addr.bb == 0x01)
+                        if (addr.cc == 0x7f)
+                        {
+                            gsReset(engine);
+                        }
+                    }
+                    else if (addr.bb == 0x01) 
+                    {
+                        // GS PARTS MAPPING: up to 4 MIDI PORTS (64 multiparts)
+                    }
 	            } else if (addr.aa == 0x40)
 	            {
 	            	// GS PATCH BLOCK
-		            
+                    int count;
+                    if (reader.bb < 0x10)
+                        count = gsHandle_400xxx(engine, reader);
+                    else 
+                        count = gsHandle_40xxxx(engine, reader);
+
+                    if (count < 0)
+                        return;
+                    left -= count;
 	            } else if (addr.aa == 0x41)
 	            {
 		            // GS DRUM BLOCK
@@ -628,12 +676,12 @@ namespace LinuxSampler {
     	}
     }
 
-    void ProcessSysexXG(ByteReader& reader)
+    void xgProcessSysex(AbstractEngine& engine, ByteReader& reader)
     {
 
     }
 
-    void ProcessSysex(ByteReader& reader)
+    void ProcessSysex(AbstractEngine& engine, ByteReader& reader)
     {
         uint8_t exclusive_status, id;
 
@@ -647,19 +695,19 @@ namespace LinuxSampler {
     	{
         case 0x7f:
     		// realtime GM SYSEX
-            ProcessSysexRTGM(reader);
+            ProcessSysexRTGM(engine, reader);
             break;
         case 0x7e:
     		// non-realtime GM SYSEX
-            ProcessSysexGM(reader);
+            ProcessSysexGM(engine, reader);
             break;
         case 0x41:
     		// ROLAND SYSEX
-            ProcessSysexGS(reader);
+            gsProcessSysex(engine, reader);
             break;
         case 0x43:
     		// YAMAHA SYSEX
-            ProcessSysexXG(reader);
+            xgProcessSysex(engine, reader);
             break;
     	}
     }

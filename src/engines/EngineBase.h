@@ -2483,7 +2483,7 @@ namespace LinuxSampler {
              *  Reset all voices and disk thread and clear input event queue and all
              *  control and status variables. This method is protected by a mutex.
              */
-            virtual void ResetInternal() OVERRIDE {
+            virtual void ResetInternal(bool keepSysex = false) OVERRIDE {
                 LockGuard lock(ResetInternalMutex);
 
                 // make sure that the engine does not get any sysex messages
@@ -2530,7 +2530,9 @@ namespace LinuxSampler {
 
                 // delete all input events
                 pEventQueue->init();
-                pSysexBuffer->init();
+            	if (!keepSysex && pSysexBuffer->read_space())
+					pSysexBuffer->init();
+            	
                 if (sysexDisabled) MidiInputPort::AddSysexListener(this);
             }
 

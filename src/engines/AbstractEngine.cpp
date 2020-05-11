@@ -27,6 +27,7 @@
 #include "AbstractEngineChannel.h"
 #include "EngineFactory.h"
 #include "../common/global_private.h"
+#include "../drivers/midi/MidiInstrumentMapper.h"
 #include "../effects/EffectFactory.h"
 
 namespace LinuxSampler {
@@ -60,15 +61,17 @@ namespace LinuxSampler {
             pEngine->DisableAndLock();
         } else { // create a new engine (and disk thread) instance for the given audio output device
             dmsg(4,("Creating new Engine.\n"));
-            pEngine = (AbstractEngine*) EngineFactory::Create(pChannel->EngineName());
+            pEngine = static_cast<AbstractEngine*>(EngineFactory::Create(pChannel->EngineName()));
             pEngine->CreateInstrumentScriptVM();
             pEngine->Connect(pDevice);
             engines[pChannel->GetEngineFormat()][pDevice] = pEngine;
         }
         // register engine channel to the engine instance
         pEngine->engineChannels.add(pChannel);
-        // remember index in the ArrayList
         pChannel->iEngineIndexSelf = pEngine->engineChannels.size() - 1;
+        pEngine->channelsCache.resize(pChannel->iEngineIndexSelf + 1);
+        pChannel->originalMidiChannel = static_cast<midi_chan_t>(pChannel->iEngineIndexSelf);
+        // remember index in the ArrayList
         dmsg(4,("This Engine has now %" PRId64 " EngineChannels.\n", (int64_t)pEngine->engineChannels.size()));
         return pEngine;
     }
@@ -85,6 +88,17 @@ namespace LinuxSampler {
         RandomSeed         = 0;
         pDedicatedVoiceChannelLeft = pDedicatedVoiceChannelRight = NULL;
         pScriptVM          = NULL;
+#if CUSTOM_GSXG_MAPS
+    	for(auto i = 0; i < std::size(MapDefaults); ++i)
+            MapDefaults[i] = DEFAULT_MIDI_INSTRUMENT_MAP;
+#else
+    	// Let's assume map #0 is for GM/Gm2/GS, #1 for XG
+        MapDefaults[static_cast<int>(MidiMode::GM)] = 0;
+        MapDefaults[static_cast<int>(MidiMode::GM2)] = 0;
+        MapDefaults[static_cast<int>(MidiMode::GS)] = 0;
+        MapDefaults[static_cast<int>(MidiMode::XG)] = 1;
+        RenderMode = MidiMode::GM;
+#endif
     }
 
     AbstractEngine::~AbstractEngine() {
@@ -120,6 +134,7 @@ namespace LinuxSampler {
         AbstractEngine* pEngine = engines[pChannel->GetEngineFormat()][pDevice];
         // unregister EngineChannel from the Engine instance
         pEngine->engineChannels.remove(pChannel);
+        pEngine->channelsCache.resize(pEngine->engineChannels.size());
         // if the used Engine instance is not used anymore, then destroy it
         if (pEngine->engineChannels.empty()) {
             pDevice->Disconnect(pEngine);
@@ -200,7 +215,7 @@ namespace LinuxSampler {
             if (!(pEvent = eventQueueReader.pop())) break;
             // if younger event reached, ignore that and all subsequent ones for now
             if (pEvent->FragmentPos() >= Samples) {
-                eventQueueReader--;
+                --eventQueueReader;
                 dmsg(2,("Younger Event, pos=%d ,Samples=%d!\n",pEvent->FragmentPos(),Samples));
                 pEvent->ResetFragmentPos();
                 break;
@@ -374,7 +389,7 @@ namespace LinuxSampler {
      */
     uint8_t AbstractEngine::GSCheckSum(const RingBuffer<uint8_t,false>::NonVolatileReader AddrReader, uint DataSize) {
         RingBuffer<uint8_t,false>::NonVolatileReader reader = AddrReader;
-        uint bytes = 3 /*addr*/ + DataSize;        
+        const uint bytes = 3 /*addr*/ + DataSize;        
         uint8_t sum = 0;
         uint8_t c;
         for (uint i = 0; i < bytes; ++i) {
@@ -480,427 +495,823 @@ namespace LinuxSampler {
 
 	class SysexReader {
 	public:
-        uint8_t aa;
-        uint8_t bb;
-        uint8_t cc;
+        uint address; 
 
-        SysexReader(ByteReader& reader) : _reader(reader)
+        SysexReader(ByteReader& reader, uint length) : _reader(reader)
 		{
-			_valid = reader.pop(&aa) && reader.pop(&bb) && reader.pop(&cc);
-		}
-
-		inline void operator++()
-		{
-			if (++cc == 0)
+            uint8_t addr[3];
+			if (reader.read(addr, 3) == 3)
 			{
-				// since SYSEX should not exceed 128 bytes would never happen but nevertheless
-                if (++bb == 0)
-                    ++cc;
-			}
+                address = ((addr[0] & 0x7f) << 14) + ((addr[1] & 0x7f) << 7) + (addr[2] & 0x7f);
+                _left = length - 3;
+            }
+            else
+                _left = -1;
 		}
 
-		inline operator bool() const
+        inline operator bool() const
+        {
+            return _left > 0;
+        }
+
+        inline uint8_t index() const
+        {
+            return address & 0x7f;
+        }
+
+		inline uint8_t middle() const
+        {
+            return (address >> 7) & 0x7f;
+        }
+
+        inline void operator++()
 		{
-            return _valid;
+        	if (_left > 0)
+        	{
+                _reader += 1;
+                ++address;
+                --_left;
+        	}
 		}
 
-		inline void operator+=(int delta)
+		inline void operator+=(uint delta)
 		{
-            skip(delta);
-		}
+        	if (_left >= delta)
+        	{
+                _reader += delta;
+                address += delta;
+                _left -= delta;
+            }
+            else
+                _left = 0;
+        }
 
-		inline int available()
+		inline int available() const
 		{
-            return _reader.read_space();
+            return _left;
 		}
 
         inline bool pop(uint8_t& value)
         {
-            if (_valid)
-            {
-                const auto tmp = _reader.pop();
-                if (tmp != nullptr)
-                {
-                    value = *tmp;
-                    next();
-                }
-                else
-                    _valid = false;
-            }
-            return _valid;
+        	if (_left > 0)
+        	{
+        		if (_reader.pop(&value))
+        		{
+                    ++address;
+                    --_left;
+                    return true;
+        		}
+                _left = 0;
+        	}
+            return false;
         }
 
         inline uint8_t* pop()
         {
-            if (_valid)
+            if (_left > 0)
             {
-                const auto tmp = _reader.pop();
-                if (tmp != nullptr)
+                auto tmp = _reader.pop();
+                if (tmp)
                 {
-                    next();
+                    ++address;
+                    --_left;
                     return tmp;
                 }
-                else
-                    _valid = false;
+                _left = 0;
             }
             return nullptr;
         }
 
-        inline bool read(uint8_t* buffer, int count)
+        inline bool read(uint8_t* buffer, uint count)
 		{
-            if (_valid)
-            {
-                if (count == _reader.read(buffer, count))
-                    skip(count);
-                else
-                    _valid = false;
-            }
-            return _valid;
+        	if (_left >= count)
+        	{
+        		if (count == _reader.read(buffer, count))
+        		{
+                    address += count;
+                    _left -= count;
+                    return true;
+        		}
+                _left = 0;
+        	}
+            return false;
 		}
 	private:
-        bool _valid;
+        int _left;
         ByteReader& _reader;
-
-		inline void next()
-		{
-            if (++cc == 0)
-                ++bb;
-		}
-
-		inline void skip(uint8_t delta)
-		{
-            uint8_t tmp = cc;
-            cc += delta;
-            if (tmp > cc)
-                ++bb;
-		}
 	};
 
-    void ProcessSysexGM(AbstractEngine& engine, ByteReader& reader)
+	#define SYSEX_ADDR(aa,bb,cc) ((aa << 14) + (bb << 7) + cc)
+	
+    class SysexMap
     {
-        uint8_t device, sub1, sub2;
+    public:
+        typedef bool (*SysexHandler)(SysexMap* me, SysexReader& sysex);
 
-        if (!reader.pop(&device) || !reader.pop(&sub1) || !reader.pop(&sub2))
-            return;
+        struct AddressBlock
+        {
+        public:
+            uint min;
+            uint max;
+            SysexHandler handler;
 
-    	if (sub1 == 0x09)
+            AddressBlock(const uint Min, const uint Max, SysexHandler Handler) : min(Min), max(Max), handler(Handler) {}
+
+            bool valid() const
+            {
+                return max != 0;
+            }
+        };
+
+
+    	SysexMap(AbstractEngine& engine, MidiInputPort* sourcePort) : _engine(&engine), _sourcePort(sourcePort)
     	{
-    		if (sub2 == 0x01)
-    		{
-    			// GM ON
-    		}
-    	}
-    }
-
-    void ProcessSysexRTGM(AbstractEngine& engine, ByteReader& reader)
-    {
-        uint8_t device, sub1, sub2;
-
-        if (!reader.pop(&device) || !reader.pop(&sub1) || !reader.pop(&sub2))
-            return;
-    }
-
-    void gsReset(AbstractEngine& engine)
-    {
-
-    }
-
-    int gsHandle_400xxx(AbstractEngine& engine, SysexReader& reader, uint8_t lead)
-    {
-        auto addr = reader.bb << 8 + reader.cc;
-    	switch(addr)
-    	{
-    	// MASTER TUNE
-        case 0x000:
-            uint8_t tune[3];
-            if (reader.read(tune, 3) != 3)
-                return -1;
-            return 3;
-            break;
-
-    	// MASTER VOLUME
-        case 0x004:
-            break;
-
-    	// MASTER KEY-SHIFT
-        case 0x005:
-            break;
-
-    	// MASTER PAN
-        case 0x006:
-            break;
-
-    	// MODE SET
-        case 0x07f:
-            if (lead == 0x00)
-                gsReset(engine);
-            break;
-
-    	// REVERB MACRO
-        case 0x130:
-            break;
-
-        // CHORUS MACRO
-        case 0x138:
-            break;
-
-        // DELAY MACRO
-        case 0x150:
-            break;
-
-    	// EQ LOW FREQ
-        case 0x200:
-            break;
-
-    	// EFX TYPE
-        case 0x300:
-            break;
-        }
-        return 0;
-    }
-
-    int gsHandle_40xxxx(AbstractEngine& engine, SysexReader& reader, uint8_t lead)
-    {
-        int channel = reader.bb & 0x0f;
-        return 0;
-    }
-
-    void gsProcessSysex(AbstractEngine& engine, ByteReader& reader)
-    {
-        uint8_t head[3];
-
-    	if (reader.read(head, 3) != 3)
-            return;
-
-    	if (head[1] == 0x45)
-    	{
-    		// NOTHING TO DO WITH GS DISPLAY DATA
-            return;
     	}
     	
-    	if (head[1] == 0x42 && head[2] == 0x12)
-    	{
-            auto left = reader.read_space() - 5;
-            if (left <= 0)
-                return;
-    		
-            SysexReader addr(reader);
-            for(; (left > 0) && addr;)
+    //protected:
+        AbstractEngine* _engine;
+        MidiInputPort* _sourcePort;
+        midi_chan_t _channel = midi_chan_all;
+        uint _cacheSize;
+
+        int filterChannels(midi_chan_t midiChannel)
+        {
+            if (_channel != midiChannel)
             {
-                uint8_t lead = *addr.pop();
-                left--;
-
-	            if (addr.aa == 0x00)
-	            {
-	            	// GS SYSTEM BLOCK
-		            if (addr.bb == 0x00)
-		            {
-                        if (addr.cc == 0x7f)
-                        {
-                            gsReset(engine);
-                        }
-                    }
-                    else if (addr.bb == 0x01) 
+                _cacheSize = 0;
+                for (auto i = 0; i < _engine->engineChannels.size(); ++i)
+                {
+                    const auto channel = static_cast<AbstractEngineChannel*>(_engine->engineChannels[i]);
+                    if (channel->originalMidiChannel == midiChannel)
                     {
-                        // GS PARTS MAPPING: up to 4 MIDI PORTS (64 multiparts)
-                    }
-	            } else if (addr.aa == 0x40)
-	            {
-	            	// GS PATCH BLOCK
-                    int count;
-                    if (addr.bb < 0x10)
-                        count = gsHandle_400xxx(engine, addr, lead);
-                    else 
-                        count = gsHandle_40xxxx(engine, addr, lead);
-
-                    if (count < 0)
-                        return;
-                    left -= count;
-	            } else if (addr.aa == 0x41)
-	            {
-		            // GS DRUM BLOCK
-	            }
-            }
-    	}
-    }
-
-    void xgProcessSysex(AbstractEngine& engine, ByteReader& reader)
-    {
-
-    }
-
-    void ProcessSysex(AbstractEngine& engine, ByteReader& reader)
-    {
-        uint8_t exclusive_status, id;
-
-        if (!reader.pop(&exclusive_status) || exclusive_status != 0xf0)
-            return;
-
-        if (!reader.pop(&id))
-            return;
-
-    	switch(id)
-    	{
-        case 0x7f:
-    		// realtime GM SYSEX
-            ProcessSysexRTGM(engine, reader);
-            break;
-        case 0x7e:
-    		// non-realtime GM SYSEX
-            ProcessSysexGM(engine, reader);
-            break;
-        case 0x41:
-    		// ROLAND SYSEX
-            gsProcessSysex(engine, reader);
-            break;
-        case 0x43:
-    		// YAMAHA SYSEX
-            xgProcessSysex(engine, reader);
-            break;
-    	}
-    }
-
-    void AbstractEngine::ProcessSysex(Pool<Event>::Iterator& itSysexEvent) {
-        RingBuffer<uint8_t,false>::NonVolatileReader reader = pSysexBuffer->get_non_volatile_reader();
-
-        uint8_t exclusive_status, id;
-        if (!reader.pop(&exclusive_status)) goto free_sysex_data;
-        if (!reader.pop(&id))               goto free_sysex_data;
-        if (exclusive_status != 0xF0)       goto free_sysex_data;
-
-        switch (id) {
-            case 0x7f: { // (Realtime) Universal Sysex (GM Standard)
-                uint8_t sysex_channel, sub_id1, sub_id2, val_msb, val_lsb;;
-                if (!reader.pop(&sysex_channel)) goto free_sysex_data;
-                if (!reader.pop(&sub_id1)) goto free_sysex_data;
-                if (!reader.pop(&sub_id2)) goto free_sysex_data;
-                if (!reader.pop(&val_lsb)) goto free_sysex_data;
-                if (!reader.pop(&val_msb)) goto free_sysex_data;
-                //TODO: for now we simply ignore the sysex channel, seldom used anyway
-                switch (sub_id1) {
-                    case 0x04: // Device Control
-                        switch (sub_id2) {
-                            case 0x01: { // Master Volume
-                                const double volume =
-                                    double((uint(val_msb)<<7) | uint(val_lsb)) / 16383.0;
-                                #if CONFIG_MASTER_VOLUME_SYSEX_BY_PORT
-                                // apply volume to all sampler channels that
-                                // are connected to the same MIDI input port
-                                // this sysex message arrived on
-                                for (int i = 0; i < engineChannels.size(); ++i) {
-                                    EngineChannel* pEngineChannel = engineChannels[i];
-                                    if (pEngineChannel->GetMidiInputPort() ==
-                                        itSysexEvent->pMidiInputPort)
-                                    {
-                                        pEngineChannel->Volume(volume);
-                                    }
-                                }
-                                #else
-                                // apply volume globally to the whole sampler
-                                GLOBAL_VOLUME = volume;
-                                #endif // CONFIG_MASTER_VOLUME_SYSEX_BY_PORT
+                        auto midiInputs = channel->midiInputs.front();
+                        for (auto k = 0; k < midiInputs->size(); ++k) {
+                            if ((*midiInputs)[k] == _sourcePort) {
+                                _engine->channelsCache[_cacheSize++] = channel;
                                 break;
                             }
                         }
+                    }
+                }
+                _channel = midiChannel;
+            }
+            return _cacheSize;
+        }
+
+        void dispatch(AddressBlock* map, SysexReader& reader)
+        {
+            for (; reader;)
+            {
+                for (; ; ++map)
+                {
+                    if (!map->valid())
+                        return;
+                    if (map->max >= reader.address)
                         break;
                 }
-                break;
-            }
-            case 0x41: { // Roland
-                dmsg(3,("Roland Sysex\n"));
-                uint8_t device_id, model_id, cmd_id;
-                if (!reader.pop(&device_id)) goto free_sysex_data;
-                if (!reader.pop(&model_id))  goto free_sysex_data;
-                if (!reader.pop(&cmd_id))    goto free_sysex_data;
-                if (model_id != 0x42 /*GS*/) goto free_sysex_data;
-                if (cmd_id != 0x12 /*DT1*/)  goto free_sysex_data;
-
-                // command address
-                uint8_t addr[3]; // 2 byte addr MSB, followed by 1 byte addr LSB)
-                //const RingBuffer<uint8_t,false>::NonVolatileReader checksum_reader = reader; // so we can calculate the check sum later
-                if (reader.read(&addr[0], 3) != 3) goto free_sysex_data;
-                if (addr[0] == 0x40 && addr[1] == 0x00) { // System Parameters
-                    dmsg(3,("\tSystem Parameter\n"));
-                    if (addr[2] == 0x7f) { // GS reset
-                        for (int i = 0; i < engineChannels.size(); ++i) {
-                            AbstractEngineChannel* pEngineChannel
-                                = static_cast<AbstractEngineChannel*>(engineChannels[i]);
-                            Sync< ArrayList<MidiInputPort*> > midiInputs = pEngineChannel->midiInputs.front();
-                            for (int k = 0; k < midiInputs->size(); ++k) {
-                                if ((*midiInputs)[k] == itSysexEvent->pMidiInputPort) { 
-                                    KillAllVoices(pEngineChannel, itSysexEvent);
-                                    pEngineChannel->ResetControllers();
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                if (map->min > reader.address)
+                {
+                    reader += map->min - reader.address;
+                    if (!reader)
+                        return;
                 }
-                else if (addr[0] == 0x40 && addr[1] == 0x01) { // Common Parameters
-                    dmsg(3,("\tCommon Parameter\n"));
-                }
-                else if (addr[0] == 0x40 && (addr[1] & 0xf0) == 0x10) { // Part Parameters (1)
-                    dmsg(3,("\tPart Parameter\n"));
-                    switch (addr[2]) {
-                        case 0x40: { // scale tuning
-                            dmsg(3,("\t\tScale Tuning\n"));
-                            uint8_t scale_tunes[12]; // detuning of all 12 semitones of an octave
-                            if (reader.read(&scale_tunes[0], 12) != 12) goto free_sysex_data;
-                            uint8_t checksum;
-                            if (!reader.pop(&checksum)) goto free_sysex_data;
-                            #if CONFIG_ASSERT_GS_SYSEX_CHECKSUM
-                            if (GSCheckSum(checksum_reader, 12)) goto free_sysex_data;
-                            #endif // CONFIG_ASSERT_GS_SYSEX_CHECKSUM
-                            for (int i = 0; i < 12; i++) scale_tunes[i] -= 64;
-                            AdjustScaleTuning((int8_t*) scale_tunes);
-                            dmsg(3,("\t\t\tNew scale applied.\n"));
-                            break;
-                        }
-                        case 0x15: { // chromatic / drumkit mode
-                            dmsg(3,("\t\tMIDI Instrument Map Switch\n"));
-                            uint8_t part = addr[1] & 0x0f;
-                            uint8_t map;
-                            if (!reader.pop(&map)) goto free_sysex_data;
-                            for (int i = 0; i < engineChannels.size(); ++i) {
-                                AbstractEngineChannel* pEngineChannel
-                                    = static_cast<AbstractEngineChannel*>(engineChannels[i]);
-                                if (pEngineChannel->midiChannel == part ||
-                                    pEngineChannel->midiChannel == midi_chan_all)
-                                {   
-                                    Sync< ArrayList<MidiInputPort*> > midiInputs = pEngineChannel->midiInputs.front();
-                                    for (int k = 0; k < midiInputs->size(); ++k) {
-                                        if ((*midiInputs)[k] == itSysexEvent->pMidiInputPort) {
-                                            try {
-                                                pEngineChannel->SetMidiInstrumentMap(map);
-                                            } catch (Exception e) {
-                                                dmsg(2,("\t\t\tCould not apply MIDI instrument map %d to part %d: %s\n", map, part, e.Message().c_str()));
-                                                goto free_sysex_data;
-                                            } catch (...) {
-                                                dmsg(2,("\t\t\tCould not apply MIDI instrument map %d to part %d (unknown exception)\n", map, part));
-                                                goto free_sysex_data;
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            dmsg(3,("\t\t\tApplied MIDI instrument map %d to part %d.\n", map, part));
-                            break;
-                        }
-                    }
-                }
-                else if (addr[0] == 0x40 && (addr[1] & 0xf0) == 0x20) { // Part Parameters (2)
-                }
-                else if (addr[0] == 0x41) { // Drum Setup Parameters
-                }
-                break;
+                if (!map->handler(this, reader))
+                    return;
+                ++map;
             }
         }
 
-        free_sysex_data: // finally free sysex data
-        pSysexBuffer->increment_read_ptr(itSysexEvent->Param.Sysex.Size);
+        template <class T> inline void forEach(void (T::* handler)(uint8_t), uint8_t argument) const
+        {
+            for (auto i = 0; i < _cacheSize; ++i)
+            {
+                const auto channel = _engine->channelsCache[i];
+                (channel->*handler)(argument);
+            }
+        }
+
+        template <typename Func, typename T> inline void forEach(T argument, Func handler) const
+        {
+            for (auto i = 0; i < _cacheSize; ++i)
+                handler(_engine->channelsCache[i], argument);
+        }
+
+        template <typename Func> inline void forEachPort(Func handler)
+        {
+            for (auto i = 0; i < _engine->engineChannels.size(); ++i)
+            {
+                const auto channel = static_cast<AbstractEngineChannel*>(_engine->engineChannels[i]);
+                const auto inputs = channel->midiInputs.front();
+                for (auto k = 0; k < inputs->size(); ++k)
+                {
+                    if ((*inputs)[k] == _sourcePort)
+                    {
+                        handler(channel);
+                        break;
+                    }
+                }
+            }
+        }
+
+        inline void forEachCC(uint8_t cc_number, uint8_t cc_value) const
+        {
+            for (auto i = 0; i < _cacheSize; ++i)
+                _engine->channelsCache[i]->SendControlChange(cc_number, cc_value, _channel);
+        }
+    };
+
+	class GSSysexMap : public SysexMap
+    {
+	public:
+		GSSysexMap(AbstractEngine& engine, MidiInputPort* sourcePort) : SysexMap(engine, sourcePort) {}
+		
+        void dispatch(SysexReader& reader)
+        {
+            SysexMap::dispatch(addressMap, reader);
+        }
+    	
+    private:
+        static bool handle_GsReset(SysexMap* me, SysexReader& sysex)
+        {
+            const auto systemMode = *sysex.pop();
+            if (systemMode < 2)
+				me->_engine->ResetMidiMode(Engine::MidiMode::GS, true);
+            return true;
+        }
+
+    	static bool handle_GsCommon(SysexMap* me, SysexReader& sysex)
+        {
+            uint8_t index;
+            for (; sysex && ((index = sysex.index()) < 0x07); )
+            {
+                switch (index)
+                {
+                    // MASTER TUNE
+                case 0x000:
+                    uint8_t tune[4];
+                    if (!sysex.read(tune, 4))
+                        return false;
+                    break;
+
+                    // MASTER VOLUME
+                case 0x004:
+                    // MASTER KEY-SHIFT
+                case 0x005:
+                    // MASTER PAN
+                case 0x006:
+                    ++sysex;
+                    break;
+
+                default:
+                    ++sysex;
+                    break;
+                }
+            }
+            return true;
+        }
+
+        static bool handle_GsPatchCommon(SysexMap* me, SysexReader& sysex)
+        {
+	        const auto midiChannel = static_cast<midi_chan_t>((sysex.address >> 7) & 0x0f);
+            const auto count = me->filterChannels(midiChannel);
+        	if (count)
+        	{
+                uint8_t index;
+        		
+        		for(; sysex && ((index = sysex.index()) <0x4c); )
+        		{
+                    auto lead = *sysex.pop();
+        			switch (index)
+        			{
+                    case 0x00:
+                        me->forEach(&AbstractEngineChannel::SetMidiBankMsb, lead);
+                        break;
+        				
+                    case 0x01:
+                        me->forEach(&AbstractEngineChannel::SetMidiProgram, lead);
+                        break;
+
+                    case 0x02:
+        				for(auto i = 0; i < count; ++i)
+        				{
+                            me->_engine->channelsCache[i]->midiChannel = static_cast<midi_chan_t>(lead);
+        				}
+                        break;
+
+                    case 0x13:
+                        me->forEachCC(lead ? 126 : 127, 1);
+                        break;
+
+                    case 0x14: {
+	                    const auto partMode = lead == 0 ? AbstractEngineChannel::AssignMode::single : AbstractEngineChannel::AssignMode::multi;
+                        for (auto i = 0; i < count; ++i)
+                        {
+                            me->_engine->channelsCache[i]->KeyAssignMode = partMode;
+                        }
+                        break;
+                    }
+
+                    case 0x15: {
+	                    const auto partMod = lead != 0 ? AbstractEngineChannel::AssignMode::instrument : AbstractEngineChannel::AssignMode::multi;
+                        for (auto i = 0; i < count; ++i)
+                        {
+                            auto chan = me->_engine->channelsCache[i];
+                            chan->PartMode = static_cast<AbstractEngineChannel::MultipartMode>(lead);
+                            chan->KeyAssignMode = partMod;
+                        }
+                        break;
+                    }
+
+                    case 0x19:
+                        me->forEachCC(7, lead);
+                        break;
+
+                    case 0x1c:
+                        if (lead == 0x00)
+                            // random PANPOT --  try to emulate fast using frame time
+                            lead = static_cast<uint8_t>(me->_engine->FrameTime & 0x7f);
+						me->forEachCC(10, lead);
+                        break;
+
+                    case 0x21:
+                        me->forEachCC(93, lead);
+                        break;
+
+                    case 0x22:
+                        me->forEachCC(91, lead);
+                        break;
+
+                    case 0x2c:
+                        me->forEachCC(94, lead);
+                        break;
+
+                    case 0x40:
+                        int8_t scale_tunes[12];
+                        if (!sysex.read(reinterpret_cast<uint8_t*>(scale_tunes), static_cast<uint>(std::size(scale_tunes))))
+                            return false;
+        				
+                        for (auto i = 0; i < std::size(scale_tunes); i++) scale_tunes[i] -= 64;
+                        me->_engine->AdjustScaleTuning(scale_tunes);
+                        break;
+
+                    default:
+                        break;
+        			}
+        		}
+        	}
+            return true;
+        }
+
+        static bool handle_GsEfx88(SysexMap* me, SysexReader& sysex)
+        {
+            const auto midiChannel = static_cast<midi_chan_t>((sysex.address >> 7) & 0x0f);
+            const auto count = me->filterChannels(midiChannel);
+            if (count)
+            {
+                uint8_t index;
+
+                for (; sysex && ((index = sysex.index()) < 0x02); )
+                {
+                    const auto lead = *sysex.pop();
+                	switch(index)
+                	{
+                    case 0x00:
+                        for (auto i = 0; i < count; ++i)
+                        {
+	                        const auto chan = me->_engine->channelsCache[i];
+                            chan->DefaultGsLsb = (lead != 0) ? lead : chan->PoweronGsLsb;
+                        }
+                        break;
+                		
+                    case 0x01:
+                        for (auto i = 0; i < count; ++i)
+                        {
+	                        const auto chan = me->_engine->channelsCache[i];
+                            chan->PoweronGsLsb = lead;
+                        }
+                        break;
+
+                    default:
+                        break;
+                	}
+                }
+            }
+            return true;
+        }
+
+    	// need to be sorted by address
+        static AddressBlock addressMap[];
+    };
+	
+    SysexMap::AddressBlock GSSysexMap::addressMap[] = {
+        {SYSEX_ADDR(0x00, 0x00, 0x7f), SYSEX_ADDR(0x00, 0x00, 0x7f), handle_GsReset },
+        {SYSEX_ADDR(0x40, 0x00, 0x00), SYSEX_ADDR(0x40, 0x00, 0x06), handle_GsCommon },
+        {SYSEX_ADDR(0x40, 0x00, 0x7f), SYSEX_ADDR(0x40, 0x00, 0x7f), handle_GsReset },
+        {SYSEX_ADDR(0x40, 0x10, 0x00), SYSEX_ADDR(0x40, 0x1f, 0x7f), handle_GsPatchCommon },
+        {SYSEX_ADDR(0x40, 0x40, 0x00), SYSEX_ADDR(0x40, 0x4f, 0x7f), handle_GsEfx88 },
+    	{ 0, 0, nullptr }
+    };
+
+	class XGSysexMap : public SysexMap
+	{
+	public:
+        XGSysexMap(AbstractEngine& engine, MidiInputPort* sourcePort) : SysexMap(engine, sourcePort) {}
+        		
+        void dispatch(SysexReader& reader)
+        {
+            SysexMap::dispatch(addressMap, reader);
+        }
+	private:
+        static bool handle_XgSystem(SysexMap* me, SysexReader& sysex)
+        {
+            uint8_t index;
+            for (; sysex && ((index = sysex.index()) < 0x07); )
+            {
+                switch (index)
+                {
+				// MASTER TUNE
+                case 0x000: {
+                    uint8_t tune[4];
+                    if (!sysex.read(tune, 4))
+                        return false;
+
+                    auto masterTune = (tune[0] << 12) + (tune[1] << 8) + (tune[2] << 4) + tune[3];
+                	break;
+                }
+
+                // MASTER VOLUME
+                case 0x004:
+                // MASTER ATTENUATOR
+                case 0x005:
+                // TRANSPONSE
+                case 0x006:
+                    ++sysex;
+                    break;
+
+                default:
+                    ++sysex;
+                    break;
+                }
+            }
+            return true;
+        }
+
+        static bool handle_XgReset(SysexMap* me, SysexReader& sysex)
+        {
+            uint8_t index;
+            for (; sysex && (index = sysex.index()) != 0; )
+            {
+                const auto next = *sysex.pop();
+                switch (index)
+                {
+                case 0x07d:  // DRUM SETUP RESET
+                    break;
+
+                case 0x07e: // XG SYSTEM ON
+                    if (next == 0)
+                    {
+                        me->_engine->ResetMidiMode(Engine::MidiMode::XG, false);
+                    }
+                    break;
+
+                case 0x07f: // ALL PARAMETER RESET
+                    if (next == 0)
+                    {
+                        me->_engine->ResetMidiMode(Engine::MidiMode::XG, true);
+                    }
+                    break;
+
+                default:
+                    break;
+                }
+            }
+            return true;
+        }
+
+        static bool handle_GlobalFx(SysexMap* me, SysexReader& sysex)
+        {
+            return true;
+        }
+
+        static bool handle_MultiEq(SysexMap* me, SysexReader& sysex)
+        {
+            return true;
+        }
+
+        static bool handle_Insertion(SysexMap* me, SysexReader& sysex)
+        {
+            return true;
+        }
+
+        static bool handle_Multipart(SysexMap* me, SysexReader& sysex)
+        {
+        	for( ; sysex ; )
+        	{
+                auto index = sysex.index();
+                const auto partIndex = static_cast<midi_chan_t>(sysex.middle());
+                if (me->filterChannels(partIndex))
+                {
+                    uint8_t buffer[128];
+                    const auto count = std::min(0x44 - index, sysex.available());
+                    if (!sysex.read(buffer, count))
+                        return false;
+                	
+                	for (const auto last = index + count; index < last ; ++index)
+                    {
+                        switch (index)
+                        {
+                        case 0x01: // BANK SELECT MSB
+                            me->forEach(&AbstractEngineChannel::SetMidiBankMsb, buffer[index]);
+                            break;
+
+                        case 0x02: // BANK SELECT LSB
+                            me->forEach(&AbstractEngineChannel::SetMidiBankLsb, buffer[index]);
+                            break;
+
+                        case 0x03: // PROGRAM NUMBER
+                            me->forEach(&AbstractEngineChannel::SetMidiProgram, buffer[index]);
+                            break;
+
+                        case 0x04: // Rcv CHANNEL
+                            me->forEach(buffer[index], [me](AbstractEngineChannel* channel, uint8_t value)
+                                {
+                                    channel->midiChannel = static_cast<midi_chan_t>(value);
+                                });
+                            break;
+
+                        case 0x05: // MONO/POLY MODE
+                            me->forEachCC(buffer[index] == 0 ? 126 : 127, 1);
+                            break;
+
+                        case 0x06: {// SAME NOTE NUMBER KEY ON ASSIGN
+                            const auto mode = buffer[index];
+                            if (mode < 3)
+                                me->forEach(mode, [me](AbstractEngineChannel* channel, uint8_t value)
+                                    {
+                                        channel->KeyAssignMode = static_cast<AbstractEngineChannel::AssignMode>(value);
+                                    });
+                            break;
+                        }
+
+                        case 0x07: // PART MODE
+                            me->forEach(buffer[index], [me](AbstractEngineChannel* channel, uint8_t value)
+                                {
+                                    channel->PartMode = static_cast<AbstractEngineChannel::MultipartMode>(value);
+                                });
+                            break;
+
+                        case 0x0b: // VOLUME
+                            me->forEachCC(7, buffer[index]);
+                            break;
+
+                        case 0x0e: {// PAN
+                            auto lead = buffer[index];
+                            if (lead == 0x00)
+                                // random PANPOT --  try to emulate fast using frame time
+                                lead = static_cast<uint8_t>(me->_engine->FrameTime & 0x7f);
+                            me->forEachCC(10, lead);
+                            break;
+                        }
+
+                        case 0x41: { // SCALE TUNING
+                            if (count < 12)
+                                return false;
+
+                            for (auto i = 0; i < 12; ++i) buffer[index + i] -= 64;
+                            me->_engine->AdjustScaleTuning(reinterpret_cast<int8_t*>(buffer[index]));
+                            index += 11;
+                            break;
+                        }
+
+                        default:
+                            break;
+                        }
+                    }
+                }
+                const auto leftover = 128 - index;
+                sysex += leftover;
+        	}
+            return true;
+        }
+
+        static bool handle_PartFx(SysexMap* me, SysexReader& sysex)
+        {
+            return true;
+        }
+
+        static bool handle_DrumSetup(SysexMap* me, SysexReader& sysex)
+        {
+            return true;
+        }
+
+        static AddressBlock addressMap[];
+	};
+
+    SysexMap::AddressBlock XGSysexMap::addressMap[] = {
+        { SYSEX_ADDR(0x00, 0x00, 0x00), SYSEX_ADDR(0x00, 0x00, 0x06), handle_XgSystem},
+        { SYSEX_ADDR(0x00, 0x00, 0x7d), SYSEX_ADDR(0x00, 0x00, 0x7f), handle_XgReset},
+        { SYSEX_ADDR(0x02, 0x01, 0x00), SYSEX_ADDR(0x02, 0x01, 0x75), handle_GlobalFx},
+        { SYSEX_ADDR(0x02, 0x40, 0x00), SYSEX_ADDR(0x02, 0x40, 0x14), handle_MultiEq},
+        { SYSEX_ADDR(0x03, 0x00, 0x00), SYSEX_ADDR(0x03, 0x7f, 0x7f), handle_Insertion},
+        { SYSEX_ADDR(0x08, 0x00, 0x00), SYSEX_ADDR(0x08, 0x7f, 0x7f), handle_Multipart},
+        { SYSEX_ADDR(0x0a, 0x00, 0x10), SYSEX_ADDR(0x0a, 0x7f, 0x45), handle_PartFx},
+        { SYSEX_ADDR(0x30, 0x00, 0x00), SYSEX_ADDR(0x3f, 0x7f, 0x74), handle_DrumSetup},
+        { 0, 0, nullptr }
+    };
+
+	class GMSysex : public SysexMap
+	{
+	public:
+		GMSysex(AbstractEngine& engine, MidiInputPort* sourcePort) : SysexMap(engine, sourcePort) {}
+
+		void dispatchRealtime(uint8_t sub1, uint8_t sub2, ByteReader& reader, uint length)
+		{
+            if (sub1 == 0x04)
+            {
+            	if (length != 2)
+                    return;
+                
+                const auto value = (*reader.pop() << 7) + *reader.pop();
+                switch (sub2)
+                {
+                case 0x01: {
+                    // MASTER VOLUME
+                    const auto volume = value / 16383.0;
+                    forEachPort([volume](AbstractEngineChannel* channel)
+                        {
+                            channel->Volume(volume);
+                        });
+                    break;
+                }
+                default:
+                    return;
+                }
+            }
+		}
+
+		void dispatchNonRealtime(uint8_t sub1, uint8_t sub2) 
+		{
+			switch(sub1)
+			{
+            case 0x09: // GM RESET
+	            {
+		            switch (sub2)
+		            {
+                    case 0x01:
+                    case 0x02:
+                        _engine->ResetMidiMode(Engine::MidiMode::GM, true);
+                        break;
+
+                    case 0x03:
+                        _engine->ResetMidiMode(Engine::MidiMode::GM2, true);
+                        break;
+
+                    default:
+                        return;
+                    }
+	            }
+				
+            default:
+                return;
+			}
+		}
+	};
+	
+    void dispatchSysex(AbstractEngine& engine, MidiInputPort* sourcePort, ByteReader& reader, uint length)
+    {
+        const auto available = reader.read_space();
+        if (length > available)
+            length = available;
+
+    	// test if packet is too short
+        if (length < 6 || *reader.pop() != 0xf0)
+            return;
+
+        switch (*reader.pop())
+        {
+        case 0x7f: {
+            // realtime GM SYSEX
+            const auto deviceId = *reader.pop(), sub1 = *reader.pop(), sub2 = *reader.pop();
+        	if (deviceId == 0x7f)
+        	{
+                GMSysex gm(engine, sourcePort);
+                gm.dispatchRealtime(sub1, sub2, reader, length - 6);
+        	}
+			break;
+        }
+        case 0x7e: {
+            // non-realtime GM SYSEX
+            const auto deviceId = reader.pop(), sub1 = reader.pop(), sub2 = reader.pop();
+            if (sub2 && *deviceId == 0x7f)
+            {
+                GMSysex gm(engine, sourcePort);
+                gm.dispatchNonRealtime(*sub1, *sub2);
+            }
+            break;
+        }
+        case 0x41: {
+            // ROLAND SYSEX
+            engine.RenderMode = Engine::MidiMode::GS;
+            if (length > 9)
+            {
+                uint8_t lead[3];
+                reader.read(lead, 3);
+                if (lead[1] == 0x45)
+                    // NOTHING TO DO WITH GS DISPLAY DATA
+                    return;
+
+                if (lead[1] == 0x42 && lead[2] == 0x12)
+                {
+                    SysexReader sysex(reader, length - 7);
+                    GSSysexMap mapper(engine, sourcePort);
+                    mapper.dispatch(sysex);
+                }
+            }
+            break;
+        }
+        case 0x43: {
+            // YAMAHA SYSEX
+            engine.RenderMode = Engine::MidiMode::XG;
+        	if (length > 7)
+        	{
+	            const auto deviceNo = *reader.pop(), modelId = *reader.pop();
+	            if (modelId == 0x4c)
+	            {
+	                const auto command = deviceNo >> 4;
+	                if (command == 1)
+	                {   // PARAMETER CHANGE
+                        SysexReader sysex(reader, length - 5);
+                        XGSysexMap mapper(engine, sourcePort);
+                        mapper.dispatch(sysex);
+	                }
+	                else if (command == 0)
+	                {   // BULK DUMP
+                        const auto len = *reader.pop() << 7 + *reader.pop();
+                        if (len == (length - 11))
+                        {
+                            SysexReader sysex(reader, length - 8);
+                            XGSysexMap mapper(engine, sourcePort);
+                            mapper.dispatch(sysex);
+                        }
+	                }
+	            }
+        	}
+            break;
+        }
+        default:
+            break;
+    	}
     }
 
+    void AbstractEngine::ProcessSysex(Pool<Event>::Iterator& itSysexEvent)
+	{
+        auto reader = pSysexBuffer->get_non_volatile_reader();
+        auto length = itSysexEvent->Param.Sysex.Size;
+        auto sourcePort = itSysexEvent->pMidiInputPort;
+        dispatchSysex(*this, sourcePort, reader, length);
+        pSysexBuffer->increment_read_ptr(length);
+    }
+
+	Engine::MidiMode AbstractEngine::GetMidiMode()
+	{
+        return RenderMode;
+	}
+
+	int AbstractEngine::GetDefaultMidiMap(MidiMode mode)
+	{
+		const auto index = static_cast<uint>(mode);
+        return (index >= std::size(MapDefaults)) ? DEFAULT_MIDI_INSTRUMENT_MAP : MapDefaults[index];
+	}
+
+    void AbstractEngine::SetDefaultMidiMap(MidiMode mode, int mapID)
+    {
+        const auto index = static_cast<uint>(mode);
+        if (mapID != NO_MIDI_INSTRUMENT_MAP && mapID != DEFAULT_MIDI_INSTRUMENT_MAP &&
+            (mapID < 0 || mapID >= MidiInstrumentMapper::GetMapCount()))
+            return;
+    	
+        if (index < std::size(MapDefaults))
+            MapDefaults[index] = mapID;
+    }
+
+    void AbstractEngine::ResetMidiMode(MidiMode mode, bool factoryReset)
+    {
+        RenderMode = mode;
+
+    	// reset parts' routing & mode by re-triggering channel assign
+    	for(auto i = 0; i < engineChannels.size(); ++i)
+    	{
+            auto channel = static_cast<AbstractEngineChannel*>(engineChannels[i]);
+    		if (channel->originalMidiChannel != midi_chan_all)
+    		{
+                channel->midiChannel = midi_chan_none;
+                channel->SetMidiChannel(channel->originalMidiChannel);
+    		}
+    	}
+    	
+        ResetInternal(true);
+    }
+	
     String AbstractEngine::GetFormatString(Format f) {
         switch(f) {
             case GIG: return "GIG";

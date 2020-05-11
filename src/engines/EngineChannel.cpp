@@ -30,9 +30,6 @@
 #include "../drivers/midi/MidiInstrumentMapper.h"
 #include "../common/atomic.h"
 
-#define NO_MIDI_INSTRUMENT_MAP		-1
-#define DEFAULT_MIDI_INSTRUMENT_MAP	-2
-
 namespace LinuxSampler {
 
     struct EngineChannel::private_data_t {
@@ -150,34 +147,21 @@ namespace LinuxSampler {
     }
 
     uint8_t EngineChannel::GetMidiBankMsb() {
-        return (p->bMidiBankMsbReceived && p->bMidiBankLsbReceived)
-            ? p->uiMidiBankMsb : 0;
+        return p->uiMidiBankMsb;
     }
 
     void EngineChannel::SetMidiBankMsb(uint8_t BankMSB) {
-        if (p->bProgramChangeReceived) {
-            p->bProgramChangeReceived =
-            p->bMidiBankLsbReceived = false;
-        }
         p->bMidiBankMsbReceived = true;
-        p->uiMidiBankMsb = BankMSB; // AFAIK atomic on all systems
+        p->uiMidiBankMsb = BankMSB; 
     }
 
     uint8_t EngineChannel::GetMidiBankLsb() {
-        return (!p->bMidiBankMsbReceived && !p->bMidiBankLsbReceived)
-                   ? 0
-                   : (p->bMidiBankMsbReceived && !p->bMidiBankLsbReceived)
-                         ? p->uiMidiBankMsb
-                         : p->uiMidiBankLsb;
+        return p->uiMidiBankLsb;
     }
 
     void EngineChannel::SetMidiBankLsb(uint8_t BankLSB) {
-        if (p->bProgramChangeReceived) {
-            p->bProgramChangeReceived =
-            p->bMidiBankMsbReceived = false;
-        }
         p->bMidiBankLsbReceived = true;
-        p->uiMidiBankLsb = BankLSB; // AFAIK atomic on all systems
+        p->uiMidiBankLsb = BankLSB;
     }
 
     bool EngineChannel::UsesNoMidiInstrumentMap() {

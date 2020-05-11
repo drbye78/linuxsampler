@@ -585,12 +585,14 @@ std::string Thread::nameOfCaller() {
     //TODO: implementation for Windows
     return "not implemented";
     #else
-    char buf[16] = {};
-    pthread_getname_np(pthread_self(), buf, 16);
-    std::string s = buf;
-    if (s.empty())
-        s = "tid=" + ToString((ptrdiff_t)(void*)&pthread_self());
-    return s;
+    char buf[16] = { 0 };
+    auto self = pthread_self();
+    if (pthread_getname_np(self, buf, std::size(buf)) || buf[0] == 0)
+    {
+        return "tid=" + ToString(reinterpret_cast<intptr_t>(&self));
+    }
+    else
+        return buf;
     #endif
 }
 

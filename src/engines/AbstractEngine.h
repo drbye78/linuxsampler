@@ -47,6 +47,7 @@ namespace LinuxSampler {
 
         public:
             enum Format { GIG = 1, SF2, SFZ };
+    	
             static String GetFormatString(Format f);
             static AbstractEngine* AcquireEngine(AbstractEngineChannel* pChannel, AudioOutputDevice* pDevice);
             static void FreeEngine(AbstractEngineChannel* pChannel, AudioOutputDevice* pDevice);
@@ -65,6 +66,10 @@ namespace LinuxSampler {
             virtual void   AdjustScaleTuning(const int8_t ScaleTunes[12]) OVERRIDE;
             virtual void   GetScaleTuning(int8_t* pScaleTunes) OVERRIDE;
             virtual void   ResetScaleTuning() OVERRIDE;
+            virtual MidiMode GetMidiMode() OVERRIDE;
+            virtual int GetDefaultMidiMap(MidiMode mode) OVERRIDE;
+            virtual void SetDefaultMidiMap(MidiMode mode, int mapID) OVERRIDE;
+            virtual void ResetMidiMode(MidiMode mode, bool factoryReset) OVERRIDE;
 
             virtual Format GetEngineFormat() = 0;
             virtual void   Connect(AudioOutputDevice* pAudioOut) = 0;
@@ -114,8 +119,15 @@ namespace LinuxSampler {
             template<class V, class R, class I> friend class EngineChannelBase;
             template<class EC, class R, class S, class D> friend class VoiceBase;
 
+            class DrumSetup
+            {
+            public:
+                static const uint MAX_DRUMSETUPS = 16;
+            };
+
         //protected:
             ArrayList<EngineChannel*>  engineChannels; ///< All engine channels of a Engine instance.
+            ArrayList<AbstractEngineChannel*>  channelsCache;  ///< cache for batch channels operations
             ConditionServer            EngineDisabled;
             int8_t                     ScaleTuning[12];    ///< contains optional detune factors (-64..+63 cents) for all 12 semitones of an octave
             ChangeFlagRelaxed          ScaleTuningChanged; ///< Boolean flag indicating whenever ScaleTuning has been modified by a foreign thread (i.e. by API).
@@ -131,7 +143,10 @@ namespace LinuxSampler {
             atomic_t                   ActiveVoiceCount;      ///< number of currently active voices
             int                        VoiceSpawnsLeft;       ///< We only allow CONFIG_MAX_VOICES voices to be spawned per audio fragment, we use this variable to ensure this limit.
             InstrumentScriptVM*        pScriptVM; ///< Real-time instrument script virtual machine runner for this engine.
-
+            MidiMode                   RenderMode;            ///< Actual rendering mode
+            int                        MapDefaults[4];        ///< Default midi map for each MidiMode
+            DrumSetup                  DrumpSetups[DrumSetup::MAX_DRUMSETUPS];
+    	
             void RouteAudio(EngineChannel* pEngineChannel, uint Samples);
             void RouteDedicatedVoiceChannels(EngineChannel* pEngineChannel, optional<float> FxSendLevels[2], uint Samples);
             void ClearEventLists();
@@ -146,7 +161,7 @@ namespace LinuxSampler {
 
             uint8_t GSCheckSum(const RingBuffer<uint8_t,false>::NonVolatileReader AddrReader, uint DataSize);
 
-            virtual void ResetInternal() = 0;
+            virtual void ResetInternal(bool keepSysex = false) = 0;
             virtual void KillAllVoices(EngineChannel* pEngineChannel, Pool<Event>::Iterator& itKillEvent) = 0;
             virtual void ProcessNoteOn(EngineChannel* pEngineChannel, Pool<Event>::Iterator& itNoteOnEvent) = 0;
             virtual void ProcessNoteOff(EngineChannel* pEngineChannel, Pool<Event>::Iterator& itNoteOffEvent) = 0;

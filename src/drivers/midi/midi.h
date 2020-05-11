@@ -48,6 +48,7 @@ namespace LinuxSampler {
         midi_chan_14  = 13,
         midi_chan_15  = 14,
         midi_chan_16  = 15,
+    	midi_chan_none = 254,
         midi_chan_all = 16
     };
 

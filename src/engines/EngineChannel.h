@@ -39,6 +39,8 @@ namespace LinuxSampler {
     class MidiInputPort;
     class FxSend;
 
+	#define NO_MIDI_INSTRUMENT_MAP		-1
+	#define DEFAULT_MIDI_INSTRUMENT_MAP	-2
 
     /** @brief Channel Interface for LinuxSampler Sampler Engines
      *
@@ -425,7 +427,7 @@ namespace LinuxSampler {
              *
              * This method is not real-time safe.
              */
-            void ExecuteProgramChange(uint32_t Program);
+            virtual void ExecuteProgramChange(uint32_t Program);
 
 
             // Deprecated APIs

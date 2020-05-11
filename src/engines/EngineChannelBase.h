@@ -425,6 +425,11 @@ namespace LinuxSampler {
                 return n;
             }
 
+    		virtual void UnloadInstrument() OVERRIDE
+    		{
+                ChangeInstrument(nullptr);
+    		}
+
             RTList<R*>* pRegionsInUse;     ///< temporary pointer into the instrument change command, used by the audio thread
             I* pInstrument;
 

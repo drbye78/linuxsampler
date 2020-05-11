@@ -286,6 +286,7 @@ namespace LinuxSampler {
 
             static optional<entry_t> GetEntry(int Map, midi_prog_index_t Index); // shall only be used by EngineChannel ATM (see source comment)
             friend class EngineChannel; // allow EngineChannel to access GetEntry()
+            friend class AbstractEngineChannel; // allow AbstractEngineChannel to access GetEntry()
 
         private:
             /**

@@ -771,6 +771,9 @@ namespace LinuxSampler {
             DeviceCreationParameterBool(String val) throw (Exception);
             virtual String Type() OVERRIDE;
             virtual bool   Multiplicity() OVERRIDE;
+#ifdef _MSC_VER
+            virtual optional<String> Default() OVERRIDE { return DeviceCreationParameter::Default(); }
+#endif
             virtual optional<String> Default(std::map<String,String> Parameters) OVERRIDE;
             virtual optional<String> RangeMin(std::map<String,String> Parameters) OVERRIDE;
             virtual optional<String> RangeMax(std::map<String,String> Parameters) OVERRIDE;

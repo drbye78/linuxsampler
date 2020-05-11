@@ -629,7 +629,7 @@ namespace LinuxSampler {
             {
                 MidiChannelMap_t& midiChannelMap = MidiChannelMap.GetConfigForUpdate();
                 for (int i = 0; i <= 16; i++) {
-                    bChannelFound |= midiChannelMap[i].count(pEngineChannel);
+                    bChannelFound |= (midiChannelMap[i].count(pEngineChannel) != 0);
                     midiChannelMap[i].erase(pEngineChannel);
                 }
             }
@@ -637,7 +637,7 @@ namespace LinuxSampler {
             {
                 MidiChannelMap_t& midiChannelMap = MidiChannelMap.SwitchConfig();
                 for (int i = 0; i <= 16; i++) {
-                    bChannelFound |= midiChannelMap[i].count(pEngineChannel);
+                    bChannelFound |= (midiChannelMap[i].count(pEngineChannel) != 0);
                     midiChannelMap[i].erase(pEngineChannel);
                 }
             }

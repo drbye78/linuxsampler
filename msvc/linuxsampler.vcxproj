@@ -15,6 +15,7 @@
     <ProjectGuid>{A48AAD21-E123-451B-9A3B-AC2BFBFE8748}</ProjectGuid>
     <RootNamespace>linuxsampler</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)$(Platform)</LocalDebuggerWorkingDirectory>
     <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
@@ -444,12 +445,12 @@
   </ItemGroup>
   <ItemGroup>
     <Bison Include="..\src\network\lscp.y">
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">lscpparser.cpp</OutputFile>
-      <DefinesFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">lscpsymbols.h</DefinesFile>
+      <OutputFile>lscpparser.cpp</OutputFile>
+      <DefinesFile>lscpsymbols.h</DefinesFile>
     </Bison>
     <Bison Include="..\src\scriptvm\parser.y">
-      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">parser.cpp</OutputFile>
-      <DefinesFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">parser.h</DefinesFile>
+      <OutputFile>parser.cpp</OutputFile>
+      <DefinesFile>parser.h</DefinesFile>
     </Bison>
   </ItemGroup>
   <ItemGroup>

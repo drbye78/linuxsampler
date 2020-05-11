@@ -66,7 +66,7 @@
 
 /* Define to 1 if you want global volume sysex message only be applied to the
    respective MIDI port. */
-/* #undef CONFIG_MASTER_VOLUME_SYSEX_BY_PORT */
+#define CONFIG_MASTER_VOLUME_SYSEX_BY_PORT 1
 
 /* Define max. allowed events per fragment. */
 #define CONFIG_MAX_EVENTS_PER_FRAGMENT 1024

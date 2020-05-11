@@ -353,6 +353,7 @@ static String defaultLadspaDir() {
     const String sysDir =
         getenv("PROGRAMFILES") ? getenv("PROGRAMFILES") : "C:\\Program Files";
     const String searchDirs[] = {
+    	".\\ladspa",
         sysDir + "\\ladspa", //FIXME: hmm... who knows what the common default LADSPA path on Windows is?
         sysDir + "\\Audacity\\Plug-Ins"
     };

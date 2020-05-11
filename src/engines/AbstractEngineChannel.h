@@ -45,6 +45,22 @@ namespace LinuxSampler {
 
     class AbstractEngineChannel: public EngineChannel, public InstrumentScriptConsumer {
         public:
+            enum class AssignMode
+            {
+            	// matches XG KEY ASSIGN MODE
+                single = 0x00,
+                multi = 0x01,
+            	instrument = 0x02
+            };
+
+    		// Part Mode, matches XG PART MODE
+            enum MultipartMode
+            {
+	            PART_NORMAL = 0x00,   ///< Normal, chromatic part
+            	PART_DRUM = 0x01,     ///< Standard drums
+            	PART_DRUMKIT = 0x02   ///< Base index for additional drumkits (GS/XG)
+            };
+    	
             // implementation of abstract methods derived from interface class 'LinuxSampler::EngineChannel'
             virtual void    PrepareLoadInstrument(const char* FileName, uint Instrument) OVERRIDE;
             virtual void    Reset() OVERRIDE;
@@ -96,9 +112,12 @@ namespace LinuxSampler {
             virtual void ResourceToBeUpdated(VMParserContext* pResource, void*& pUpdateArg) OVERRIDE {}
             virtual void ResourceUpdated(VMParserContext* pOldResource, VMParserContext* pNewResource, void* pUpdateArg) OVERRIDE {}
             virtual void OnResourceProgress(float fProgress) OVERRIDE {}
+            virtual void ExecuteProgramChange(uint32_t Program) OVERRIDE;
+
 
             virtual AbstractEngine::Format GetEngineFormat() = 0;
             virtual MidiKeyboardManagerBase* GetMidiKeyboardManager() = 0;
+            virtual void UnloadInstrument() = 0;
 
             AudioOutputDevice* GetAudioOutputDeviceSafe();
 
@@ -138,6 +157,7 @@ namespace LinuxSampler {
             int                       AudioDeviceChannelRight;  ///< audio device channel number to which the right channel is connected to
             DoubleBuffer< ArrayList<MidiInputPort*> > midiInputs; ///< MIDI input ports on which this sampler engine channel shall listen to.
             midi_chan_t               midiChannel;              ///< MIDI channel(s) on which this engine channel listens to (on all MIDI input ports).
+            midi_chan_t               originalMidiChannel;      ///< MIDI channel(s) originally set by frontend. Equals to midiChannel until remap by GS/XG
             RingBuffer<Event,false>*  pEventQueue;              ///< Input event queue.
             RTList<Event>*            pEvents;                  ///< All engine channel specific events for the current audio fragment.
             struct _DelayedEvents {
@@ -172,6 +192,10 @@ namespace LinuxSampler {
             bool                      bStatusChanged;           ///< true in case an engine parameter has changed (e.g. new instrument, another volumet)
             uint32_t                  RoundRobinIndex;          ///< counter for round robin sample selection, incremented for each note on
             InstrumentScript*         pScript;                  ///< Points to the real-time instrument script(s) to be executed, NULL if current instrument does not have an instrument script. Even though the underlying VM representation of the script is shared among multiple sampler channels, the InstrumentScript object here is not shared though, it exists for each sampler channel separately.
+            AssignMode                KeyAssignMode;            ///< Whether melodic / drum (GS/XG)
+            MultipartMode             PartMode;                 ///< PART_NORMAL or GS/XG DrumKit number (Standard drums = 1, drumkit 1..N)
+            uint                      DefaultGsLsb;             ///< GS Default TONE MAP NUMBER
+            uint                      PoweronGsLsb;             ///< GS Tone map in effect upon power-on / reset
 
             SynchronizedConfig< ArrayList<VirtualMidiDevice*> > virtualMidiDevices;
             SynchronizedConfig< ArrayList<VirtualMidiDevice*> >::Reader virtualMidiDevicesReader_AudioThread;

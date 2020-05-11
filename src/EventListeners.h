@@ -91,13 +91,16 @@ namespace LinuxSampler {
 #define REGISTER_FIRE_EVENT_METHOD_ARG2(method, T1, T2) virtual void method(T1 _evt_arg1_, T2 _evt_arg2_) \
     { for(int i = 0; i < GetListenerCount(); i++) GetListener(i)->method(_evt_arg1_, _evt_arg2_); }
 
+
+#ifdef _MSC_VER
+#pragma warning(disable: 5204)
+#endif
     /**
      * This class is used as a listener, which is notified
      * when the number of sampler channels is changed.
      */
     class ChannelCountListener {
         public:
-            virtual ~ChannelCountListener() {}
             /**
              * Invoked when the number of sampler channels has changed.
              * @param NewCount The new number of sampler channels.
@@ -113,9 +116,9 @@ namespace LinuxSampler {
      */
     class ChannelCountAdapter : public ChannelCountListener {
         public:
-            virtual void ChannelCountChanged(int NewCount) { };
-            virtual void ChannelAdded(SamplerChannel* pChannel) { };
-            virtual void ChannelToBeRemoved(SamplerChannel* pChannel) { };
+            virtual void ChannelCountChanged(int NewCount) OVERRIDE { };
+            virtual void ChannelAdded(SamplerChannel* pChannel) OVERRIDE { };
+            virtual void ChannelToBeRemoved(SamplerChannel* pChannel) OVERRIDE { };
     };
 
     /**

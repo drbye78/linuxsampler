@@ -128,6 +128,10 @@ namespace LinuxSampler
 			Channels.push_back(new AudioChannel(i, size));
 		}
 
+		auto deviceInfo = Pa_GetDeviceInfo(_device);
+		auto deviceName = TraitsDevice::SafeValue(_device, deviceInfo);
+		dmsg(2, ("PortAudio: successfully opened device '%s', format = %dHz, %d channels, %d samples\n", deviceName.c_str(), _sampleRate, _channels, _fragmentSize));
+
 		if (static_cast<DeviceCreationParameterBool*>(Parameters["ACTIVE"])->ValueAsBool())
 		{
 			Play();

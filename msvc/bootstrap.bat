@@ -26,6 +26,8 @@ if not exist %arch% mkdir %arch%
 set src=vcpkg\installed\%triplet%\
 mklink /j %INC_DIR% %src%include
 mklink /j %LIB_DIR% %src%lib
+if not exist plugins mkdir plugins
+if not exist ladspa mkdir ladspa
 
 :part2
 

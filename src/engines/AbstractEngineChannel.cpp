@@ -26,6 +26,7 @@
 #include "AbstractEngineChannel.h"
 #include "../common/global_private.h"
 #include "../Sampler.h"
+#include "../drivers/midi/MidiInstrumentMapper.h"
 
 namespace LinuxSampler {
 
@@ -118,12 +119,21 @@ namespace LinuxSampler {
         GlobalTranspose = 0;
         // set all MIDI controller values to zero
         memset(ControllerTable, 0x00, 129);
+    	
         // reset all FX Send levels
-        for (
-            std::vector<FxSend*>::iterator iter = fxSends.begin();
-            iter != fxSends.end(); iter++
-        ) {
-            (*iter)->Reset();
+        for (auto fxSend : fxSends)
+            fxSend->Reset();
+
+    	if (PartMode == PART_NORMAL)
+    	{
+            SetMidiBankMsb(0x00);
+            SetMidiBankLsb(0x00);
+            SetMidiProgram(0x00);
+        } else
+        {
+            SetMidiBankMsb(0x7f);
+            SetMidiBankLsb(0x00);
+            SetMidiProgram(0x00);
         }
     }
 
@@ -330,6 +340,18 @@ namespace LinuxSampler {
             throw MidiInputException("Invalid MIDI channel (" + ToString(int(MidiChannel)) + ")");
 
         this->midiChannel = MidiChannel;
+        this->originalMidiChannel = MidiChannel;
+
+        const auto mode = GetEngine()->GetMidiMode();
+    	if (this->midiChannel == midi_chan_10)
+    	{
+            this->PartMode = PART_DRUM;
+            this->KeyAssignMode = (mode == Engine::MidiMode::GS) ? AssignMode::single : AssignMode::instrument;
+        } else
+    	{
+            this->PartMode = PART_NORMAL;
+            this->KeyAssignMode = AssignMode::multi;
+    	}
         
         Sync< ArrayList<MidiInputPort*> > connections = midiInputs.back();
         ArrayList<MidiInputPort*> clonedList = *connections;
@@ -1164,10 +1186,107 @@ namespace LinuxSampler {
      */
     void AbstractEngineChannel::DeleteGroupEventLists() {
         for (ActiveKeyGroupMap::iterator iter = ActiveKeyGroups.begin();
-             iter != ActiveKeyGroups.end(); iter++) {
+             iter != ActiveKeyGroups.end(); ++iter) {
             delete iter->second;
         }
         ActiveKeyGroups.clear();
     }
+
+	void AbstractEngineChannel::ExecuteProgramChange(uint32_t Program)
+    {
+        uint8_t msb = (Program >> 16) & 0xff;
+        uint8_t lsb = (Program >> 8) & 0xff;
+        uint8_t pc = Program & 0x7f;
+
+        dmsg(1, ("Received MIDI program change (msb=%d) (lsb=%d) (prog=%d)\n", msb, lsb, pc));
+    	if (UsesNoMidiInstrumentMap())
+    	{
+            dmsg(1, ("Channel %d doesn't have midi map assigned, ignoring..", static_cast<int>(iEngineIndexSelf)));
+            return;
+    	}
+    	
+        auto maps = MidiInstrumentMapper::Maps();
+        if (maps.empty())
+            return;
+
+        int midiMap;
+
+    	if (UsesDefaultMidiInstrumentMap())
+    	{
+            midiMap = GetEngine()->GetDefaultMidiMap(GetEngine()->GetMidiMode());
+            if (midiMap < 0)
+                midiMap = MidiInstrumentMapper::GetDefaultMap();
+        }
+        else
+            midiMap = GetMidiInstrumentMap();
+
+        switch (GetEngine()->GetMidiMode())
+        {
+        case Engine::MidiMode::GM2:
+            if (PartMode != PART_NORMAL)
+                msb = 0x78;
+            break;
+        	
+        default:
+            if (PartMode != PART_NORMAL)
+                msb = 0x7f;
+            break;
+        }
+
+        midi_prog_index_t midiIndex = { msb, lsb, pc };
+        auto mapping = MidiInstrumentMapper::GetEntry(midiMap, midiIndex);
+        if (!mapping)
+        {
+            // try to detect capital tone according to current midi mode
+            switch (GetEngine()->GetMidiMode())
+            {
+            case Engine::MidiMode::GS:
+            {
+                midiIndex.midi_bank_msb = 0;
+                mapping = MidiInstrumentMapper::GetEntry(midiMap, midiIndex);
+                break;
+            }
+
+            case Engine::MidiMode::XG:
+            {
+                if ((msb == 0x00) || (msb == 0x2f) || (msb == 0x40) || (msb == 0x78) || (msb == 0x79) || (msb == 0x7e) || (msb == 0x7f))
+                {
+                    midiIndex.midi_bank_lsb = 0;
+                    mapping = MidiInstrumentMapper::GetEntry(midiMap, midiIndex);
+                }
+                else if (msb == 0x08)
+                {
+                    midiIndex.midi_bank_lsb &= 0xc0;
+                    mapping = MidiInstrumentMapper::GetEntry(midiMap, midiIndex);
+                }
+                else if ((msb == 0x30) || (msb == 0x3e) || (msb == 0x3f) || (msb > 0x40 && msb < 0x60))
+                {
+                	// result in 'SILENT VOICE'
+                    UnloadInstrument();
+                }
+                else if (msb >= 0x60 && msb < 0x70)
+                {
+                    midiIndex.midi_bank_msb = 0;
+                    midiIndex.midi_bank_lsb = 0;
+                    mapping = MidiInstrumentMapper::GetEntry(midiMap, midiIndex);
+                }
+                break;
+            }
+
+            default:
+                break;
+            }
+        }
+        if (mapping) { // if mapping exists ...
+            InstrumentManager::instrument_id_t id = { mapping->InstrumentFile, mapping->InstrumentIndex };
+            //TODO: we should switch the engine type here
+            InstrumentManager::LoadInstrumentInBackground(id, this);
+            Volume(mapping->Volume);
+        } else {
+            dmsg(1, ("No instrument mapping found on channel #%d, midi map #%d\n", static_cast<int>(iEngineIndexSelf), midiMap));
+        }
+
+    }
+
 
 } // namespace LinuxSampler

@@ -40,6 +40,13 @@ namespace LinuxSampler {
      */
     class Engine {
         public:
+            enum class MidiMode
+            {
+                GM = 0,
+                GM2 = 1,
+                GS = 2,
+                XG = 3
+            };
 
             /////////////////////////////////////////////////////////////////
             // abstract methods
@@ -107,6 +114,27 @@ namespace LinuxSampler {
              * respective standard scale tuning SysEx MIDI message.
              */
             virtual void ResetScaleTuning() = 0;
+
+    		/**
+    		 * Returns active Midi mode (either autodetected or set via GM/GM2/GS/XG reset
+    		 */
+            virtual MidiMode GetMidiMode() = 0;
+
+    		/**
+    		 * Returns engine-determined default MidiMap to use if not defined explicitly
+    		 */
+            virtual int GetDefaultMidiMap(MidiMode mode) = 0;
+
+    		/**
+    		 * Specify default midi map for the specified MidiMode
+    		 * Use DEFAULT_MIDI_INSTRUMENT_MAP to revert to default behaviour
+    		 */
+            virtual void SetDefaultMidiMap(MidiMode mode, int mapID) = 0;
+
+            /**
+             * Reset engine by switching to specified MidiMode
+             */
+            virtual void ResetMidiMode(MidiMode mode, bool factoryReset) = 0;
 
         protected:
             virtual ~Engine() {}; // MUST only be destroyed by EngineFactory

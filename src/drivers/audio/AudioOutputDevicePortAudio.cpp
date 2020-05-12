@@ -218,7 +218,7 @@ namespace LinuxSampler
 
 	uint AudioOutputDevicePortAudio::MaxSamplesPerCycle()
 	{
-		return _fragmentSize * 2;
+		return _fragmentSize;
 	}
 
 	uint AudioOutputDevicePortAudio::SampleRate()

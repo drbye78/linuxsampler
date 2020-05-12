@@ -1237,6 +1237,8 @@ namespace LinuxSampler {
         auto mapping = MidiInstrumentMapper::GetEntry(midiMap, midiIndex);
         if (!mapping)
         {
+            dmsg(1, ("\nMissing instrument for map #%d, msb=%d, lsb=%d, pc=%d, falling back ..", 
+                GetEngine()->GetMidiMode(), msb, lsb, pc));
             // try to detect capital tone according to current midi mode
             switch (GetEngine()->GetMidiMode())
             {
@@ -1283,7 +1285,7 @@ namespace LinuxSampler {
             InstrumentManager::LoadInstrumentInBackground(id, this);
             Volume(mapping->Volume);
         } else {
-            dmsg(1, ("No instrument mapping found on channel #%d, midi map #%d\n", static_cast<int>(iEngineIndexSelf), midiMap));
+            dmsg(1, ("\nNo instrument mapping found on channel #%d, midi map #%d", static_cast<int>(iEngineIndexSelf), midiMap));
         }
 
     }

@@ -570,7 +570,7 @@ namespace LinuxSampler {
         {
             if (_left > 0)
             {
-                auto tmp = _reader.pop();
+	            const auto tmp = _reader.pop();
                 if (tmp)
                 {
                     ++address;
@@ -1033,7 +1033,7 @@ namespace LinuxSampler {
                             break;
 
                         case 0x04: // Rcv CHANNEL
-                            me->forEach(buffer[index], [me](AbstractEngineChannel* channel, uint8_t value)
+                            me->forEach(buffer[index], [](AbstractEngineChannel* channel, uint8_t value)
                                 {
                                     channel->midiChannel = static_cast<midi_chan_t>(value);
                                 });
@@ -1046,7 +1046,7 @@ namespace LinuxSampler {
                         case 0x06: {// SAME NOTE NUMBER KEY ON ASSIGN
                             const auto mode = buffer[index];
                             if (mode < 3)
-                                me->forEach(mode, [me](AbstractEngineChannel* channel, uint8_t value)
+                                me->forEach(mode, [](AbstractEngineChannel* channel, uint8_t value)
                                     {
                                         channel->KeyAssignMode = static_cast<AbstractEngineChannel::AssignMode>(value);
                                     });
@@ -1054,7 +1054,7 @@ namespace LinuxSampler {
                         }
 
                         case 0x07: // PART MODE
-                            me->forEach(buffer[index], [me](AbstractEngineChannel* channel, uint8_t value)
+                            me->forEach(buffer[index], [](AbstractEngineChannel* channel, uint8_t value)
                                 {
                                     channel->PartMode = static_cast<AbstractEngineChannel::MultipartMode>(value);
                                 });
@@ -1246,7 +1246,7 @@ namespace LinuxSampler {
 	                }
 	                else if (command == 0)
 	                {   // BULK DUMP
-                        const auto len = *reader.pop() << 7 + *reader.pop();
+                        const auto len = (*reader.pop() << 7) + *reader.pop();
                         if (len == (length - 11))
                         {
                             SysexReader sysex(reader, length - 8);
@@ -1266,8 +1266,8 @@ namespace LinuxSampler {
     void AbstractEngine::ProcessSysex(Pool<Event>::Iterator& itSysexEvent)
 	{
         auto reader = pSysexBuffer->get_non_volatile_reader();
-        auto length = itSysexEvent->Param.Sysex.Size;
-        auto sourcePort = itSysexEvent->pMidiInputPort;
+        const auto length = itSysexEvent->Param.Sysex.Size;
+        const auto sourcePort = itSysexEvent->pMidiInputPort;
         dispatchSysex(*this, sourcePort, reader, length);
         pSysexBuffer->increment_read_ptr(length);
     }
